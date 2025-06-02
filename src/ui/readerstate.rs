@@ -4,15 +4,16 @@ use ratatui::{
     layout::{Constraint, Layout}, widgets::{Block, Borders}
 };
 
-use crate::ui::{appstate::AppState, feedtree::FeedTree};
+use crate::{library::feedlibrary::FeedLibrary, ui::{appstate::AppState, feedtree::FeedTree}};
 
 pub struct ReaderState {
     running: bool,
+    library: FeedLibrary,
 }
 
 impl ReaderState {
     pub fn new() -> ReaderState {
-        ReaderState { running: true }
+        ReaderState { running: true, library: FeedLibrary::new() }
     }
 }
 
@@ -23,7 +24,7 @@ impl AppState for ReaderState {
         let layout = Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)]);
         let chunks = layout.split(frame.area());
 
-        let feedtree = FeedTree {};
+        let feedtree = FeedTree::new(&self.library);
         frame.render_widget(feedtree, chunks[0]);
 
         let main_panel = Block::default().title("Main Panel").borders(Borders::ALL);
