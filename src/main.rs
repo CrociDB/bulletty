@@ -1,9 +1,7 @@
-use color_eyre::owo_colors::OwoColorize;
-
+mod ui;
 mod app;
-mod appstate;
 
-mod readerstate;
+use crate::ui::readerstate;
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;

@@ -1,7 +1,7 @@
 use color_eyre::{eyre, Result};
 use ratatui::DefaultTerminal;
 
-use crate::appstate::AppState;
+use crate::ui::appstate::AppState;
 
 // #[derive(Debug)]
 pub struct App {

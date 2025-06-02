@@ -1,12 +1,10 @@
 use color_eyre::Result;
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::{
-    style::Stylize,
-    text::Line,
-    widgets::{Block, Paragraph},
+    layout::{Constraint, Layout}, widgets::{Block, Borders}
 };
 
-use crate::appstate::AppState;
+use crate::ui::{appstate::AppState, feedtree::FeedTree};
 
 pub struct ReaderState {
     running: bool,
@@ -22,21 +20,15 @@ impl AppState for ReaderState {
     fn start(&mut self) {}
 
     fn render(&mut self, frame: &mut ratatui::Frame) {
-        let title = Line::from("Ratatui Simple Template")
-            .bold()
-            .blue()
-            .centered();
+        let layout = Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)]);
+        let chunks = layout.split(frame.area());
 
-        let text = "Hello, Ratatui!\n\n\
-            Created using https://github.com/ratatui/templates\n\
-            Press `Esc`, `Ctrl-C` or `q` to stop running.";
+        let feedtree = FeedTree {};
+        frame.render_widget(feedtree, chunks[0]);
 
-        frame.render_widget(
-            Paragraph::new(text)
-                .block(Block::bordered().title(title))
-                .centered(),
-            frame.area(),
-        )
+        let main_panel = Block::default().title("Main Panel").borders(Borders::ALL);
+        frame.render_widget(main_panel, chunks[1]);
+
     }
 
     fn handle_events(&mut self) -> Result<()> {
