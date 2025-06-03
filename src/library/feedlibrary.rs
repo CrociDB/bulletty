@@ -1,21 +1,21 @@
-use crate::library::feedcategory::FeedCategory;
+use crate::library::{data::config::Config, feedcategory::FeedCategory};
 
 pub struct FeedLibrary {
     pub feedcategories: Vec<FeedCategory>,
     pub currentselection: usize,
-    pub totalitems: usize,
+    pub config: Config,
 }
 
 impl FeedLibrary {
     pub fn new() -> FeedLibrary {
         FeedLibrary {
             currentselection: 0,
-            totalitems: 0,
             feedcategories: vec![
                 FeedCategory::new(),
                 FeedCategory::new(),
                 FeedCategory::new(),
             ],
+            config: Config::new(),
         }
     }
 

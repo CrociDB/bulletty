@@ -1,4 +1,5 @@
 mod app;
+mod defs;
 mod feedparser;
 mod library;
 mod ui;
