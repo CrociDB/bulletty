@@ -53,7 +53,7 @@ impl FeedLibrary {
 
     pub fn selection_up(&mut self) {
         if self.currentselection > 0 {
-            self.currentselection = self.currentselection - 1;
+            self.currentselection -= 1;
         }
     }
 

@@ -1,7 +1,7 @@
-mod ui;
 mod app;
-mod library;
 mod feedparser;
+mod library;
+mod ui;
 
 use crate::ui::readerstate;
 
@@ -16,4 +16,3 @@ fn main() -> color_eyre::Result<()> {
     ratatui::restore();
     result
 }
-

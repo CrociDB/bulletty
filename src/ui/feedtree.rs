@@ -24,12 +24,12 @@ impl<'a> FeedTree<'a> {
         self.selected = library.currentselection;
         for (i, title) in library.get_list_data().iter().enumerate() {
             if i == library.currentselection {
-                self.listitems.push(ListItem::new(title.clone()).style(Style::new().bg(Color::Yellow)));
+                self.listitems
+                    .push(ListItem::new(title.clone()).style(Style::new().bg(Color::Yellow)));
             } else {
                 self.listitems.push(ListItem::new(title.clone()));
             }
         }
-        
     }
 }
 
@@ -38,7 +38,8 @@ impl<'a> Widget for FeedTree<'a> {
     where
         Self: Sized,
     {
-        let list = List::new(self.listitems).block(Block::default().title("Feeds").borders(Borders::ALL));
+        let list =
+            List::new(self.listitems).block(Block::default().title("Feeds").borders(Borders::ALL));
         list.render(area, buf);
     }
 }

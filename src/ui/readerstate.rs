@@ -6,7 +6,7 @@ use ratatui::{
 };
 
 use crate::{
-    library::{self, feedlibrary::FeedLibrary},
+    library::feedlibrary::FeedLibrary,
     ui::{appstate::AppState, feedtree::FeedTree},
 };
 
@@ -55,13 +55,13 @@ impl AppState for ReaderState {
             (_, KeyCode::Esc | KeyCode::Char('q'))
             | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
                 self.running = false
-            },
+            }
             (_, KeyCode::Down | KeyCode::Char('j')) => {
                 self.library.selection_down();
-            },
+            }
             (_, KeyCode::Up | KeyCode::Char('k')) => {
                 self.library.selection_up();
-            },
+            }
             _ => {}
         }
     }
