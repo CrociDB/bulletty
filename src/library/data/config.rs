@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use toml;
 
 use crate::defs;
@@ -33,12 +33,18 @@ impl Config {
                     .create_new(true)
                     .open(&config_file)
                 {
-                    Ok(file) => {
+                    Ok(mut file) => {
                         if let Some(data_dir) = dirs::data_dir() {
                             let config = Config { datapath: data_dir };
 
-                            file.write(&toml::to_string(&config).unwrap().into_bytes());
-                            return config;
+                            if let Err(e) =
+                                file.write_all(&toml::to_string(&config).unwrap().into_bytes())
+                            {
+                                eprintln!("Failed to write config: {}", e);
+                                std::process::exit(1);
+                            }
+
+                            config
                         } else {
                             eprintln!("Error: data dir not found");
                             std::process::exit(1);
@@ -50,8 +56,16 @@ impl Config {
                     }
                 }
             } else if let Ok(configstr) = std::fs::read_to_string(&config_file) {
-                let config: Config = toml::from_str(&configstr).unwrap();
-                return config;
+                match toml::from_str(&configstr) {
+                    Ok(config) => config,
+                    Err(e) => {
+                        eprintln!("Error: config file is can't be parsed: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            } else {
+                eprintln!("Error: can't read config file");
+                std::process::exit(1);
             }
         } else {
             eprintln!("Error: no config dir");
