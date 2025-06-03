@@ -1,27 +1,5 @@
-use crate::library::feeditem::FeedItem;
+use crate::library::feedcategory::FeedCategory;
 
-pub struct FeedCategoryState {
-    expanded: bool,
-}
-
-// Category
-pub struct FeedCategory {
-    pub title: String,
-    pub feeds: Vec<FeedItem>,
-    pub state: FeedCategoryState,
-}
-
-impl FeedCategory {
-    pub fn new() -> FeedCategory {
-        FeedCategory {
-            title: String::from("Category"),
-            feeds: Vec::new(),
-            state: FeedCategoryState { expanded: false },
-        }
-    }
-}
-
-// Library
 pub struct FeedLibrary {
     pub feedcategories: Vec<FeedCategory>,
     pub currentselection: usize,
@@ -43,7 +21,7 @@ impl FeedLibrary {
 
     pub fn get_list_data(&self) -> Vec<String> {
         let mut items = Vec::<String>::new();
-        for (i, item) in self.feedcategories.iter().enumerate() {
+        for item in self.feedcategories.iter() {
             let title = format!(" > {}", item.title);
             items.push(title);
         }
