@@ -6,16 +6,30 @@ use ratatui::{
 use crate::library::feedlibrary::FeedLibrary;
 
 pub struct FeedTree<'a> {
-    selected: usize,
-    library: &'a FeedLibrary,
+    pub selected: usize,
+    pub listitems: Vec<ListItem<'a>>,
 }
 
 impl<'a> FeedTree<'a> {
-    pub fn new(lib: &'a FeedLibrary) -> FeedTree<'a> {
+    pub fn new() -> FeedTree<'a> {
         FeedTree {
             selected: 0,
-            library: lib,
+            listitems: Vec::new(),
         }
+    }
+
+    pub fn set_list_data(&mut self, library: &FeedLibrary) {
+        self.listitems.clear();
+
+        self.selected = library.currentselection;
+        for (i, title) in library.get_list_data().iter().enumerate() {
+            if i == library.currentselection {
+                self.listitems.push(ListItem::new(title.clone()).style(Style::new().bg(Color::Yellow)));
+            } else {
+                self.listitems.push(ListItem::new(title.clone()));
+            }
+        }
+        
     }
 }
 
@@ -24,17 +38,7 @@ impl<'a> Widget for FeedTree<'a> {
     where
         Self: Sized,
     {
-        let mut items = Vec::<ListItem>::new();
-
-        for (i, item) in self.library.feedcategories.iter().enumerate() {
-            if i == self.selected {
-                items.push(ListItem::new(item.title.clone()).style(Style::new().bg(Color::Yellow)));
-            } else {
-                items.push(ListItem::new(item.title.clone()));
-            }
-        }
-
-        let list = List::new(items).block(Block::default().title("Feeds").borders(Borders::ALL));
+        let list = List::new(self.listitems).block(Block::default().title("Feeds").borders(Borders::ALL));
         list.render(area, buf);
     }
 }

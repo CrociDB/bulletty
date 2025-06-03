@@ -1,10 +1,14 @@
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::{
-    layout::{Constraint, Layout}, widgets::{Block, Borders}
+    layout::{Constraint, Layout},
+    widgets::{Block, Borders},
 };
 
-use crate::{library::feedlibrary::FeedLibrary, ui::{appstate::AppState, feedtree::FeedTree}};
+use crate::{
+    library::{self, feedlibrary::FeedLibrary},
+    ui::{appstate::AppState, feedtree::FeedTree},
+};
 
 pub struct ReaderState {
     running: bool,
@@ -13,7 +17,10 @@ pub struct ReaderState {
 
 impl ReaderState {
     pub fn new() -> ReaderState {
-        ReaderState { running: true, library: FeedLibrary::new() }
+        ReaderState {
+            running: true,
+            library: FeedLibrary::new(),
+        }
     }
 }
 
@@ -21,15 +28,16 @@ impl AppState for ReaderState {
     fn start(&mut self) {}
 
     fn render(&mut self, frame: &mut ratatui::Frame) {
-        let layout = Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)]);
-        let chunks = layout.split(frame.area());
+        let chunks = Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)])
+            .margin(1)
+            .split(frame.area());
 
-        let feedtree = FeedTree::new(&self.library);
+        let mut feedtree = FeedTree::new();
+        feedtree.set_list_data(&(self.library));
         frame.render_widget(feedtree, chunks[0]);
 
         let main_panel = Block::default().title("Main Panel").borders(Borders::ALL);
         frame.render_widget(main_panel, chunks[1]);
-
     }
 
     fn handle_events(&mut self) -> Result<()> {
@@ -45,14 +53,20 @@ impl AppState for ReaderState {
     fn handle_keypress(&mut self, key: crossterm::event::KeyEvent) {
         match (key.modifiers, key.code) {
             (_, KeyCode::Esc | KeyCode::Char('q'))
-            | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => self.running = false,
+            | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
+                self.running = false
+            },
+            (_, KeyCode::Down | KeyCode::Char('j')) => {
+                self.library.selection_down();
+            },
+            (_, KeyCode::Up | KeyCode::Char('k')) => {
+                self.library.selection_up();
+            },
             _ => {}
         }
     }
 
-    fn quit(&mut self) {
-
-    }
+    fn quit(&mut self) {}
 
     fn running(&self) -> bool {
         self.running
