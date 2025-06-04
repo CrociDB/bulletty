@@ -1,13 +1,17 @@
-use crate::library::{data::config::Config, feedcategory::FeedCategory};
+use crate::library::{data::{config::Config, data::Data}, feedcategory::FeedCategory};
 
 pub struct FeedLibrary {
     pub feedcategories: Vec<FeedCategory>,
     pub currentselection: usize,
     pub config: Config,
+    pub data: Data,
 }
 
 impl FeedLibrary {
     pub fn new() -> FeedLibrary {
+        let config_obj = Config::new();
+        let data_obj = Data::new(config_obj.datapath.as_ref());
+
         FeedLibrary {
             currentselection: 0,
             feedcategories: vec![
@@ -15,7 +19,8 @@ impl FeedLibrary {
                 FeedCategory::new(),
                 FeedCategory::new(),
             ],
-            config: Config::new(),
+            config: config_obj,
+            data: data_obj,
         }
     }
 

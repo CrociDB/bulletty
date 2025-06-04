@@ -9,7 +9,7 @@ use toml;
 use crate::defs;
 #[derive(Serialize, Deserialize)]
 pub struct Config {
-    datapath: PathBuf,
+    pub datapath: PathBuf,
 }
 
 impl Config {
@@ -35,7 +35,7 @@ impl Config {
                 {
                     Ok(mut file) => {
                         if let Some(data_dir) = dirs::data_dir() {
-                            let config = Config { datapath: data_dir };
+                            let config = Config { datapath: data_dir.join(defs::DATA_DIR) };
 
                             if let Err(e) =
                                 file.write_all(&toml::to_string(&config).unwrap().into_bytes())
