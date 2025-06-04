@@ -32,7 +32,7 @@ fn command_add(cli: &Cli, url: &str) -> Result<(), color_eyre::eyre::Error> {
     let mut library = FeedLibrary::new();
     let feed = library.add_feed(url)?;
 
-    println!("Feed added: {} by {}", feed.title, feed.author);
+    println!("Feed added: {:?}", feed);
 
     Ok(())
 }
