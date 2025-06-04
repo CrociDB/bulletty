@@ -1,1 +1,2 @@
-pub mod feed;
+pub mod feedentry;
+pub mod feedparser;

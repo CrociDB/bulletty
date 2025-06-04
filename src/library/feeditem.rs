@@ -1,7 +1,5 @@
-use crate::feedparser::feed::Feed;
-
 pub struct FeedItem {
-    title: String,
-    url: String,
-    feed: Feed,
+    pub title: String,
+    pub url: String,
+    pub author: String,
 }

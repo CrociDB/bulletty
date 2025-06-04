@@ -1,4 +1,13 @@
-use crate::library::{data::{config::Config, data::Data}, feedcategory::FeedCategory};
+use color_eyre::{Section, SectionExt, eyre::Report, eyre::eyre};
+
+use crate::{
+    feedparser,
+    library::{
+        data::{config::Config, data::Data},
+        feedcategory::FeedCategory,
+        feeditem::FeedItem,
+    },
+};
 
 pub struct FeedLibrary {
     pub feedcategories: Vec<FeedCategory>,
@@ -23,6 +32,13 @@ impl FeedLibrary {
             data: data_obj,
         }
     }
+
+    pub fn add_feed(&mut self, url: &str) -> color_eyre::Result<FeedItem> {
+        let feed = feedparser::feedparser::parse(url)?;
+        Ok(feed)
+    }
+
+    // Navigation: this needs to be moved somehwere else
 
     pub fn get_list_data(&self) -> Vec<String> {
         let mut items = Vec::<String>::new();
