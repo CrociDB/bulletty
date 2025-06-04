@@ -1,19 +1,21 @@
+use clap::{Parser, Subcommand};
+
 mod app;
+mod cli;
 mod defs;
 mod feedparser;
 mod library;
+mod mainui;
 mod ui;
-
-use crate::ui::readerstate;
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
-    let terminal = ratatui::init();
 
-    let mut app = app::App::new();
-    app.init(Box::new(readerstate::ReaderState::new()));
+    let cli = cli::Cli::parse();
 
-    let result = app.run(terminal);
-    ratatui::restore();
-    result
+    if cli.command.is_none() {
+        mainui::run_main_ui()
+    } else {
+        cli::run_main_cli(cli)
+    }
 }
