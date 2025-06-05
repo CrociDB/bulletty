@@ -35,6 +35,15 @@ impl FeedLibrary {
 
     pub fn add_feed(&mut self, url: &str) -> color_eyre::Result<FeedItem> {
         let feed = feedparser::feedparser::parse(url)?;
+
+        // check if feed already in library
+        if self.data.feed_exists(&feed.slug) {
+            return Err(eyre!("Feed already exists"));
+        }
+
+        // then create
+        self.data.feed_create(&feed)?;
+
         Ok(feed)
     }
 

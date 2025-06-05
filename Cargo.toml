@@ -17,3 +17,4 @@ clap = { version = "4.5.39", features = ["derive"] }
 reqwest = { version = "0.12.19", features = ["blocking"] }
 roxmltree = "0.20.0"
 openssl = { version = "0.10", features = ["vendored"] }
+slug = "0.1"

@@ -1,6 +1,7 @@
 use color_eyre::eyre::eyre;
 
 use reqwest::blocking::get;
+use slug::slugify;
 
 use crate::library::feeditem::FeedItem;
 
@@ -56,6 +57,8 @@ pub fn parse(url: &str) -> color_eyre::Result<FeedItem> {
                 .to_string();
         }
     }
+
+    feed.slug = slugify(&feed.title);
 
     Ok(feed)
 }
