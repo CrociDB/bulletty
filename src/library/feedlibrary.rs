@@ -1,11 +1,12 @@
 use color_eyre::{Section, SectionExt, eyre::Report, eyre::eyre};
 
 use crate::{
-    defs, feedparser, library::{
+    defs, feedparser,
+    library::{
         data::{config::Config, data::Data},
         feedcategory::FeedCategory,
         feeditem::FeedItem,
-    }
+    },
 };
 
 pub struct FeedLibrary {
@@ -36,10 +37,16 @@ impl FeedLibrary {
         }
     }
 
-    pub fn add_feed(&mut self, url: &str, category: &Option<String>) -> color_eyre::Result<FeedItem> {
+    pub fn add_feed(
+        &mut self,
+        url: &str,
+        category: &Option<String>,
+    ) -> color_eyre::Result<FeedItem> {
         let feed = feedparser::feedparser::parse(url)?;
 
-        let category_string = category.clone().unwrap_or_else(|| String::from(defs::DATA_CATEGORY_DEFAULT));
+        let category_string = category
+            .clone()
+            .unwrap_or_else(|| String::from(defs::DATA_CATEGORY_DEFAULT));
 
         // check if feed already in library
         if self.data.feed_exists(&feed.slug, &category_string) {
@@ -56,9 +63,13 @@ impl FeedLibrary {
 
     pub fn get_list_data(&self) -> Vec<String> {
         let mut items = Vec::<String>::new();
-        for item in self.feedcategories.iter() {
-            let title = format!(" > {}", item.title);
+        for category in self.feedcategories.iter() {
+            let title = format!(" > {}", category.title);
             items.push(title);
+
+            for feed in category.feeds.iter() {
+                items.push(format!("  - {}", feed.title));
+            }
         }
 
         items
@@ -76,6 +87,15 @@ impl FeedLibrary {
     }
 
     fn count_total_items(&self) -> usize {
-        self.feedcategories.len()
+        let mut total: usize = 0;
+        total += self.feedcategories.len();
+
+        total += self
+            .feedcategories
+            .iter()
+            .map(|c| c.feeds.len())
+            .sum::<usize>();
+
+        total
     }
 }
