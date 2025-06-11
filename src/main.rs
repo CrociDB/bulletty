@@ -1,9 +1,9 @@
-use clap::{Parser, Subcommand};
+use clap::Parser;
 
 mod app;
 mod cli;
 mod defs;
-mod feedparser;
+mod feed;
 mod library;
 mod mainui;
 mod ui;

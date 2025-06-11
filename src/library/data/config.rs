@@ -35,7 +35,9 @@ impl Config {
                 {
                     Ok(mut file) => {
                         if let Some(data_dir) = dirs::data_dir() {
-                            let config = Config { datapath: data_dir.join(defs::DATA_DIR) };
+                            let config = Config {
+                                datapath: data_dir.join(defs::DATA_DIR),
+                            };
 
                             if let Err(e) =
                                 file.write_all(&toml::to_string(&config).unwrap().into_bytes())
@@ -59,7 +61,7 @@ impl Config {
                 match toml::from_str(&configstr) {
                     Ok(config) => config,
                     Err(e) => {
-                        eprintln!("Error: config file is can't be parsed: {}", e);
+                        eprintln!("Error: config file can't be parsed: {}", e);
                         std::process::exit(1);
                     }
                 }
