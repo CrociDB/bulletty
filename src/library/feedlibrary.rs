@@ -1,9 +1,9 @@
-use color_eyre::{Section, SectionExt, eyre::Report, eyre::eyre};
+use color_eyre::eyre::eyre;
 
 use crate::{
-    defs, feedparser,
+    defs, feed,
     library::{
-        data::{config::Config, data::Data},
+        data::{config::Config, librarydata::LibraryData},
         feedcategory::FeedCategory,
         feeditem::FeedItem,
     },
@@ -12,14 +12,13 @@ use crate::{
 pub struct FeedLibrary {
     pub feedcategories: Vec<FeedCategory>,
     pub currentselection: usize,
-    pub config: Config,
-    pub data: Data,
+    pub data: LibraryData,
 }
 
 impl FeedLibrary {
     pub fn new() -> FeedLibrary {
         let config_obj = Config::new();
-        let data_obj = Data::new(config_obj.datapath.as_ref());
+        let data_obj = LibraryData::new(config_obj.datapath.as_ref());
 
         let categories = match data_obj.generate_categories_tree() {
             Ok(c) => c,
@@ -32,7 +31,6 @@ impl FeedLibrary {
         FeedLibrary {
             currentselection: 0,
             feedcategories: categories,
-            config: config_obj,
             data: data_obj,
         }
     }
@@ -42,7 +40,7 @@ impl FeedLibrary {
         url: &str,
         category: &Option<String>,
     ) -> color_eyre::Result<FeedItem> {
-        let feed = feedparser::feedparser::parse(url)?;
+        let feed = feed::feedparser::parse(url)?;
 
         let category_string = category
             .clone()

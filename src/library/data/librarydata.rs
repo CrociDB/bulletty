@@ -6,26 +6,30 @@ use std::{
 
 use color_eyre::eyre::eyre;
 
-use crate::library::feedcategory::{FeedCategory, FeedCategoryState};
+use crate::library::feedcategory::{FeedCategory};
 use crate::{
     defs::{self, DATA_CATEGORIES_DIR, DATA_FEED},
     library::feeditem::FeedItem,
 };
 
-pub struct Data {
+pub struct LibraryData {
     path: PathBuf,
 }
 
-impl Data {
-    pub fn new(datapath: &Path) -> Data {
+impl LibraryData {
+    pub fn new(datapath: &Path) -> LibraryData {
         load_or_create(datapath);
-        Data {
+        LibraryData {
             path: PathBuf::from(datapath),
         }
     }
 
     pub fn feed_exists(&self, slug: &str, category: &str) -> bool {
-        let feedir = self.path.join(DATA_CATEGORIES_DIR).join(category).join(slug);
+        let feedir = self
+            .path
+            .join(DATA_CATEGORIES_DIR)
+            .join(category)
+            .join(slug);
         if feedir.exists() {
             let feeddata = feedir.join(DATA_FEED);
             return feeddata.exists();
@@ -35,7 +39,11 @@ impl Data {
     }
 
     pub fn feed_create(&self, feed: &FeedItem, category: &str) -> color_eyre::Result<()> {
-        let feedir = self.path.join(DATA_CATEGORIES_DIR).join(category).join(&feed.slug);
+        let feedir = self
+            .path
+            .join(DATA_CATEGORIES_DIR)
+            .join(category)
+            .join(&feed.slug);
         fs::create_dir_all(&feedir)?;
 
         let feeddata = feedir.join(DATA_FEED);
@@ -67,7 +75,6 @@ impl Data {
                     let cat = FeedCategory {
                         title: String::from(name),
                         feeds: self.load_feeds_from_category(path.as_path())?,
-                        state: FeedCategoryState::default(),
                     };
 
                     categories.push(cat);

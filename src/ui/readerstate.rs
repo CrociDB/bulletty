@@ -1,7 +1,9 @@
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::{
-    layout::{Constraint, Layout}, style::{Color, Modifier, Style}, widgets::{Block, Borders}
+    layout::{Constraint, Layout},
+    style::{Color, Modifier, Style},
+    widgets::{Block, Borders},
 };
 
 use crate::{
@@ -32,7 +34,7 @@ impl ReaderState {
 }
 
 impl AppState for ReaderState {
-    fn start(&mut self) {}
+    fn _start(&mut self) {}
 
     fn render(&mut self, frame: &mut ratatui::Frame) {
         let chunks = Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)])
@@ -68,7 +70,7 @@ impl AppState for ReaderState {
             ReaderInputState::Menu => match (key.modifiers, key.code) {
                 (_, KeyCode::Esc | KeyCode::Char('q'))
                 | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
-                    self.running = false
+                    self.running = false;
                 }
                 (_, KeyCode::Down | KeyCode::Char('j')) => {
                     self.library.selection_down();
@@ -76,12 +78,19 @@ impl AppState for ReaderState {
                 (_, KeyCode::Up | KeyCode::Char('k')) => {
                     self.library.selection_up();
                 }
-                (_, KeyCode::Right | KeyCode::Char('l')) => {
+                (_, KeyCode::Right | KeyCode::Enter | KeyCode::Tab | KeyCode::Char('l')) => {
                     self.inputstate = ReaderInputState::Content;
                 }
                 _ => {}
             },
             ReaderInputState::Content => match (key.modifiers, key.code) {
+                (_, KeyCode::Char('q'))
+                | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
+                    self.running = false;
+                }
+                (_, KeyCode::Esc) => {
+                    self.inputstate = ReaderInputState::Menu;
+                }
                 (_, KeyCode::Right | KeyCode::Char('h')) => {
                     self.inputstate = ReaderInputState::Menu;
                 }
@@ -90,7 +99,7 @@ impl AppState for ReaderState {
         }
     }
 
-    fn quit(&mut self) {}
+    fn _quit(&mut self) {}
 
     fn running(&self) -> bool {
         self.running

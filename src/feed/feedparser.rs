@@ -1,5 +1,3 @@
-use color_eyre::eyre::eyre;
-
 use reqwest::blocking::get;
 use slug::slugify;
 
