@@ -25,7 +25,18 @@ pub fn run_main_cli(cli: Cli) -> color_eyre::Result<()> {
 }
 
 fn command_list(cli: &Cli) -> Result<(), color_eyre::eyre::Error> {
-    todo!()
+    let library = FeedLibrary::new();
+
+    println!("Feeds Registered\n\n");
+    for category in library.feedcategories.iter() {
+        println!("{}", category.title);
+        for feed in category.feeds.iter().as_ref() {
+            println!("\t-> {}", feed.title);
+        }
+        println!();
+    }
+
+    Ok(())
 }
 
 fn command_add(cli: &Cli, url: &str) -> Result<(), color_eyre::eyre::Error> {

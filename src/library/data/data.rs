@@ -6,6 +6,7 @@ use std::{
 
 use color_eyre::eyre::eyre;
 
+use crate::library::feedcategory::{FeedCategory, FeedCategoryState};
 use crate::{
     defs::{self, DATA_CATEGORIES_DIR, DATA_FEED},
     library::feeditem::FeedItem,
@@ -51,10 +52,54 @@ impl Data {
                     Ok(())
                 }
             }
-            Err(e) => {
-                Err(eyre!("Couldn't open file {}: {}", feeddata.display(), e))
+            Err(e) => Err(eyre!("Couldn't open file {}: {}", feeddata.display(), e)),
+        }
+    }
+
+    pub fn generate_categories_tree(&self) -> color_eyre::Result<Vec<FeedCategory>> {
+        let mut categories: Vec<FeedCategory> = Vec::new();
+        let catpath = self.path.join(DATA_CATEGORIES_DIR);
+
+        for entry in fs::read_dir(catpath)? {
+            let path = entry?.path();
+            if path.is_dir() {
+                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                    let cat = FeedCategory {
+                        title: String::from(name),
+                        feeds: self.load_feeds_from_category(path.as_path())?,
+                        state: FeedCategoryState::default(),
+                    };
+
+                    categories.push(cat);
+                }
             }
         }
+
+        Ok(categories)
+    }
+
+    pub fn load_feeds_from_category(&self, category: &Path) -> color_eyre::Result<Vec<FeedItem>> {
+        let mut feeds = Vec::new();
+
+        for entry in fs::read_dir(category)? {
+            let path = entry?.path();
+            if path.is_dir() {
+                let feedpath = path.join(defs::DATA_FEED);
+
+                if let Ok(file) = std::fs::read_to_string(&feedpath) {
+                    let feed = match toml::from_str(&file) {
+                        Ok(f) => f,
+                        Err(e) => {
+                            return Err(eyre!("Error: feed file can't be parsed: {}", e));
+                        }
+                    };
+
+                    feeds.push(feed);
+                }
+            }
+        }
+
+        Ok(feeds)
     }
 }
 

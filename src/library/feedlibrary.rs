@@ -21,13 +21,17 @@ impl FeedLibrary {
         let config_obj = Config::new();
         let data_obj = Data::new(config_obj.datapath.as_ref());
 
+        let categories = match data_obj.generate_categories_tree() {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!("{}", e);
+                std::process::exit(1);
+            }
+        };
+
         FeedLibrary {
             currentselection: 0,
-            feedcategories: vec![
-                FeedCategory::new(),
-                FeedCategory::new(),
-                FeedCategory::new(),
-            ],
+            feedcategories: categories,
             config: config_obj,
             data: data_obj,
         }

@@ -1,5 +1,6 @@
 use crate::library::feeditem::FeedItem;
 
+#[derive(Default)]
 pub struct FeedCategoryState {
     expanded: bool,
 }
