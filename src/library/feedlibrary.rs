@@ -1,12 +1,11 @@
 use color_eyre::{Section, SectionExt, eyre::Report, eyre::eyre};
 
 use crate::{
-    feedparser,
-    library::{
+    defs, feedparser, library::{
         data::{config::Config, data::Data},
         feedcategory::FeedCategory,
         feeditem::FeedItem,
-    },
+    }
 };
 
 pub struct FeedLibrary {
@@ -37,16 +36,18 @@ impl FeedLibrary {
         }
     }
 
-    pub fn add_feed(&mut self, url: &str) -> color_eyre::Result<FeedItem> {
+    pub fn add_feed(&mut self, url: &str, category: &Option<String>) -> color_eyre::Result<FeedItem> {
         let feed = feedparser::feedparser::parse(url)?;
 
+        let category_string = category.clone().unwrap_or_else(|| String::from(defs::DATA_CATEGORY_DEFAULT));
+
         // check if feed already in library
-        if self.data.feed_exists(&feed.slug) {
+        if self.data.feed_exists(&feed.slug, &category_string) {
             return Err(eyre!("Feed already exists"));
         }
 
         // then create
-        self.data.feed_create(&feed)?;
+        self.data.feed_create(&feed, &category_string)?;
 
         Ok(feed)
     }

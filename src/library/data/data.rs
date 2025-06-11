@@ -24,8 +24,8 @@ impl Data {
         }
     }
 
-    pub fn feed_exists(&self, slug: &str) -> bool {
-        let feedir = self.path.join(DATA_CATEGORIES_DIR).join(slug);
+    pub fn feed_exists(&self, slug: &str, category: &str) -> bool {
+        let feedir = self.path.join(DATA_CATEGORIES_DIR).join(category).join(slug);
         if feedir.exists() {
             let feeddata = feedir.join(DATA_FEED);
             return feeddata.exists();
@@ -34,8 +34,8 @@ impl Data {
         false
     }
 
-    pub fn feed_create(&self, feed: &FeedItem) -> color_eyre::Result<()> {
-        let feedir = self.path.join(DATA_CATEGORIES_DIR).join(&feed.slug);
+    pub fn feed_create(&self, feed: &FeedItem, category: &str) -> color_eyre::Result<()> {
+        let feedir = self.path.join(DATA_CATEGORIES_DIR).join(category).join(&feed.slug);
         fs::create_dir_all(&feedir)?;
 
         let feeddata = feedir.join(DATA_FEED);

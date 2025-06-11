@@ -13,13 +13,17 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
     List,
-    Add { url: String },
+    Add {
+        url: String,
+        #[arg()]
+        category: Option<String>,
+    },
 }
 
 pub fn run_main_cli(cli: Cli) -> color_eyre::Result<()> {
     match &cli.command {
         Some(Commands::List) => command_list(&cli),
-        Some(Commands::Add { url }) => command_add(&cli, url),
+        Some(Commands::Add { url, category }) => command_add(&cli, url, category),
         None => Ok(()),
     }
 }
@@ -39,9 +43,9 @@ fn command_list(cli: &Cli) -> Result<(), color_eyre::eyre::Error> {
     Ok(())
 }
 
-fn command_add(cli: &Cli, url: &str) -> Result<(), color_eyre::eyre::Error> {
+fn command_add(cli: &Cli, url: &str, category: &Option<String>) -> Result<(), color_eyre::eyre::Error> {
     let mut library = FeedLibrary::new();
-    let feed = library.add_feed(url)?;
+    let feed = library.add_feed(url, category)?;
 
     println!("Feed added: {:?}", feed);
 
