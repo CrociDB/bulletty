@@ -5,7 +5,6 @@ use std::{
 };
 
 use color_eyre::eyre::eyre;
-use html2md::parse_html;
 use slug::slugify;
 
 use crate::feed::feedentry::FeedEntry;
@@ -162,7 +161,7 @@ impl LibraryData {
                 let entrytext = format!(
                     "---\n{}---\n{}",
                     toml::to_string(&entryclone).unwrap_or(String::new()),
-                    parse_html(&entry.text)
+                    &entry.text
                 );
 
                 file.write_all(&entrytext.into_bytes())?;

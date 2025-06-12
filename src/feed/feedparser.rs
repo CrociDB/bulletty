@@ -1,4 +1,6 @@
+use html2md::parse_html;
 use reqwest::blocking::get;
+use roxmltree::Node;
 use slug::slugify;
 
 use crate::{feed::feedentry::FeedEntry, library::feeditem::FeedItem};
@@ -33,12 +35,13 @@ pub fn parse(url: &str) -> color_eyre::Result<FeedItem> {
         .unwrap_or(&feed.title)
         .to_string();
 
-    feed.url = feed_tag
-        .descendants()
-        .find(|t| t.tag_name().name() == "link")
-        .and_then(|t| t.text())
-        .unwrap_or(url)
-        .to_string();
+    // feed.url = feed_tag
+    //     .descendants()
+    //     .find(|t| t.tag_name().name() == "link")
+    //     .and_then(|t| t.text())
+    //     .unwrap_or(url)
+    //     .to_string();
+    feed.url = String::from(url);
 
     if let Some(author_tag) = feed_tag
         .descendants()
@@ -69,8 +72,6 @@ pub fn get_feed_entries(feed: &FeedItem) -> color_eyre::Result<Vec<FeedEntry>> {
 pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result<Vec<FeedEntry>> {
     let doc = roxmltree::Document::parse(doctxt)?;
 
-    println!("Starting to parse document...");
-
     let mut feed_tag = doc.root();
     if feed_tag.tag_name().name() == "rss" {
         feed_tag = feed_tag
@@ -85,6 +86,8 @@ pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result
         .descendants()
         .filter(|t| t.tag_name().name() == "item" || t.tag_name().name() == "entry")
     {
+        let (desc, content) = get_description_content(&entry);
+
         let fe = FeedEntry {
             title: entry
                 .descendants()
@@ -103,16 +106,39 @@ pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result
                 .unwrap_or("NOURL")
                 .to_string(),
 
-            text: entry
-                .descendants()
-                .find(|t| t.tag_name().name() == "summary" || t.tag_name().name() == "content")
-                .and_then(|t| t.text())
-                .unwrap_or("NOURL")
-                .to_string(),
+            text: content,
+            description: desc,
         };
 
         feedentries.push(fe);
     }
 
     Ok(feedentries)
+}
+
+fn get_description_content(entry: &Node) -> (String, String) {
+    let content = entry
+        .descendants()
+        .find(|t| t.tag_name().name() == "content" || t.tag_name().name() == "encoded")
+        .and_then(|t| t.text());
+
+    let description = entry
+        .descendants()
+        .find(|t| t.tag_name().name() == "description" || t.tag_name().name() == "summary")
+        .and_then(|t| t.text());
+
+    let content_text = match content {
+        Some(text) => parse_html(text),
+        None => match description {
+            Some(desc) => parse_html(desc),
+            None => String::new(),
+        },
+    };
+
+    let description_text = match description {
+        Some(text) => parse_html(text).replace("\n", "").chars().take(140).collect::<String>(),
+        None => content_text.replace("\n", "").chars().take(140).collect::<String>()
+    };
+
+    (description_text, content_text)
 }
