@@ -30,12 +30,12 @@ pub fn run_main_cli(cli: Cli) -> color_eyre::Result<()> {
     match &cli.command {
         Some(Commands::List) => command_list(&cli),
         Some(Commands::Add { url, category }) => command_add(&cli, url, category),
-        Some(Commands::Update) => Ok(()),
+        Some(Commands::Update) => command_update(&cli),
         None => Ok(()),
     }
 }
 
-fn command_list(_cli: &Cli) -> Result<(), color_eyre::eyre::Error> {
+fn command_list(_cli: &Cli) -> color_eyre::Result<()> {
     let library = FeedLibrary::new();
 
     println!("Feeds Registered\n\n");
@@ -50,11 +50,24 @@ fn command_list(_cli: &Cli) -> Result<(), color_eyre::eyre::Error> {
     Ok(())
 }
 
-fn command_add(_cli: &Cli, url: &str, category: &Option<String>) -> Result<(), color_eyre::eyre::Error> {
+fn command_add(_cli: &Cli, url: &str, category: &Option<String>) -> color_eyre::Result<()> {
     let mut library = FeedLibrary::new();
     let feed = library.add_feed(url, category)?;
 
     println!("Feed added: {:?}", feed);
+
+    Ok(())
+}
+
+fn command_update(_cli: &Cli) -> color_eyre::Result<()> {
+    let library = FeedLibrary::new();
+
+    for category in library.feedcategories.iter() {
+        for feed in category.feeds.iter() {
+            println!("Updating {}", feed.title);
+            library.data.update_feed_entries(category, feed, None)?;
+        }
+    }
 
     Ok(())
 }

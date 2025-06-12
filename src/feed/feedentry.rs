@@ -1,6 +1,8 @@
-pub struct _FeedEntry {
-    title: String,
-    url: String,
-    author: String,
-    text: String,
+use serde::{Deserialize, Serialize};
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
+pub struct FeedEntry {
+    pub title: String,
+    pub url: String,
+    pub author: String,
+    pub text: String,
 }

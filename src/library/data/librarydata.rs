@@ -5,8 +5,11 @@ use std::{
 };
 
 use color_eyre::eyre::eyre;
+use slug::slugify;
 
-use crate::library::feedcategory::{FeedCategory};
+use crate::feed::feedentry::FeedEntry;
+use crate::feed::feedparser;
+use crate::library::feedcategory::FeedCategory;
 use crate::{
     defs::{self, DATA_CATEGORIES_DIR, DATA_FEED},
     library::feeditem::FeedItem,
@@ -107,6 +110,65 @@ impl LibraryData {
         }
 
         Ok(feeds)
+    }
+
+    pub fn update_feed_entries(
+        &self,
+        category: &FeedCategory,
+        feed: &FeedItem,
+        feedxml: Option<String>,
+    ) -> color_eyre::Result<()> {
+        let feedentries = if let Some(txt) = feedxml {
+            feedparser::get_feed_entries_doc(feed, &txt)
+        } else {
+            feedparser::get_feed_entries(feed)
+        }?;
+
+        self.update_entries(category, feed, feedentries)
+    }
+
+    fn update_entries(
+        &self,
+        category: &FeedCategory,
+        feed: &FeedItem,
+        entries: Vec<FeedEntry>,
+    ) -> color_eyre::Result<()> {
+        for entry in entries.iter().as_ref() {
+            let item_slug = slugify(&entry.title);
+            let entrypath = self
+                .path
+                .join(defs::DATA_CATEGORIES_DIR)
+                .join(&category.title)
+                .join(&feed.slug)
+                .join(format!("{}.md", item_slug));
+
+            // if it exists, it means the entry has been setup already
+            if !entrypath.exists() {
+                let mut file = match OpenOptions::new()
+                    .write(true)
+                    .create_new(true)
+                    .open(&entrypath)
+                {
+                    Ok(file) => file,
+                    Err(error) => {
+                        return Err(eyre!("Error creating file '{}': {}", entrypath.display(), error));
+                    }
+                };
+
+                let mut entryclone = (*entry).clone();
+                entryclone.text = String::new();
+
+                let entrytext = format!(
+                    "---\n{}\n---\n{}",
+                    toml::to_string(&entryclone).unwrap_or(String::new()),
+                    entry.text
+                );
+
+                file.write_all(&entrytext.into_bytes())?;
+            }
+        }
+
+        Ok(())
     }
 }
 
