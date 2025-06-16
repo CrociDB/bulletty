@@ -107,6 +107,7 @@ pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result
                 .to_string(),
 
             text: content,
+            date: String::from("10-10-2020"),
             description: desc,
         };
 

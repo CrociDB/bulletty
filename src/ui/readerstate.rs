@@ -3,12 +3,11 @@ use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::{
     layout::{Constraint, Layout},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders},
+    widgets::{Block, Borders, Widget},
 };
 
 use crate::{
-    library::feedlibrary::FeedLibrary,
-    ui::{appstate::AppState, feedtree::FeedTree},
+    feed::feedentry::FeedEntry, library::feedlibrary::FeedLibrary, ui::{appstate::AppState, feedentrylist::FeedEntryList, feedtree::FeedTree}
 };
 
 #[derive(PartialEq, Eq)]
@@ -41,18 +40,22 @@ impl AppState for ReaderState {
             .margin(1)
             .split(frame.area());
 
-        let disabled_style = Style::default().fg(Color::Gray).add_modifier(Modifier::DIM);
-
         let mut feedtree = FeedTree::new();
         feedtree.enabled = self.inputstate == ReaderInputState::Menu;
         feedtree.set_list_data(&(self.library));
         frame.render_widget(feedtree, chunks[0]);
 
-        let mut main_panel = Block::default().title("Main Panel").borders(Borders::ALL);
-        if self.inputstate == ReaderInputState::Menu {
-            main_panel = main_panel.style(disabled_style);
-        }
-        frame.render_widget(main_panel, chunks[1]);
+        let entries: Vec<FeedEntry> = vec![FeedEntry {
+            title: String::from("Test"),
+            description: String::from("This is a whole text"),
+            date: String::from("10-10-2000"),
+            url: String::from("https://asdasasdasd.com/"),
+            author: String::from("Bruno Croci"),
+            text: String::from("testeeeeeeeeeeeeeeee"),
+        }];
+
+        let feedentries = FeedEntryList::new(self.inputstate == ReaderInputState::Content, entries);
+        frame.render_widget(feedentries, chunks[1]);
     }
 
     fn handle_events(&mut self) -> Result<()> {

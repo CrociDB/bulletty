@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 pub struct FeedEntry {
     pub title: String,
     pub description: String,
+    pub date: String,
     pub url: String,
     pub author: String,
     pub text: String,
