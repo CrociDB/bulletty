@@ -7,7 +7,8 @@
  - [X] Subscribe to RSS and ATOM feed types
  - [X] All your data in one place
  - [X] Download articles
- - [ ] Render basic HTML on the console
+ - [ ] Mouse support
+ - [ ] Render Markdown
  - [ ] Basic support for images (depending on your terminal emulator)
  - [ ] Highlight
  - [ ] Notes
