@@ -155,7 +155,7 @@ fn strip_markdown_tags(input: &str) -> String {
         r"!\[(.*?)\]\(.*?\)",  // images
         r"^#+\s*",             // headings
         r">+\s*",              // blockquotes
-        r"[-*_]{3,}",          // horizontal rules
+        r"[-*_=]{3,}",         // horizontal rules
         r"`{3}.*?`{3}",        // code blocks
     ];
     let mut result = input.to_string();
