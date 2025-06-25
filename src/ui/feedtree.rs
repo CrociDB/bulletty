@@ -5,6 +5,45 @@ use ratatui::{
 
 use crate::library::feedlibrary::FeedLibrary;
 
+// FeedTreeState
+
+pub enum FeedItemInfo {
+    Category (String),
+    Item (String, String),
+}
+
+#[derive(Default)]
+pub struct FeedTreeState {
+    pub treeitems: Vec<FeedItemInfo>,
+    pub selected: usize,
+}
+
+impl FeedTreeState {
+    pub fn update(&mut self, library: &FeedLibrary) {
+        self.treeitems.clear();
+
+        for category in library.feedcategories.iter() {
+            self.treeitems.push(FeedItemInfo::Category(category.title.clone()));
+            for item in category.feeds.iter() {
+                self.treeitems.push(FeedItemInfo::Item(item.title.clone(), item.slug.clone()));
+            }
+        }
+    }
+    
+    pub fn selection_up(&mut self) {
+        if self.selected > 0 {
+            self.selected -= 1;
+        }
+    }
+
+    pub fn selection_down(&mut self) {
+        self.selected =
+            std::cmp::min(self.selected + 1, self.treeitems.len() - 1);
+    }
+}
+
+// FeedTree
+
 pub struct FeedTree<'a> {
     pub selected: usize,
     pub listitems: Vec<ListItem<'a>>,
@@ -20,12 +59,18 @@ impl<'a> FeedTree<'a> {
         }
     }
 
-    pub fn set_list_data(&mut self, library: &FeedLibrary) {
+    pub fn set_list_data(&mut self, state: &FeedTreeState) {
         self.listitems.clear();
 
-        self.selected = library.currentselection;
-        for (i, title) in library.get_list_data().iter().enumerate() {
-            if i == library.currentselection {
+        self.selected = state.selected;
+
+        for (i, item) in state.treeitems.iter().enumerate() {
+            let title = match item {
+                FeedItemInfo::Category (t) => format!("> {}", t),
+                FeedItemInfo::Item (t, _) => format!("   {}", t),
+            };
+
+            if i == self.selected {
 
                 let color = if self.enabled {
                     Color::Yellow

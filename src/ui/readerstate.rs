@@ -1,13 +1,11 @@
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
-use ratatui::{
-    layout::{Constraint, Layout},
-    style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Widget},
-};
+use ratatui::
+    layout::{Constraint, Layout}
+;
 
 use crate::{
-    feed::feedentry::FeedEntry, library::feedlibrary::FeedLibrary, ui::{appstate::AppState, feedentrylist::FeedEntryList, feedtree::FeedTree}
+    feed::feedentry::FeedEntry, library::feedlibrary::FeedLibrary, ui::{appstate::AppState, feedentrylist::FeedEntryList, feedtree::{FeedTree, FeedTreeState}}
 };
 
 #[derive(PartialEq, Eq)]
@@ -19,6 +17,7 @@ enum ReaderInputState {
 pub struct ReaderState {
     running: bool,
     library: FeedLibrary,
+    feedtreestate: FeedTreeState,
     inputstate: ReaderInputState,
 }
 
@@ -27,6 +26,7 @@ impl ReaderState {
         ReaderState {
             running: true,
             library: FeedLibrary::new(),
+            feedtreestate: FeedTreeState::default(),
             inputstate: ReaderInputState::Menu,
         }
     }
@@ -40,9 +40,11 @@ impl AppState for ReaderState {
             .margin(1)
             .split(frame.area());
 
+        self.feedtreestate.update(&self.library);
+
         let mut feedtree = FeedTree::new();
         feedtree.enabled = self.inputstate == ReaderInputState::Menu;
-        feedtree.set_list_data(&(self.library));
+        feedtree.set_list_data(&self.feedtreestate);
         frame.render_widget(feedtree, chunks[0]);
 
         let entries: Vec<FeedEntry> = vec![FeedEntry {
@@ -76,10 +78,10 @@ impl AppState for ReaderState {
                     self.running = false;
                 }
                 (_, KeyCode::Down | KeyCode::Char('j')) => {
-                    self.library.selection_down();
+                    self.feedtreestate.selection_down();
                 }
                 (_, KeyCode::Up | KeyCode::Char('k')) => {
-                    self.library.selection_up();
+                    self.feedtreestate.selection_up();
                 }
                 (_, KeyCode::Right | KeyCode::Enter | KeyCode::Tab | KeyCode::Char('l')) => {
                     self.inputstate = ReaderInputState::Content;

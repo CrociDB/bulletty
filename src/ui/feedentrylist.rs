@@ -1,7 +1,7 @@
 use ratatui::{
     style::{Color, Modifier, Style, Stylize},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, List, ListItem, Widget},
+    widgets::{Block, Borders, List, ListItem, Padding, Widget},
 };
 
 use crate::feed::feedentry::FeedEntry;
@@ -64,7 +64,7 @@ impl Widget for FeedEntryList {
             .collect();
 
         let mut list_widget = List::new(list_items)
-            .block(Block::default().borders(Borders::ALL).title("Feed Entries"));
+            .block(Block::default().borders(Borders::ALL).title("Feed Entries").padding(Padding::uniform(2)));
 
         if !self.selected {
             let disabled_style = Style::default().fg(Color::Gray).add_modifier(Modifier::DIM);
