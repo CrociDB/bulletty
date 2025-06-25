@@ -29,6 +29,10 @@ impl FeedTreeState {
             }
         }
     }
+
+    pub fn get_selected(&self) -> &FeedItemInfo {
+        &self.treeitems[self.selected]
+    }
     
     pub fn selection_up(&mut self) {
         if self.selected > 0 {

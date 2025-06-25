@@ -1,7 +1,8 @@
 use color_eyre::eyre::eyre;
 
 use crate::{
-    defs, feed,
+    defs,
+    feed::{self, feedentry::FeedEntry},
     library::{
         data::{config::Config, librarydata::LibraryData},
         feedcategory::FeedCategory,
@@ -53,5 +54,28 @@ impl FeedLibrary {
         self.data.feed_create(&feed, &category_string)?;
 
         Ok(feed)
+    }
+
+    pub fn get_feed_entries_by_category(&self, categorytitle: &str) -> Vec<FeedEntry> {
+        let entries = vec![];
+        entries
+    }
+
+    pub fn get_feed_entries_by_item_slug(&self, slug: &str) -> Vec<FeedEntry> {
+        for category in self.feedcategories.iter() {
+            for feed in category.feeds.iter() {
+                if feed.slug == slug {
+                    return match self.data.load_feed_entries(category, feed) {
+                        Ok(entries) => entries,
+                        Err(e) => {
+                            println!("Error: {:?}", e);
+                            vec![]
+                        }
+                    };
+                }
+            }
+        }
+
+        vec![]
     }
 }

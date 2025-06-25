@@ -1,11 +1,15 @@
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
-use ratatui::
-    layout::{Constraint, Layout}
-;
+use ratatui::layout::{Constraint, Layout};
 
 use crate::{
-    feed::feedentry::FeedEntry, library::feedlibrary::FeedLibrary, ui::{appstate::AppState, feedentrylist::FeedEntryList, feedtree::{FeedTree, FeedTreeState}}
+    feed::feedentry::FeedEntry,
+    library::feedlibrary::FeedLibrary,
+    ui::{
+        appstate::AppState,
+        feedentrylist::{FeedEntryList, FeedEntryState},
+        feedtree::{FeedTree, FeedTreeState},
+    },
 };
 
 #[derive(PartialEq, Eq)]
@@ -18,6 +22,7 @@ pub struct ReaderState {
     running: bool,
     library: FeedLibrary,
     feedtreestate: FeedTreeState,
+    feedentrystate: FeedEntryState,
     inputstate: ReaderInputState,
 }
 
@@ -27,6 +32,7 @@ impl ReaderState {
             running: true,
             library: FeedLibrary::new(),
             feedtreestate: FeedTreeState::default(),
+            feedentrystate: FeedEntryState::default(),
             inputstate: ReaderInputState::Menu,
         }
     }
@@ -41,6 +47,8 @@ impl AppState for ReaderState {
             .split(frame.area());
 
         self.feedtreestate.update(&self.library);
+        self.feedentrystate
+            .update(&self.library, &self.feedtreestate);
 
         let mut feedtree = FeedTree::new();
         feedtree.enabled = self.inputstate == ReaderInputState::Menu;
@@ -56,7 +64,10 @@ impl AppState for ReaderState {
             text: String::from("testeeeeeeeeeeeeeeee"),
         }];
 
-        let feedentries = FeedEntryList::new(self.inputstate == ReaderInputState::Content, entries);
+        let feedentries = FeedEntryList::new(
+            self.inputstate == ReaderInputState::Content,
+            &self.feedentrystate.entries,
+        );
         frame.render_widget(feedentries, chunks[1]);
     }
 

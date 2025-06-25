@@ -151,7 +151,11 @@ impl LibraryData {
                 {
                     Ok(file) => file,
                     Err(error) => {
-                        return Err(eyre!("Error creating file '{}': {}", entrypath.display(), error));
+                        return Err(eyre!(
+                            "Error creating file '{}': {}",
+                            entrypath.display(),
+                            error
+                        ));
                     }
                 };
 
@@ -169,6 +173,37 @@ impl LibraryData {
         }
 
         Ok(())
+    }
+
+    pub fn load_feed_entries(
+        &self,
+        category: &FeedCategory,
+        item: &FeedItem,
+    ) -> color_eyre::Result<Vec<FeedEntry>> {
+        let mut entries = vec![];
+
+        let feedir = self
+            .path
+            .join(DATA_CATEGORIES_DIR)
+            .join(&category.title)
+            .join(&item.slug);
+
+        for entry in fs::read_dir(feedir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_file() {
+                let contents = std::fs::read_to_string(&path)?;
+                let parts: Vec<&str> = contents.split("---").collect();
+                if parts.len() < 2 {
+                    continue;
+                }
+                let mut entry: FeedEntry = toml::from_str(parts[1])?;
+                entry.text = parts[2].to_string();
+                entries.push(entry);
+            }
+        }
+
+        Ok(entries)
     }
 }
 

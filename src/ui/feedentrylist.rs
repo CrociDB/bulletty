@@ -4,15 +4,36 @@ use ratatui::{
     widgets::{Block, Borders, List, ListItem, Padding, Widget},
 };
 
-use crate::feed::feedentry::FeedEntry;
+use crate::{feed::feedentry::FeedEntry, library::feedlibrary::FeedLibrary, ui::feedtree::{FeedItemInfo, FeedTreeState}};
 
-pub struct FeedEntryList {
+// The list state
+
+#[derive(Default)]
+pub struct FeedEntryState {
     pub entries: Vec<FeedEntry>,
+    pub selected: usize,
+}
+
+impl FeedEntryState {
+    pub fn update(&mut self, library: &FeedLibrary, treestate: &FeedTreeState) {
+
+        self.entries = match treestate.get_selected() {
+            FeedItemInfo::Category(t) => library.get_feed_entries_by_category(t),
+            FeedItemInfo::Item(_, s) => library.get_feed_entries_by_item_slug(s),
+        }
+
+    }
+}
+
+// The list itself
+
+pub struct FeedEntryList<'a> {
+    pub entries: &'a Vec<FeedEntry>,
     pub selected: bool,
 }
 
-impl FeedEntryList {
-    pub fn new(sel: bool, feedentries: Vec<FeedEntry>) -> FeedEntryList {
+impl<'a> FeedEntryList<'a> {
+    pub fn new(sel: bool, feedentries: &'a Vec<FeedEntry>) -> FeedEntryList<'a> {
         FeedEntryList {
             entries: feedentries,
             selected: sel,
@@ -20,7 +41,7 @@ impl FeedEntryList {
     }
 }
 
-impl Widget for FeedEntryList {
+impl<'a> Widget for FeedEntryList<'a> {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
         let list_items: Vec<ListItem> = self
             .entries
@@ -63,8 +84,12 @@ impl Widget for FeedEntryList {
             })
             .collect();
 
-        let mut list_widget = List::new(list_items)
-            .block(Block::default().borders(Borders::ALL).title("Feed Entries").padding(Padding::uniform(2)));
+        let mut list_widget = List::new(list_items).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Feed Entries")
+                .padding(Padding::uniform(2)),
+        );
 
         if !self.selected {
             let disabled_style = Style::default().fg(Color::Gray).add_modifier(Modifier::DIM);
