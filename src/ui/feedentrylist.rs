@@ -51,6 +51,7 @@ impl<'a> Widget for FeedEntryList<'a> {
             .map(|entry| {
                 let mut item_content_lines: Vec<Line> = Vec::new();
 
+                item_content_lines.push(Line::from(""));
                 item_content_lines.push(Line::from(Span::styled(
                     entry.title.clone(),
                     Style::default().bold().underline_color(Color::Blue),

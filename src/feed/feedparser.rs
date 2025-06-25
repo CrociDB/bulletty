@@ -1,3 +1,4 @@
+use regex::Regex;
 use html2md::parse_html;
 use reqwest::blocking::get;
 use roxmltree::Node;
@@ -141,5 +142,26 @@ fn get_description_content(entry: &Node) -> (String, String) {
         None => content_text.replace("\n", "").chars().take(140).collect::<String>()
     };
 
-    (description_text, content_text)
+    (strip_markdown_tags(&description_text), content_text)
+}
+
+fn strip_markdown_tags(input: &str) -> String {
+    let patterns = [
+        r"\*\*(.*?)\*\*",      // bold **
+        r"\*(.*?)\*",          // italic *
+        r"`(.*?)`",            // inline code
+        r"~~(.*?)~~",          // strikethrough
+        r"\[(.*?)\]\(.*?\)",   // links
+        r"!\[(.*?)\]\(.*?\)",  // images
+        r"^#+\s*",             // headings
+        r">+\s*",              // blockquotes
+        r"[-*_]{3,}",          // horizontal rules
+        r"`{3}.*?`{3}",        // code blocks
+    ];
+    let mut result = input.to_string();
+    for pat in patterns.iter() {
+        let re = Regex::new(pat).unwrap();
+        result = re.replace_all(&result, "$1").to_string();
+    }
+    result
 }

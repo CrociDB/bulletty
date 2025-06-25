@@ -55,15 +55,6 @@ impl AppState for ReaderState {
         feedtree.set_list_data(&self.feedtreestate);
         frame.render_widget(feedtree, chunks[0]);
 
-        let entries: Vec<FeedEntry> = vec![FeedEntry {
-            title: String::from("Test"),
-            description: String::from("This is a whole text"),
-            date: String::from("10-10-2000"),
-            url: String::from("https://asdasasdasd.com/"),
-            author: String::from("Bruno Croci"),
-            text: String::from("testeeeeeeeeeeeeeeee"),
-        }];
-
         let feedentries = FeedEntryList::new(
             self.inputstate == ReaderInputState::Content,
             &self.feedentrystate.entries,

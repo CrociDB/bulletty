@@ -132,6 +132,7 @@ dependencies = [
  "html2md",
  "openssl",
  "ratatui",
+ "regex",
  "reqwest",
  "roxmltree",
  "serde",
