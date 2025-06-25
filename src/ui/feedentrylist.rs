@@ -4,7 +4,11 @@ use ratatui::{
     widgets::{Block, Borders, List, ListItem, Padding, Widget},
 };
 
-use crate::{feed::feedentry::FeedEntry, library::feedlibrary::FeedLibrary, ui::feedtree::{FeedItemInfo, FeedTreeState}};
+use crate::{
+    feed::feedentry::FeedEntry,
+    library::feedlibrary::FeedLibrary,
+    ui::feedtree::{FeedItemInfo, FeedTreeState},
+};
 
 // The list state
 
@@ -16,12 +20,10 @@ pub struct FeedEntryState {
 
 impl FeedEntryState {
     pub fn update(&mut self, library: &FeedLibrary, treestate: &FeedTreeState) {
-
         self.entries = match treestate.get_selected() {
             FeedItemInfo::Category(t) => library.get_feed_entries_by_category(t),
             FeedItemInfo::Item(_, s) => library.get_feed_entries_by_item_slug(s),
         }
-
     }
 }
 
@@ -49,27 +51,30 @@ impl<'a> Widget for FeedEntryList<'a> {
             .map(|entry| {
                 let mut item_content_lines: Vec<Line> = Vec::new();
 
-                // Title - Bold
                 item_content_lines.push(Line::from(Span::styled(
                     entry.title.clone(),
-                    Style::default().bold(),
+                    Style::default().bold().underline_color(Color::Blue),
                 )));
 
-                // Date - Italics
                 item_content_lines.push(Line::from(Span::styled(
-                    entry.date.clone(),
+                    format!("Date: {}", entry.date),
                     Style::default().italic(),
                 )));
 
-                // Text - Approximately 3 lines
-                // This takes up to the first 3 lines from the entry's text.
-                let text_lines: Vec<Line> = entry
-                    .text
-                    .lines()
-                    .take(3)
-                    .map(|s| Line::from(s.to_string()))
-                    .collect();
-                item_content_lines.extend(text_lines);
+                // let text_lines: Vec<Line> = entry
+                //     .text
+                //     .lines()
+                //     .take(3)
+                //     .map(|s| Line::from(s.to_string()))
+                //     .collect();
+                // item_content_lines.extend(text_lines);
+
+                item_content_lines.push(Line::from(Span::styled(
+                    format!("{}...", entry.description),
+                    Style::default().dim(),
+                )));
+
+                item_content_lines.push(Line::from(""));
 
                 let item_text = Text::from(item_content_lines);
                 let list_item = ListItem::new(item_text);
