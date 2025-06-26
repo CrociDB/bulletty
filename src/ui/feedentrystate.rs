@@ -12,7 +12,6 @@ use crate::{
 
 pub struct FeedEntryState {
     pub entries: Vec<FeedEntry>,
-    pub selected: usize,
     pub listatate: ListState,
     pub previous_selected: String,
 }
@@ -21,12 +20,11 @@ impl FeedEntryState {
     pub fn new() -> Self {
         let mut entry = Self {
             entries: vec![],
-            selected: 0,
             listatate: ListState::default(),
             previous_selected: String::new(),
         };
 
-        entry.listatate.select(Some(0));
+        entry.listatate.select_first();
         entry
     }
 
@@ -45,7 +43,7 @@ impl FeedEntryState {
         };
 
         if prev != self.previous_selected {
-            self.selected = 0;
+            self.listatate.select_first();
         }
     }
 
@@ -80,17 +78,5 @@ impl FeedEntryState {
                 ListItem::new(item_text)
             })
             .collect()
-    }
-
-    pub fn selection_up(&mut self) {
-        if self.selected > 0 {
-            self.selected -= 1;
-        }
-        self.listatate.select(Some(self.selected));
-    }
-
-    pub fn selection_down(&mut self) {
-        self.selected = std::cmp::min(self.selected + 1, self.entries.len() - 1);
-        self.listatate.select(Some(self.selected));
     }
 }

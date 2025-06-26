@@ -10,7 +10,6 @@ pub enum FeedItemInfo {
 pub struct FeedTreeState {
     pub treeitems: Vec<FeedItemInfo>,
     pub listatate: ListState,
-    pub selected: usize,
 }
 
 impl FeedTreeState {
@@ -18,7 +17,6 @@ impl FeedTreeState {
         let mut state = FeedTreeState {
             treeitems: vec![],
             listatate: ListState::default(),
-            selected: 0,
         };
 
         state.listatate.select(Some(0));
@@ -53,19 +51,6 @@ impl FeedTreeState {
     }
 
     pub fn get_selected(&self) -> &FeedItemInfo {
-        &self.treeitems[self.selected]
-    }
-
-    pub fn selection_up(&mut self) {
-        if self.selected > 0 {
-            self.selected -= 1;
-        }
-
-        self.listatate.select(Some(self.selected));
-    }
-
-    pub fn selection_down(&mut self) {
-        self.selected = std::cmp::min(self.selected + 1, self.treeitems.len() - 1);
-        self.listatate.select(Some(self.selected));
+        &self.treeitems[self.listatate.selected().unwrap_or(0)]
     }
 }

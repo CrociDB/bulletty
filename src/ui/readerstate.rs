@@ -101,10 +101,10 @@ impl AppState for ReaderState {
                     self.running = false;
                 }
                 (_, KeyCode::Down | KeyCode::Char('j')) => {
-                    self.feedtreestate.selection_down();
+                    self.feedtreestate.listatate.select_next();
                 }
                 (_, KeyCode::Up | KeyCode::Char('k')) => {
-                    self.feedtreestate.selection_up();
+                    self.feedtreestate.listatate.select_previous();
                 }
                 (_, KeyCode::Right | KeyCode::Enter | KeyCode::Tab | KeyCode::Char('l')) => {
                     self.inputstate = ReaderInputState::Content;
@@ -117,10 +117,10 @@ impl AppState for ReaderState {
                     self.running = false;
                 }
                 (_, KeyCode::Down | KeyCode::Char('j')) => {
-                    self.feedentrystate.selection_down();
+                    self.feedentrystate.listatate.select_next();
                 }
                 (_, KeyCode::Up | KeyCode::Char('k')) => {
-                    self.feedentrystate.selection_up();
+                    self.feedentrystate.listatate.select_previous();
                 }
                 (_, KeyCode::Esc) => {
                     self.inputstate = ReaderInputState::Menu;
