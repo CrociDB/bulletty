@@ -2,17 +2,13 @@ use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::{
     layout::{Constraint, Layout},
-    style::{Color, Style},
+    style::{Color, Style, Stylize},
     widgets::{Block, List, ListState, Padding},
 };
 
 use crate::{
     library::feedlibrary::FeedLibrary,
-    ui::{
-        appstate::AppState,
-        feedentrystate::FeedEntryState,
-        feedtree::{FeedTree, FeedTreeState},
-    },
+    ui::{appstate::AppState, feedentrystate::FeedEntryState, feedtreestate::FeedTreeState},
 };
 
 #[derive(PartialEq, Eq)]
@@ -34,7 +30,7 @@ impl ReaderState {
         ReaderState {
             running: true,
             library: FeedLibrary::new(),
-            feedtreestate: FeedTreeState::default(),
+            feedtreestate: FeedTreeState::new(),
             feedentrystate: FeedEntryState::default(),
             inputstate: ReaderInputState::Menu,
         }
@@ -51,15 +47,29 @@ impl AppState for ReaderState {
 
         // Feed tree
         self.feedtreestate.update(&self.library);
+
+        let block_style = if self.inputstate == ReaderInputState::Menu {
+            Block::default()
+                .style(Style::default().bg(Color::from_u32(0x262626)))
+                .padding(Padding::new(2, 2, 2, 2))
+        } else {
+            Block::default()
+                .style(Style::default().bg(Color::from_u32(0x262626)))
+                .dim()
+                .padding(Padding::new(2, 2, 2, 2))
+        };
+
+        let tree_widget = List::new(self.feedtreestate.get_items())
+            .block(block_style)
+            .highlight_style(Style::default().bg(Color::Yellow));
+
+        let mut tree_state = self.feedtreestate.listatate.clone();
+        frame.render_stateful_widget(tree_widget, chunks[0], &mut tree_state);
+
+        // The feed entries
         self.feedentrystate
             .update(&self.library, &self.feedtreestate);
 
-        let mut feedtree = FeedTree::new();
-        feedtree.enabled = self.inputstate == ReaderInputState::Menu;
-        feedtree.set_list_data(&self.feedtreestate);
-        frame.render_widget(feedtree, chunks[0]);
-
-        // The feed entries
         let mut entryliststate = ListState::default();
         entryliststate.select(Some(self.feedentrystate.selected));
 

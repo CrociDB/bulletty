@@ -1,12 +1,13 @@
 use ratatui::{
     style::{Color, Style, Stylize},
-    text::{Line, Span, Text}, widgets::ListItem,
+    text::{Line, Span, Text},
+    widgets::ListItem,
 };
 
 use crate::{
     feed::feedentry::FeedEntry,
     library::feedlibrary::FeedLibrary,
-    ui::feedtree::{FeedItemInfo, FeedTreeState},
+    ui::feedtreestate::{FeedItemInfo, FeedTreeState},
 };
 
 #[derive(Default)]
