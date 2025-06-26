@@ -1,6 +1,6 @@
 use ratatui::{
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListItem, Padding, Widget},
+    widgets::{Block, List, ListItem, Padding, Widget},
 };
 
 use crate::library::feedlibrary::FeedLibrary;

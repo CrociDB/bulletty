@@ -1,12 +1,16 @@
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
-use ratatui::layout::{Constraint, Layout};
+use ratatui::{
+    layout::{Constraint, Layout},
+    style::{Color, Style},
+    widgets::{Block, List, ListState, Padding},
+};
 
 use crate::{
     library::feedlibrary::FeedLibrary,
     ui::{
         appstate::AppState,
-        feedentrylist::{FeedEntryList, FeedEntryState},
+        feedentrystate::FeedEntryState,
         feedtree::{FeedTree, FeedTreeState},
     },
 };
@@ -45,6 +49,7 @@ impl AppState for ReaderState {
             .margin(1)
             .split(frame.area());
 
+        // Feed tree
         self.feedtreestate.update(&self.library);
         self.feedentrystate
             .update(&self.library, &self.feedtreestate);
@@ -54,12 +59,19 @@ impl AppState for ReaderState {
         feedtree.set_list_data(&self.feedtreestate);
         frame.render_widget(feedtree, chunks[0]);
 
-        let feedentries = FeedEntryList::new(
-            self.feedentrystate.selected,
-            self.inputstate == ReaderInputState::Content,
-            &self.feedentrystate.entries,
-        );
-        frame.render_widget(feedentries, chunks[1]);
+        // The feed entries
+        let mut entryliststate = ListState::default();
+        entryliststate.select(Some(self.feedentrystate.selected));
+
+        let list_widget = List::new(self.feedentrystate.get_items())
+            .block(
+                Block::default()
+                    .style(Style::default().bg(Color::from_u32(0x3a3a3a)))
+                    .padding(Padding::new(2, 2, 1, 1)),
+            )
+            .highlight_style(Style::default().bg(Color::Blue));
+
+        frame.render_stateful_widget(list_widget, chunks[1], &mut entryliststate);
     }
 
     fn handle_events(&mut self) -> Result<()> {

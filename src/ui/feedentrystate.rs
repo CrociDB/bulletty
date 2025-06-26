@@ -1,7 +1,6 @@
 use ratatui::{
-    style::{Color, Modifier, Style, Stylize},
-    text::{Line, Span, Text},
-    widgets::{Block, Borders, List, ListItem, Padding, Widget},
+    style::{Color, Style, Stylize},
+    text::{Line, Span, Text}, widgets::ListItem,
 };
 
 use crate::{
@@ -9,8 +8,6 @@ use crate::{
     library::feedlibrary::FeedLibrary,
     ui::feedtree::{FeedItemInfo, FeedTreeState},
 };
-
-// The list state
 
 #[derive(Default)]
 pub struct FeedEntryState {
@@ -39,46 +36,10 @@ impl FeedEntryState {
         }
     }
 
-    pub fn selection_up(&mut self) {
-        if self.selected > 0 {
-            self.selected -= 1;
-        }
-    }
-
-    pub fn selection_down(&mut self) {
-        self.selected = std::cmp::min(self.selected + 1, self.entries.len() - 1);
-    }
-}
-
-// The list itself
-
-pub struct FeedEntryList<'a> {
-    pub entries: &'a Vec<FeedEntry>,
-    pub enabled: bool,
-    pub selected: usize,
-}
-
-impl<'a> FeedEntryList<'a> {
-    pub fn new(
-        entry_selected: usize,
-        widget_enabled: bool,
-        feedentries: &'a Vec<FeedEntry>,
-    ) -> FeedEntryList<'a> {
-        FeedEntryList {
-            entries: feedentries,
-            enabled: widget_enabled,
-            selected: entry_selected,
-        }
-    }
-}
-
-impl<'a> Widget for FeedEntryList<'a> {
-    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
-        let list_items: Vec<ListItem> = self
-            .entries
+    pub fn get_items(&self) -> Vec<ListItem> {
+        self.entries
             .iter()
-            .enumerate()
-            .map(|(id, entry)| {
+            .map(|entry| {
                 let mut item_content_lines: Vec<Line> = Vec::new();
 
                 item_content_lines.push(Line::from(""));
@@ -103,24 +64,18 @@ impl<'a> Widget for FeedEntryList<'a> {
                 item_content_lines.push(Line::from(""));
 
                 let item_text = Text::from(item_content_lines);
-                let list_item = ListItem::new(item_text);
-
-                // Highlight the selected item
-                if self.enabled && id == self.selected {
-                    list_item.style(Style::default().bg(Color::Blue))
-                } else {
-                    list_item
-                }
+                ListItem::new(item_text)
             })
-            .collect();
+            .collect()
+    }
 
-        let mut list_widget = List::new(list_items).block(
-            Block::default()
-                .style(Style::default().bg(Color::from_u32(0x3a3a3a)))
-                .padding(Padding::new(2, 2, 1, 1)),
-        );
+    pub fn selection_up(&mut self) {
+        if self.selected > 0 {
+            self.selected -= 1;
+        }
+    }
 
-        // Render the list widget
-        list_widget.render(area, buf);
+    pub fn selection_down(&mut self) {
+        self.selected = std::cmp::min(self.selected + 1, self.entries.len() - 1);
     }
 }
