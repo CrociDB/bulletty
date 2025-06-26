@@ -56,6 +56,7 @@ impl AppState for ReaderState {
         frame.render_widget(feedtree, chunks[0]);
 
         let feedentries = FeedEntryList::new(
+            self.feedentrystate.selected,
             self.inputstate == ReaderInputState::Content,
             &self.feedentrystate.entries,
         );
@@ -94,6 +95,12 @@ impl AppState for ReaderState {
                 (_, KeyCode::Char('q'))
                 | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
                     self.running = false;
+                }
+                (_, KeyCode::Down | KeyCode::Char('j')) => {
+                    self.feedentrystate.selection_down();
+                }
+                (_, KeyCode::Up | KeyCode::Char('k')) => {
+                    self.feedentrystate.selection_up();
                 }
                 (_, KeyCode::Esc) => {
                     self.inputstate = ReaderInputState::Menu;

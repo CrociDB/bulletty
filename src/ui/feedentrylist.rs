@@ -16,14 +16,37 @@ use crate::{
 pub struct FeedEntryState {
     pub entries: Vec<FeedEntry>,
     pub selected: usize,
+    pub previous_selected: String,
 }
 
 impl FeedEntryState {
     pub fn update(&mut self, library: &FeedLibrary, treestate: &FeedTreeState) {
+        let prev = self.previous_selected.to_string();
+
         self.entries = match treestate.get_selected() {
-            FeedItemInfo::Category(t) => library.get_feed_entries_by_category(t),
-            FeedItemInfo::Item(_, s) => library.get_feed_entries_by_item_slug(s),
+            FeedItemInfo::Category(t) => {
+                self.previous_selected = t.to_string();
+                library.get_feed_entries_by_category(t)
+            }
+            FeedItemInfo::Item(_, s) => {
+                self.previous_selected = s.to_string();
+                library.get_feed_entries_by_item_slug(s)
+            }
+        };
+
+        if prev != self.previous_selected {
+            self.selected = 0;
         }
+    }
+
+    pub fn selection_up(&mut self) {
+        if self.selected > 0 {
+            self.selected -= 1;
+        }
+    }
+
+    pub fn selection_down(&mut self) {
+        self.selected = std::cmp::min(self.selected + 1, self.entries.len() - 1);
     }
 }
 
@@ -31,14 +54,20 @@ impl FeedEntryState {
 
 pub struct FeedEntryList<'a> {
     pub entries: &'a Vec<FeedEntry>,
-    pub selected: bool,
+    pub enabled: bool,
+    pub selected: usize,
 }
 
 impl<'a> FeedEntryList<'a> {
-    pub fn new(sel: bool, feedentries: &'a Vec<FeedEntry>) -> FeedEntryList<'a> {
+    pub fn new(
+        entry_selected: usize,
+        widget_enabled: bool,
+        feedentries: &'a Vec<FeedEntry>,
+    ) -> FeedEntryList<'a> {
         FeedEntryList {
             entries: feedentries,
-            selected: sel,
+            enabled: widget_enabled,
+            selected: entry_selected,
         }
     }
 }
@@ -48,7 +77,8 @@ impl<'a> Widget for FeedEntryList<'a> {
         let list_items: Vec<ListItem> = self
             .entries
             .iter()
-            .map(|entry| {
+            .enumerate()
+            .map(|(id, entry)| {
                 let mut item_content_lines: Vec<Line> = Vec::new();
 
                 item_content_lines.push(Line::from(""));
@@ -78,15 +108,14 @@ impl<'a> Widget for FeedEntryList<'a> {
                 item_content_lines.push(Line::from(""));
 
                 let item_text = Text::from(item_content_lines);
-                let list_item = ListItem::new(item_text);
+                let mut list_item = ListItem::new(item_text);
 
                 // Highlight the selected item
-                // if i == self.selected {
-                //     list_item.style(Style::default().bg(Color::Blue)) // Example highlight
-                // } else {
-                //     list_item
-                // }
-                list_item
+                if id == self.selected {
+                    list_item.style(Style::default().bg(Color::Blue)) // Example highlight
+                } else {
+                    list_item
+                }
             })
             .collect();
 
@@ -97,7 +126,7 @@ impl<'a> Widget for FeedEntryList<'a> {
                 .padding(Padding::uniform(2)),
         );
 
-        if !self.selected {
+        if !self.enabled {
             let disabled_style = Style::default().fg(Color::Gray).add_modifier(Modifier::DIM);
             list_widget = list_widget.style(disabled_style);
         }
