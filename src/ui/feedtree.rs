@@ -1,6 +1,6 @@
 use ratatui::{
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListItem, Widget},
+    widgets::{Block, Borders, List, ListItem, Padding, Widget},
 };
 
 use crate::library::feedlibrary::FeedLibrary;
@@ -8,8 +8,8 @@ use crate::library::feedlibrary::FeedLibrary;
 // FeedTreeState
 
 pub enum FeedItemInfo {
-    Category (String),
-    Item (String, String),
+    Category(String),
+    Item(String, String),
 }
 
 #[derive(Default)]
@@ -23,9 +23,11 @@ impl FeedTreeState {
         self.treeitems.clear();
 
         for category in library.feedcategories.iter() {
-            self.treeitems.push(FeedItemInfo::Category(category.title.clone()));
+            self.treeitems
+                .push(FeedItemInfo::Category(category.title.clone()));
             for item in category.feeds.iter() {
-                self.treeitems.push(FeedItemInfo::Item(item.title.clone(), item.slug.clone()));
+                self.treeitems
+                    .push(FeedItemInfo::Item(item.title.clone(), item.slug.clone()));
             }
         }
     }
@@ -33,7 +35,7 @@ impl FeedTreeState {
     pub fn get_selected(&self) -> &FeedItemInfo {
         &self.treeitems[self.selected]
     }
-    
+
     pub fn selection_up(&mut self) {
         if self.selected > 0 {
             self.selected -= 1;
@@ -41,8 +43,7 @@ impl FeedTreeState {
     }
 
     pub fn selection_down(&mut self) {
-        self.selected =
-            std::cmp::min(self.selected + 1, self.treeitems.len() - 1);
+        self.selected = std::cmp::min(self.selected + 1, self.treeitems.len() - 1);
     }
 }
 
@@ -70,12 +71,11 @@ impl<'a> FeedTree<'a> {
 
         for (i, item) in state.treeitems.iter().enumerate() {
             let title = match item {
-                FeedItemInfo::Category (t) => format!("> {}", t),
-                FeedItemInfo::Item (t, _) => format!("   {}", t),
+                FeedItemInfo::Category(t) => format!("> {}", t),
+                FeedItemInfo::Item(t, _) => format!("   {}", t),
             };
 
             if i == self.selected {
-
                 let color = if self.enabled {
                     Color::Yellow
                 } else {
@@ -96,8 +96,11 @@ impl<'a> Widget for FeedTree<'a> {
     where
         Self: Sized,
     {
-        let mut list =
-            List::new(self.listitems).block(Block::default().title("Feeds").borders(Borders::ALL));
+        let mut list = List::new(self.listitems).block(
+            Block::default()
+                .style(Style::default().bg(Color::from_u32(0x332210)))
+                .padding(Padding::new(2, 2, 2, 2)),
+        );
 
         if !self.enabled {
             let disabled_style = Style::default().fg(Color::Gray).add_modifier(Modifier::DIM);

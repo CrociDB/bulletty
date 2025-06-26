@@ -10,6 +10,7 @@
  - [ ] Mouse support
  - [ ] Render Markdown
  - [ ] Basic support for images (depending on your terminal emulator)
+ - [ ] Themes
  - [ ] Highlight
  - [ ] Notes
 

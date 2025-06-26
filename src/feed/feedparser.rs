@@ -176,12 +176,12 @@ fn get_description_content(entry: &Node) -> (String, String) {
         Some(text) => parse_html(text)
             .replace("\n", "")
             .chars()
-            .take(140)
+            .take(280)
             .collect::<String>(),
         None => content_text
             .replace("\n", "")
             .chars()
-            .take(140)
+            .take(280)
             .collect::<String>(),
     };
 

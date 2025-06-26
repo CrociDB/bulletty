@@ -92,7 +92,7 @@ impl<'a> Widget for FeedEntryList<'a> {
                         "Last update: {}",
                         entry.date.with_timezone(&chrono::Local).format("%Y-%m-%d")
                     ),
-                    Style::default().italic(),
+                    Style::default().italic().dim(),
                 )));
 
                 item_content_lines.push(Line::from(Span::styled(
@@ -106,7 +106,7 @@ impl<'a> Widget for FeedEntryList<'a> {
                 let list_item = ListItem::new(item_text);
 
                 // Highlight the selected item
-                if id == self.selected {
+                if self.enabled && id == self.selected {
                     list_item.style(Style::default().bg(Color::Blue))
                 } else {
                     list_item
@@ -116,9 +116,8 @@ impl<'a> Widget for FeedEntryList<'a> {
 
         let mut list_widget = List::new(list_items).block(
             Block::default()
-                .borders(Borders::ALL)
-                .title("Feed Entries")
-                .padding(Padding::uniform(2)),
+                .style(Style::default().bg(Color::from_u32(0x473623)))
+                .padding(Padding::new(2, 2, 1, 1)),
         );
 
         if !self.enabled {

@@ -41,7 +41,7 @@ impl AppState for ReaderState {
     fn _start(&mut self) {}
 
     fn render(&mut self, frame: &mut ratatui::Frame) {
-        let chunks = Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)])
+        let chunks = Layout::horizontal([Constraint::Min(30), Constraint::Percentage(85)])
             .margin(1)
             .split(frame.area());
 
