@@ -57,7 +57,23 @@ impl FeedLibrary {
     }
 
     pub fn get_feed_entries_by_category(&self, categorytitle: &str) -> Vec<FeedEntry> {
-        let entries = vec![];
+        let mut entries = vec![];
+
+        for category in self.feedcategories.iter() {
+            if category.title == categorytitle {
+                for feed in category.feeds.iter() {
+                    entries.extend(match self.data.load_feed_entries(category, feed) {
+                        Ok(entries) => entries,
+                        Err(e) => {
+                            println!("Error: {:?}", e);
+                            vec![]
+                        }
+                    });
+                }
+            }
+        }
+
+        entries.sort_by(|a, b| b.title.len().cmp(&a.title.len()));
         entries
     }
 
