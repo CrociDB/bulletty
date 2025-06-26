@@ -97,6 +97,7 @@ pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result
                 t.tag_name().name() == "published"
                     || t.tag_name().name() == "updated"
                     || t.tag_name().name() == "date"
+                    || t.tag_name().name() == "pubDate"
             })
             .and_then(|t| t.text())
             .unwrap_or("1990-09-19")
@@ -144,6 +145,10 @@ fn parse_date(date_str: &str) -> DateTime<Utc> {
                     let naive = naive_date.and_hms_opt(0, 0, 0).unwrap();
                     DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc)
                 })
+        })
+        .or_else(|_| {
+            DateTime::parse_from_str(date_str, "%a, %d %b %Y %H:%M:%S %z")
+                .map(|dt| dt.with_timezone(&Utc))
         })
         .unwrap_or_else(|_| {
             let fallback = chrono::NaiveDate::from_ymd_opt(1990, 9, 19).unwrap()
