@@ -98,7 +98,7 @@ impl<'a> Widget for FeedTree<'a> {
     {
         let mut list = List::new(self.listitems).block(
             Block::default()
-                .style(Style::default().bg(Color::from_u32(0x332210)))
+                .style(Style::default().bg(Color::from_u32(0x262626)))
                 .padding(Padding::new(2, 2, 2, 2)),
         );
 

@@ -116,7 +116,7 @@ impl<'a> Widget for FeedEntryList<'a> {
 
         let mut list_widget = List::new(list_items).block(
             Block::default()
-                .style(Style::default().bg(Color::from_u32(0x473623)))
+                .style(Style::default().bg(Color::from_u32(0x3a3a3a)))
                 .padding(Padding::new(2, 2, 1, 1)),
         );
 
