@@ -17,15 +17,12 @@ pub struct FeedEntryState {
 }
 
 impl FeedEntryState {
-    pub fn new() -> Self {
-        let mut entry = Self {
+    pub fn new() -> FeedEntryState {
+        FeedEntryState {
             entries: vec![],
-            listatate: ListState::default(),
+            listatate: ListState::default().with_selected(Some(0)),
             previous_selected: String::new(),
-        };
-
-        entry.listatate.select_first();
-        entry
+        }
     }
 
     pub fn update(&mut self, library: &FeedLibrary, treestate: &FeedTreeState) {

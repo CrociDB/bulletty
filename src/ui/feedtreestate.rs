@@ -14,13 +14,10 @@ pub struct FeedTreeState {
 
 impl FeedTreeState {
     pub fn new() -> FeedTreeState {
-        let mut state = FeedTreeState {
+        FeedTreeState {
             treeitems: vec![],
-            listatate: ListState::default(),
-        };
-
-        state.listatate.select(Some(0));
-        state
+            listatate: ListState::default().with_selected(Some(0)),
+        }
     }
 
     pub fn update(&mut self, library: &FeedLibrary) {
