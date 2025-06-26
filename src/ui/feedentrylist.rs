@@ -89,7 +89,7 @@ impl<'a> Widget for FeedEntryList<'a> {
 
                 item_content_lines.push(Line::from(Span::styled(
                     format!(
-                        "Last update: {}",
+                        "\u{f0520} {}",
                         entry.date.with_timezone(&chrono::Local).format("%Y-%m-%d")
                     ),
                     Style::default().italic().dim(),
@@ -119,11 +119,6 @@ impl<'a> Widget for FeedEntryList<'a> {
                 .style(Style::default().bg(Color::from_u32(0x473623)))
                 .padding(Padding::new(2, 2, 1, 1)),
         );
-
-        if !self.enabled {
-            let disabled_style = Style::default().fg(Color::Gray).add_modifier(Modifier::DIM);
-            list_widget = list_widget.style(disabled_style);
-        }
 
         // Render the list widget
         list_widget.render(area, buf);

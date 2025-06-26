@@ -71,8 +71,8 @@ impl<'a> FeedTree<'a> {
 
         for (i, item) in state.treeitems.iter().enumerate() {
             let title = match item {
-                FeedItemInfo::Category(t) => format!("> {}", t),
-                FeedItemInfo::Item(t, _) => format!("   {}", t),
+                FeedItemInfo::Category(t) => format!("\u{f07c} {}", t),
+                FeedItemInfo::Item(t, _) => format!(" \u{f09e}  {}", t),
             };
 
             if i == self.selected {
