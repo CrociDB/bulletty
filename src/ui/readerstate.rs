@@ -3,7 +3,6 @@ use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::layout::{Constraint, Layout};
 
 use crate::{
-    feed::feedentry::FeedEntry,
     library::feedlibrary::FeedLibrary,
     ui::{
         appstate::AppState,

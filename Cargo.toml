@@ -20,3 +20,4 @@ openssl = { version = "0.10", features = ["vendored"] }
 slug = "0.1"
 html2md = "0.2.15"
 regex = "1.11.1"
+chrono = { version = "0.4", features = ["serde"] }

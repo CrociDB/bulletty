@@ -1,5 +1,6 @@
-use regex::Regex;
+use chrono::{DateTime, Utc};
 use html2md::parse_html;
+use regex::Regex;
 use reqwest::blocking::get;
 use roxmltree::Node;
 use slug::slugify;
@@ -36,6 +37,7 @@ pub fn parse(url: &str) -> color_eyre::Result<FeedItem> {
         .unwrap_or(&feed.title)
         .to_string();
 
+    // TODO: find the proper url of the post
     // feed.url = feed_tag
     //     .descendants()
     //     .find(|t| t.tag_name().name() == "link")
@@ -89,6 +91,17 @@ pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result
     {
         let (desc, content) = get_description_content(&entry);
 
+        let datestr = entry
+            .descendants()
+            .find(|t| {
+                t.tag_name().name() == "published"
+                    || t.tag_name().name() == "updated"
+                    || t.tag_name().name() == "date"
+            })
+            .and_then(|t| t.text())
+            .unwrap_or("1990-09-19")
+            .to_string();
+
         let fe = FeedEntry {
             title: entry
                 .descendants()
@@ -108,7 +121,7 @@ pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result
                 .to_string(),
 
             text: content,
-            date: String::from("10-10-2020"),
+            date: parse_date(&datestr),
             description: desc,
         };
 
@@ -117,6 +130,28 @@ pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result
 
     Ok(feedentries)
 }
+
+fn parse_date(date_str: &str) -> DateTime<Utc> {
+    DateTime::parse_from_rfc3339(date_str)
+        .map(|dt| dt.with_timezone(&Utc))
+        .or_else(|_| {
+            chrono::NaiveDateTime::parse_from_str(date_str, "%Y-%m-%d %H:%M:%S")
+                .map(|naive| DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc))
+        })
+        .or_else(|_| {
+            chrono::NaiveDate::parse_from_str(date_str, "%Y-%m-%d")
+                .map(|naive_date| {
+                    let naive = naive_date.and_hms_opt(0, 0, 0).unwrap();
+                    DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc)
+                })
+        })
+        .unwrap_or_else(|_| {
+            let fallback = chrono::NaiveDate::from_ymd_opt(1990, 9, 19).unwrap()
+                .and_hms_opt(0, 0, 0).unwrap();
+            DateTime::<Utc>::from_naive_utc_and_offset(fallback, Utc)
+        })
+}
+
 
 fn get_description_content(entry: &Node) -> (String, String) {
     let content = entry
@@ -138,8 +173,16 @@ fn get_description_content(entry: &Node) -> (String, String) {
     };
 
     let description_text = match description {
-        Some(text) => parse_html(text).replace("\n", "").chars().take(140).collect::<String>(),
-        None => content_text.replace("\n", "").chars().take(140).collect::<String>()
+        Some(text) => parse_html(text)
+            .replace("\n", "")
+            .chars()
+            .take(140)
+            .collect::<String>(),
+        None => content_text
+            .replace("\n", "")
+            .chars()
+            .take(140)
+            .collect::<String>(),
     };
 
     (strip_markdown_tags(&description_text), content_text)
@@ -147,16 +190,16 @@ fn get_description_content(entry: &Node) -> (String, String) {
 
 fn strip_markdown_tags(input: &str) -> String {
     let patterns = [
-        r"\*\*(.*?)\*\*",      // bold **
-        r"\*(.*?)\*",          // italic *
-        r"`(.*?)`",            // inline code
-        r"~~(.*?)~~",          // strikethrough
-        r"\[(.*?)\]\(.*?\)",   // links
-        r"!\[(.*?)\]\(.*?\)",  // images
-        r"^#+\s*",             // headings
-        r">+\s*",              // blockquotes
-        r"[-*_=]{3,}",         // horizontal rules
-        r"`{3}.*?`{3}",        // code blocks
+        r"\*\*(.*?)\*\*",     // bold **
+        r"\*(.*?)\*",         // italic *
+        r"`(.*?)`",           // inline code
+        r"~~(.*?)~~",         // strikethrough
+        r"\[(.*?)\]\(.*?\)",  // links
+        r"!\[(.*?)\]\(.*?\)", // images
+        r"^#+\s*",            // headings
+        r">+\s*",             // blockquotes
+        r"[-*_=]{3,}",        // horizontal rules
+        r"`{3}.*?`{3}",       // code blocks
     ];
     let mut result = input.to_string();
     for pat in patterns.iter() {

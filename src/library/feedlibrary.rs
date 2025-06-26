@@ -73,7 +73,7 @@ impl FeedLibrary {
             }
         }
 
-        entries.sort_by(|a, b| b.title.len().cmp(&a.title.len()));
+        entries.sort_by(|a, b| b.date.cmp(&a.date));
         entries
     }
 
@@ -81,13 +81,16 @@ impl FeedLibrary {
         for category in self.feedcategories.iter() {
             for feed in category.feeds.iter() {
                 if feed.slug == slug {
-                    return match self.data.load_feed_entries(category, feed) {
+                    let mut entries = match self.data.load_feed_entries(category, feed) {
                         Ok(entries) => entries,
                         Err(e) => {
                             println!("Error: {:?}", e);
                             vec![]
                         }
                     };
+
+                    entries.sort_by(|a, b| b.date.cmp(&a.date));
+                    return entries;
                 }
             }
         }

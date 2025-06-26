@@ -88,17 +88,12 @@ impl<'a> Widget for FeedEntryList<'a> {
                 )));
 
                 item_content_lines.push(Line::from(Span::styled(
-                    format!("Date: {}", entry.date),
+                    format!(
+                        "Last update: {}",
+                        entry.date.with_timezone(&chrono::Local).format("%Y-%m-%d")
+                    ),
                     Style::default().italic(),
                 )));
-
-                // let text_lines: Vec<Line> = entry
-                //     .text
-                //     .lines()
-                //     .take(3)
-                //     .map(|s| Line::from(s.to_string()))
-                //     .collect();
-                // item_content_lines.extend(text_lines);
 
                 item_content_lines.push(Line::from(Span::styled(
                     format!("{}...", entry.description),
@@ -108,11 +103,11 @@ impl<'a> Widget for FeedEntryList<'a> {
                 item_content_lines.push(Line::from(""));
 
                 let item_text = Text::from(item_content_lines);
-                let mut list_item = ListItem::new(item_text);
+                let list_item = ListItem::new(item_text);
 
                 // Highlight the selected item
                 if id == self.selected {
-                    list_item.style(Style::default().bg(Color::Blue)) // Example highlight
+                    list_item.style(Style::default().bg(Color::Blue))
                 } else {
                     list_item
                 }
