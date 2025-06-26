@@ -3,7 +3,7 @@ use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::{
     layout::{Constraint, Layout},
     style::{Color, Style, Stylize},
-    widgets::{Block, List, ListState, Padding},
+    widgets::{Block, List, Padding},
 };
 
 use crate::{
@@ -31,7 +31,7 @@ impl ReaderState {
             running: true,
             library: FeedLibrary::new(),
             feedtreestate: FeedTreeState::new(),
-            feedentrystate: FeedEntryState::default(),
+            feedentrystate: FeedEntryState::new(),
             inputstate: ReaderInputState::Menu,
         }
     }
@@ -59,19 +59,18 @@ impl AppState for ReaderState {
                 .padding(Padding::new(2, 2, 2, 2))
         };
 
-        let tree_widget = List::new(self.feedtreestate.get_items())
+        let treelist = List::new(self.feedtreestate.get_items())
             .block(block_style)
             .highlight_style(Style::default().bg(Color::Yellow));
 
-        let mut tree_state = self.feedtreestate.listatate.clone();
-        frame.render_stateful_widget(tree_widget, chunks[0], &mut tree_state);
+        let mut treestate = self.feedtreestate.listatate.clone();
+        frame.render_stateful_widget(treelist, chunks[0], &mut treestate);
 
         // The feed entries
         self.feedentrystate
             .update(&self.library, &self.feedtreestate);
 
-        let mut entryliststate = ListState::default();
-        entryliststate.select(Some(self.feedentrystate.selected));
+        let mut entryliststate = self.feedentrystate.listatate.clone();
 
         let list_widget = List::new(self.feedentrystate.get_items())
             .block(

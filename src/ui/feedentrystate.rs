@@ -1,7 +1,7 @@
 use ratatui::{
     style::{Color, Style, Stylize},
     text::{Line, Span, Text},
-    widgets::ListItem,
+    widgets::{ListItem, ListState},
 };
 
 use crate::{
@@ -10,14 +10,26 @@ use crate::{
     ui::feedtreestate::{FeedItemInfo, FeedTreeState},
 };
 
-#[derive(Default)]
 pub struct FeedEntryState {
     pub entries: Vec<FeedEntry>,
     pub selected: usize,
+    pub listatate: ListState,
     pub previous_selected: String,
 }
 
 impl FeedEntryState {
+    pub fn new() -> Self {
+        let mut entry = Self {
+            entries: vec![],
+            selected: 0,
+            listatate: ListState::default(),
+            previous_selected: String::new(),
+        };
+
+        entry.listatate.select(Some(0));
+        entry
+    }
+
     pub fn update(&mut self, library: &FeedLibrary, treestate: &FeedTreeState) {
         let prev = self.previous_selected.to_string();
 
@@ -74,9 +86,11 @@ impl FeedEntryState {
         if self.selected > 0 {
             self.selected -= 1;
         }
+        self.listatate.select(Some(self.selected));
     }
 
     pub fn selection_down(&mut self) {
         self.selected = std::cmp::min(self.selected + 1, self.entries.len() - 1);
+        self.listatate.select(Some(self.selected));
     }
 }
