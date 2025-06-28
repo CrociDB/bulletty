@@ -8,7 +8,11 @@ use ratatui::{
 
 use crate::{
     library::feedlibrary::FeedLibrary,
-    ui::{appstate::AppState, feedentrystate::FeedEntryState, feedtreestate::FeedTreeState},
+    ui::{
+        appstate::{AppState, AppStateEvent},
+        feedentrystate::FeedEntryState,
+        feedtreestate::FeedTreeState,
+    },
 };
 
 #[derive(PartialEq, Eq)]
@@ -18,7 +22,6 @@ enum ReaderInputState {
 }
 
 pub struct ReaderState {
-    running: bool,
     library: FeedLibrary,
     feedtreestate: FeedTreeState,
     feedentrystate: FeedEntryState,
@@ -28,7 +31,6 @@ pub struct ReaderState {
 impl ReaderState {
     pub fn new() -> ReaderState {
         ReaderState {
-            running: true,
             library: FeedLibrary::new(),
             feedtreestate: FeedTreeState::new(),
             feedentrystate: FeedEntryState::new(),
@@ -41,8 +43,8 @@ impl AppState for ReaderState {
     fn _start(&mut self) {}
 
     fn render(&mut self, frame: &mut ratatui::Frame, area: Rect) {
-        let chunks = Layout::horizontal([Constraint::Min(30), Constraint::Percentage(85)])
-            .split(area);
+        let chunks =
+            Layout::horizontal([Constraint::Min(30), Constraint::Percentage(85)]).split(area);
 
         // Feed tree
         self.feedtreestate.update(&self.library);
@@ -94,59 +96,61 @@ impl AppState for ReaderState {
         frame.render_stateful_widget(list_widget, chunks[1], &mut entryliststate);
     }
 
-    fn handle_events(&mut self) -> Result<()> {
+    fn handle_events(&mut self) -> Result<AppStateEvent> {
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => self.handle_keypress(key),
-            Event::Mouse(_) => {}
-            Event::Resize(_, _) => {}
-            _ => {}
+            Event::Mouse(_) => Ok(AppStateEvent::None),
+            Event::Resize(_, _) => Ok(AppStateEvent::None),
+            _ => Ok(AppStateEvent::None),
         }
-        Ok(())
     }
 
-    fn handle_keypress(&mut self, key: crossterm::event::KeyEvent) {
+    fn handle_keypress(&mut self, key: crossterm::event::KeyEvent) -> Result<AppStateEvent> {
         match self.inputstate {
             ReaderInputState::Menu => match (key.modifiers, key.code) {
                 (_, KeyCode::Esc | KeyCode::Char('q'))
                 | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
-                    self.running = false;
+                    Ok(AppStateEvent::ExitApp)
                 }
                 (_, KeyCode::Down | KeyCode::Char('j')) => {
                     self.feedtreestate.listatate.select_next();
+                    Ok(AppStateEvent::None)
                 }
                 (_, KeyCode::Up | KeyCode::Char('k')) => {
                     self.feedtreestate.listatate.select_previous();
+                    Ok(AppStateEvent::None)
                 }
                 (_, KeyCode::Right | KeyCode::Enter | KeyCode::Tab | KeyCode::Char('l')) => {
                     self.inputstate = ReaderInputState::Content;
+                    Ok(AppStateEvent::None)
                 }
-                _ => {}
+                _ => Ok(AppStateEvent::None),
             },
             ReaderInputState::Content => match (key.modifiers, key.code) {
                 (_, KeyCode::Char('q'))
                 | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
-                    self.running = false;
+                    Ok(AppStateEvent::ExitApp)
                 }
                 (_, KeyCode::Down | KeyCode::Char('j')) => {
                     self.feedentrystate.listatate.select_next();
+                    Ok(AppStateEvent::None)
                 }
                 (_, KeyCode::Up | KeyCode::Char('k')) => {
                     self.feedentrystate.listatate.select_previous();
+                    Ok(AppStateEvent::None)
                 }
                 (_, KeyCode::Esc) => {
                     self.inputstate = ReaderInputState::Menu;
+                    Ok(AppStateEvent::None)
                 }
                 (_, KeyCode::Right | KeyCode::Char('h')) => {
                     self.inputstate = ReaderInputState::Menu;
+                    Ok(AppStateEvent::None)
                 }
-                _ => {}
+                _ => Ok(AppStateEvent::None),
             },
         }
     }
 
     fn _quit(&mut self) {}
-
-    fn running(&self) -> bool {
-        self.running
-    }
 }
