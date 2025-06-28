@@ -48,20 +48,26 @@ impl AppState for ReaderState {
         // Feed tree
         self.feedtreestate.update(&self.library);
 
-        let block_style = if self.inputstate == ReaderInputState::Menu {
-            Block::default()
-                .style(Style::default().bg(Color::from_u32(0x262626)))
-                .padding(Padding::new(2, 2, 2, 2))
+        let (treestyle, treeselectionstyle) = if self.inputstate == ReaderInputState::Menu {
+            (
+                Block::default()
+                    .style(Style::default().bg(Color::from_u32(0x262626)))
+                    .padding(Padding::new(2, 2, 2, 2)),
+                Style::default().bg(Color::Yellow),
+            )
         } else {
-            Block::default()
-                .style(Style::default().bg(Color::from_u32(0x262626)))
-                .dim()
-                .padding(Padding::new(2, 2, 2, 2))
+            (
+                Block::default()
+                    .style(Style::default().bg(Color::from_u32(0x262626)))
+                    .dim()
+                    .padding(Padding::new(2, 2, 2, 2)),
+                Style::default().bg(Color::DarkGray),
+            )
         };
 
         let treelist = List::new(self.feedtreestate.get_items())
-            .block(block_style)
-            .highlight_style(Style::default().bg(Color::Yellow));
+            .block(treestyle)
+            .highlight_style(treeselectionstyle);
 
         let mut treestate = self.feedtreestate.listatate.clone();
         frame.render_stateful_widget(treelist, chunks[0], &mut treestate);
@@ -72,13 +78,19 @@ impl AppState for ReaderState {
 
         let mut entryliststate = self.feedentrystate.listatate.clone();
 
+        let entryselectionstyle = if self.inputstate == ReaderInputState::Content {
+            Style::default().bg(Color::Blue)
+        } else {
+            Style::default().bg(Color::DarkGray)
+        };
+
         let list_widget = List::new(self.feedentrystate.get_items())
             .block(
                 Block::default()
                     .style(Style::default().bg(Color::from_u32(0x3a3a3a)))
                     .padding(Padding::new(2, 2, 1, 1)),
             )
-            .highlight_style(Style::default().bg(Color::Blue));
+            .highlight_style(entryselectionstyle);
 
         frame.render_stateful_widget(list_widget, chunks[1], &mut entryliststate);
     }
