@@ -1,7 +1,7 @@
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::{
-    layout::{Constraint, Layout},
+    layout::{Constraint, Layout, Rect},
     style::{Color, Style, Stylize},
     widgets::{Block, List, Padding},
 };
@@ -40,10 +40,9 @@ impl ReaderState {
 impl AppState for ReaderState {
     fn _start(&mut self) {}
 
-    fn render(&mut self, frame: &mut ratatui::Frame) {
+    fn render(&mut self, frame: &mut ratatui::Frame, area: Rect) {
         let chunks = Layout::horizontal([Constraint::Min(30), Constraint::Percentage(85)])
-            .margin(1)
-            .split(frame.area());
+            .split(area);
 
         // Feed tree
         self.feedtreestate.update(&self.library);
