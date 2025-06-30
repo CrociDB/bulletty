@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use color_eyre::{Result, eyre};
 use ratatui::{
     DefaultTerminal,
@@ -12,6 +14,7 @@ use crate::ui::appstate::{AppState, AppStateEvent};
 pub struct App {
     running: bool,
     current_state: Option<Box<dyn AppState>>,
+    states_queue: VecDeque<Box<dyn AppState>>,
 }
 
 impl App {
@@ -19,6 +22,7 @@ impl App {
         App {
             running: true,
             current_state: None,
+            states_queue: VecDeque::<Box<dyn AppState>>::new(),
         }
     }
 
@@ -57,13 +61,13 @@ impl App {
                 match state.handle_events()? {
                     AppStateEvent::None => {}
                     AppStateEvent::ChangeState(app_state) => {
-                        // Change state...
+                        self.change_state(app_state);
                     }
                     AppStateEvent::ExitApp => {
                         self.running = false;
                     }
                     AppStateEvent::ExitState => {
-                        // Go back to previous state
+                        self.exit_state();
                     }
                 }
             } else {
@@ -73,5 +77,32 @@ impl App {
         }
 
         Ok(())
+    }
+
+    fn change_state(&mut self, mut new_state: Box<dyn AppState>) {
+        if let Some(mut state) = self.current_state.take() {
+            state.pause();
+            self.states_queue.push_back(state);
+        }
+
+        new_state.start();
+        self.current_state = Some(new_state);
+    }
+
+    fn exit_state(&mut self) {
+        if let Some(mut state) = self.current_state.take() {
+            state.quit();
+        }
+
+        if !self.states_queue.is_empty() {
+            if let Some(mut state) = self.states_queue.pop_back() {
+                state.unpause();
+                self.current_state = Some(state);
+            } else {
+                self.running = false;
+            }
+        } else {
+            self.running = false;
+        }
     }
 }

@@ -76,4 +76,17 @@ impl FeedEntryState {
             })
             .collect()
     }
+
+    pub fn get_selected(&self) -> Option<FeedEntry> {
+        match self.listatate.selected() {
+            None => None,
+            Some(selected) => {
+                if selected < self.entries.len() {
+                    Some(self.entries[selected].clone())
+                } else {
+                    None
+                }
+            }
+        }
+    }
 }
