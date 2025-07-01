@@ -198,7 +198,7 @@ impl LibraryData {
                     continue;
                 }
                 let mut entry: FeedEntry = toml::from_str(parts[1])?;
-                entry.text = parts[2].to_string();
+                entry.text = parts[2..].join("---");
                 entries.push(entry);
             }
         }
