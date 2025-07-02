@@ -2,8 +2,9 @@ use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::layout::{Alignment, Constraint, Layout};
 use ratatui::style::{Color, Style};
-use ratatui::text::Text;
-use ratatui::widgets::{Block, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap};
+use ratatui::widgets::{
+    Block, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
+};
 
 use crate::{
     feed::feedentry::FeedEntry,
@@ -92,7 +93,6 @@ impl AppState for ReaderState {
         frame.render_widget(title, contentlayout[0]);
         frame.render_widget(date, contentlayout[1]);
         frame.render_widget(text, contentlayout[2]);
-
 
         let mut scrollbarstate = ScrollbarState::new(self.scrollmax).position(self.scroll);
         let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight);

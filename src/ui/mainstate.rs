@@ -150,7 +150,9 @@ impl AppState for MainState {
                 }
                 (_, KeyCode::Enter) => {
                     if let Some(entry) = self.feedentrystate.get_selected() {
-                        Ok(AppStateEvent::ChangeState(Box::new(ReaderState::new(entry))))
+                        Ok(AppStateEvent::ChangeState(Box::new(ReaderState::new(
+                            entry,
+                        ))))
                     } else {
                         Ok(AppStateEvent::None)
                     }

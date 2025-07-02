@@ -4,4 +4,3 @@ pub struct FeedCategory {
     pub title: String,
     pub feeds: Vec<FeedItem>,
 }
-

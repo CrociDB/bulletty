@@ -140,23 +140,23 @@ fn parse_date(date_str: &str) -> DateTime<Utc> {
                 .map(|naive| DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc))
         })
         .or_else(|_| {
-            chrono::NaiveDate::parse_from_str(date_str, "%Y-%m-%d")
-                .map(|naive_date| {
-                    let naive = naive_date.and_hms_opt(0, 0, 0).unwrap();
-                    DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc)
-                })
+            chrono::NaiveDate::parse_from_str(date_str, "%Y-%m-%d").map(|naive_date| {
+                let naive = naive_date.and_hms_opt(0, 0, 0).unwrap();
+                DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc)
+            })
         })
         .or_else(|_| {
             DateTime::parse_from_str(date_str, "%a, %d %b %Y %H:%M:%S %z")
                 .map(|dt| dt.with_timezone(&Utc))
         })
         .unwrap_or_else(|_| {
-            let fallback = chrono::NaiveDate::from_ymd_opt(1990, 9, 19).unwrap()
-                .and_hms_opt(0, 0, 0).unwrap();
+            let fallback = chrono::NaiveDate::from_ymd_opt(1990, 9, 19)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap();
             DateTime::<Utc>::from_naive_utc_and_offset(fallback, Utc)
         })
 }
-
 
 fn get_description_content(entry: &Node) -> (String, String) {
     let content = entry
