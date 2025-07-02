@@ -1,10 +1,11 @@
-<h1 align="center">bulletty</h1>
+<h1 align="center">📰 bulletty</h1>
+<p align="center">The TUI RSS/ATOM feed reader that lets your decide where to store your data.</p>
 
 <p align="center">
   <img src="img/screenshot.gif" alt="bulletty" />
 </p>
 
-**bulletty** is a feed (RSS and ATOM) reader for the terminal. Read your subscriptions within your terminal. It downloads the entries for offline reading so all the data is yours: your subscriptions, highlights, comments, etc. You only need to sync the `data` folder.
+**bulletty** is a TUI feed (RSS and ATOM) reader. Read your subscriptions within your terminal. It downloads the entries for offline reading so all the data is yours: your subscriptions, highlights, comments, etc. You only need to sync the `data` folder.
 
 It's in active development.
 
@@ -12,17 +13,18 @@ It's in active development.
 
  - [X] Subscribe to RSS and ATOM feed types
  - [X] All your data in one place
- - [X] Download articles
+ - [X] Download entries
+ - [X] Render Markdown
  - [ ] Mouse support
- - [ ] Render Markdown
- - [ ] Basic support for images (depending on your terminal emulator)
+ - [ ] Image support (depending on your terminal emulator)
  - [ ] Themes
  - [ ] Highlight
  - [ ] Notes
+ - [ ] Web view
 
 ## Philosophy
 
-The whole idea is bring back the syndicalized internet. You subscribe to the sources you like the most and you get their content whenever it's available. When you get it, it's yours. **bulletty** will generate a Markdown file of each entry from each source. You can read through the embedded reader, straight from your terminal, or using any text editor. Much like the posix philosophy, everything here is a file.
+The whole idea is bringing back the syndicalized internet. You subscribe to the sources you like the most and you get their content whenever it's available. When you get it, it's yours. **bulletty** will generate a Markdown file of each entry from each source. You can read through the embedded reader, straight from your terminal, or using any text editor. Much like the posix philosophy, everything here is a file.
 
 Registering a new feed is as easy as:
 
@@ -70,6 +72,10 @@ Clone the repository, then:
 ```shell
 cargo build --release
 ```
+
+## Contributing
+
+I am very open for contributions to help make **bulletty** the best feed reader out there.
 
 ## License
 
