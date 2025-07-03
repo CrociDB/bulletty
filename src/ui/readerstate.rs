@@ -47,7 +47,6 @@ impl AppState for ReaderState {
 
         frame.render_widget(block, area);
 
-        // frame.render_widget(paragraph, area);
         let sizelayout = Layout::horizontal([
             Constraint::Min(1),
             Constraint::Percentage(60),
