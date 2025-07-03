@@ -174,9 +174,9 @@ impl AppState for MainState {
 
     fn get_state_instructions(&self) -> String {
         if self.inputstate == MainInputState::Menu {
-            String::from("j/k/↓/↑: move selection | Enter: confirm | Esc/q: quit")
+            String::from("j/k/↓/↑: move selection | Enter: select | Esc/q: quit")
         } else {
-            String::from("j/k/↓/↑: move selection | Enter: confirm | Esc/q: back")
+            String::from("j/k/↓/↑: move selection | Enter: read entry | Esc/q: back")
         }
     }
 }
