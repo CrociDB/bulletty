@@ -54,9 +54,9 @@ impl App {
 
                     // Bottom status line
                     let statusline = Layout::horizontal([
-                        Constraint::Min(30),
-                        Constraint::Percentage(60),
-                        Constraint::Percentage(30),
+                        Constraint::Max(25),
+                        Constraint::Fill(1),
+                        Constraint::Max(60),
                     ])
                     .margin(1)
                     .split(mainlayout[1]);
