@@ -89,4 +89,16 @@ impl FeedEntryState {
             }
         }
     }
+
+    pub fn select_next(&mut self) {
+        if self.listatate.selected().unwrap_or(0) < self.entries.len() - 1 {
+            self.listatate.select_next();
+        }
+    }
+
+    pub fn select_previous(&mut self) {
+        if self.listatate.selected().unwrap_or(0) > 0 {
+            self.listatate.select_previous();
+        }
+    }
 }

@@ -114,11 +114,11 @@ impl AppState for MainState {
                     Ok(AppStateEvent::ExitApp)
                 }
                 (_, KeyCode::Down | KeyCode::Char('j')) => {
-                    self.feedtreestate.listatate.select_next();
+                    self.feedtreestate.select_next();
                     Ok(AppStateEvent::None)
                 }
                 (_, KeyCode::Up | KeyCode::Char('k')) => {
-                    self.feedtreestate.listatate.select_previous();
+                    self.feedtreestate.select_previous();
                     Ok(AppStateEvent::None)
                 }
                 (_, KeyCode::Right | KeyCode::Enter | KeyCode::Tab | KeyCode::Char('l')) => {
@@ -133,11 +133,11 @@ impl AppState for MainState {
                     Ok(AppStateEvent::ExitApp)
                 }
                 (_, KeyCode::Down | KeyCode::Char('j')) => {
-                    self.feedentrystate.listatate.select_next();
+                    self.feedentrystate.select_next();
                     Ok(AppStateEvent::None)
                 }
                 (_, KeyCode::Up | KeyCode::Char('k')) => {
-                    self.feedentrystate.listatate.select_previous();
+                    self.feedentrystate.select_previous();
                     Ok(AppStateEvent::None)
                 }
                 (_, KeyCode::Esc) => {

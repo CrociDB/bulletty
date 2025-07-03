@@ -50,4 +50,16 @@ impl FeedTreeState {
     pub fn get_selected(&self) -> &FeedItemInfo {
         &self.treeitems[self.listatate.selected().unwrap_or(0)]
     }
+
+    pub fn select_next(&mut self) {
+        if self.listatate.selected().unwrap_or(0) < self.treeitems.len() - 1 {
+            self.listatate.select_next();
+        }
+    }
+
+    pub fn select_previous(&mut self) {
+        if self.listatate.selected().unwrap_or(0) > 0 {
+            self.listatate.select_previous();
+        }
+    }
 }
