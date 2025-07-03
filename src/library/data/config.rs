@@ -1,11 +1,11 @@
 use dirs;
 use serde::{Deserialize, Serialize};
-use tracing::error;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use toml;
+use tracing::error;
 
 use crate::defs;
 #[derive(Serialize, Deserialize)]
