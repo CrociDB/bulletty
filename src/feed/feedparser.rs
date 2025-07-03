@@ -8,9 +8,7 @@ use slug::slugify;
 use crate::{feed::feedentry::FeedEntry, library::feeditem::FeedItem};
 
 pub fn parse(url: &str) -> color_eyre::Result<FeedItem> {
-    println!("Loading feed...");
     let response = get(url)?.text()?;
-    println!("Parsing feed...");
 
     let mut feed = FeedItem::default();
 

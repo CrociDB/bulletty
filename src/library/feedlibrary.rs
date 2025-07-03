@@ -1,4 +1,5 @@
 use color_eyre::eyre::eyre;
+use tracing::error;
 
 use crate::{
     defs,
@@ -23,7 +24,7 @@ impl FeedLibrary {
         let categories = match data_obj.generate_categories_tree() {
             Ok(c) => c,
             Err(e) => {
-                eprintln!("{}", e);
+                error!("{}", e);
                 std::process::exit(1);
             }
         };
@@ -65,7 +66,7 @@ impl FeedLibrary {
                     entries.extend(match self.data.load_feed_entries(category, feed) {
                         Ok(entries) => entries,
                         Err(e) => {
-                            println!("Error: {:?}", e);
+                            error!("{:?}", e);
                             vec![]
                         }
                     });
@@ -84,7 +85,7 @@ impl FeedLibrary {
                     let mut entries = match self.data.load_feed_entries(category, feed) {
                         Ok(entries) => entries,
                         Err(e) => {
-                            println!("Error: {:?}", e);
+                            error!("{:?}", e);
                             vec![]
                         }
                     };

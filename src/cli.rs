@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use tracing::info;
 
 use crate::library::feedlibrary::FeedLibrary;
 
@@ -27,6 +28,8 @@ pub enum Commands {
 }
 
 pub fn run_main_cli(cli: Cli) -> color_eyre::Result<()> {
+    info!("Initializing CLI");
+
     match &cli.command {
         Some(Commands::List) => command_list(&cli),
         Some(Commands::Add { url, category }) => command_add(&cli, url, category),
@@ -54,6 +57,7 @@ fn command_add(_cli: &Cli, url: &str, category: &Option<String>) -> color_eyre::
     let mut library = FeedLibrary::new();
     let feed = library.add_feed(url, category)?;
 
+    info!("Feed added: {:?}", feed);
     println!("Feed added: {:?}", feed);
 
     Ok(())
@@ -64,6 +68,7 @@ fn command_update(_cli: &Cli) -> color_eyre::Result<()> {
 
     for category in library.feedcategories.iter() {
         for feed in category.feeds.iter() {
+            info!("Updating {}", feed.title);
             println!("Updating {}", feed.title);
             library.data.update_feed_entries(category, feed, None)?;
         }

@@ -1,5 +1,6 @@
 use dirs;
 use serde::{Deserialize, Serialize};
+use tracing::error;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
@@ -23,7 +24,7 @@ impl Config {
                 let config_path = Path::new(&config_dir).join(defs::CONFIG_PATH);
                 if !config_path.exists() {
                     if let Err(e) = fs::create_dir_all(config_path) {
-                        eprintln!("Failed to create directory: {}", e);
+                        error!("Failed to create directory: {}", e);
                         std::process::exit(1);
                     }
                 }
@@ -42,18 +43,18 @@ impl Config {
                             if let Err(e) =
                                 file.write_all(&toml::to_string(&config).unwrap().into_bytes())
                             {
-                                eprintln!("Failed to write config: {}", e);
+                                error!("Failed to write config: {}", e);
                                 std::process::exit(1);
                             }
 
                             config
                         } else {
-                            eprintln!("Error: data dir not found");
+                            error!("Error: data dir not found");
                             std::process::exit(1);
                         }
                     }
                     Err(e) => {
-                        eprintln!("Failed to create new config file: {}", e);
+                        error!("Failed to create new config file: {}", e);
                         std::process::exit(1);
                     }
                 }
@@ -61,16 +62,16 @@ impl Config {
                 match toml::from_str(&configstr) {
                     Ok(config) => config,
                     Err(e) => {
-                        eprintln!("Error: config file can't be parsed: {}", e);
+                        error!("Config file can't be parsed: {}", e);
                         std::process::exit(1);
                     }
                 }
             } else {
-                eprintln!("Error: can't read config file");
+                error!("Can't read config file");
                 std::process::exit(1);
             }
         } else {
-            eprintln!("Error: no config dir");
+            error!("No config dir");
             std::process::exit(1);
         }
     }
