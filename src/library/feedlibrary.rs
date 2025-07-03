@@ -2,16 +2,21 @@ use color_eyre::eyre::eyre;
 use tracing::error;
 
 use crate::{
-    app::AppWorkStatus, defs, feed::{self, feedentry::FeedEntry}, library::{
+    app::AppWorkStatus,
+    defs,
+    feed::{self, feedentry::FeedEntry},
+    library::{
         data::{config::Config, librarydata::LibraryData},
         feedcategory::FeedCategory,
         feeditem::FeedItem,
-    }
+        updater::Updater,
+    },
 };
 
 pub struct FeedLibrary {
     pub feedcategories: Vec<FeedCategory>,
     pub data: LibraryData,
+    pub updater: Option<Updater>,
 }
 
 impl FeedLibrary {
@@ -30,6 +35,7 @@ impl FeedLibrary {
         FeedLibrary {
             feedcategories: categories,
             data: data_obj,
+            updater: None,
         }
     }
 
@@ -97,11 +103,37 @@ impl FeedLibrary {
         vec![]
     }
 
-    pub fn update(&mut self) {
+    pub fn start_updater(&mut self) {
+        self.updater = Some(Updater::new(self.feedcategories.clone()));
+    }
 
+    pub fn update(&mut self) {
+        if let Some(updater) = self.updater.as_ref() {
+            if updater.finished.load(std::sync::atomic::Ordering::Relaxed) {
+                self.updater = None;
+            }
+        }
     }
 
     pub fn get_update_status(&self) -> AppWorkStatus {
-        AppWorkStatus::None
+        if let Some(updater) = self.updater.as_ref() {
+            let total: f32 = self
+                .feedcategories
+                .iter()
+                .map(|cat| cat.feeds.len() as f32)
+                .sum();
+
+            AppWorkStatus::Working(
+                1.0_f32.min(
+                    updater
+                        .total_completed
+                        .load(std::sync::atomic::Ordering::Relaxed) as f32
+                        / total,
+                ),
+                updater.last_completed.lock().unwrap().to_string(),
+            )
+        } else {
+            AppWorkStatus::None
+        }
     }
 }

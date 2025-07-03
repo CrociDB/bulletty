@@ -5,7 +5,7 @@ use ratatui::{
     DefaultTerminal,
     layout::{Constraint, Layout},
     style::{Color, Style, Stylize},
-    widgets::{Block, Borders, Gauge, Paragraph},
+    widgets::{Block, Gauge, Paragraph},
 };
 
 use crate::ui::appstate::{AppState, AppStateEvent};
@@ -36,7 +36,8 @@ impl App {
         }
     }
 
-    pub fn init(&mut self, state: Box<dyn AppState>) {
+    pub fn init(&mut self, mut state: Box<dyn AppState>) {
+        state.start();
         self.current_state = Some(state);
     }
 
@@ -100,6 +101,10 @@ impl App {
                 self.running = false;
                 return Err(eyre::eyre!("No current AppState"));
             }
+        }
+
+        if let Some(state) = self.current_state.as_mut() {
+            state.quit();
         }
 
         Ok(())

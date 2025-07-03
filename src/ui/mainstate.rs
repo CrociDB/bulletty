@@ -43,7 +43,7 @@ impl MainState {
 
 impl AppState for MainState {
     fn start(&mut self) {
-        self.library.update();
+        self.library.start_updater();
     }
 
     fn quit(&mut self) {}
@@ -53,6 +53,8 @@ impl AppState for MainState {
     fn unpause(&mut self) {}
 
     fn render(&mut self, frame: &mut ratatui::Frame, area: Rect) {
+        self.library.update();
+
         let chunks =
             Layout::horizontal([Constraint::Min(30), Constraint::Percentage(85)]).split(area);
 
