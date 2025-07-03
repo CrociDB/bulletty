@@ -167,4 +167,17 @@ impl AppState for MainState {
     fn pause(&mut self) {}
 
     fn unpause(&mut self) {}
+
+    fn get_state_name(&self) -> String {
+        String::from("Main")
+    }
+
+    fn get_state_instructions(&self) -> String {
+        if self.inputstate == MainInputState::Menu {
+            String::from("j/k/↓/↑: move selection | Enter: confirm | Esc/q: quit")
+
+        } else {
+            String::from("j/k/↓/↑: move selection | Enter: confirm | Esc/q: back")
+        }
+    }
 }

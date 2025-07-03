@@ -134,4 +134,12 @@ impl AppState for ReaderState {
     fn unpause(&mut self) {}
 
     fn quit(&mut self) {}
+
+    fn get_state_name(&self) -> String {
+        String::from("Reader")
+    }
+
+    fn get_state_instructions(&self) -> String {
+        String::from("j/k/↓/↑: scroll | Esc/q: leave")
+    }
 }

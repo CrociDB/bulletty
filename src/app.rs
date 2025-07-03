@@ -4,7 +4,7 @@ use color_eyre::{Result, eyre};
 use ratatui::{
     DefaultTerminal,
     layout::{Constraint, Layout},
-    style::{Color, Style},
+    style::{Color, Style, Stylize},
     widgets::{Block, Paragraph},
 };
 
@@ -44,8 +44,8 @@ impl App {
                     // Bottom status line
                     let statusline = Layout::horizontal([
                         Constraint::Min(20),
-                        Constraint::Percentage(85),
-                        Constraint::Min(40),
+                        Constraint::Percentage(40),
+                        Constraint::Percentage(50),
                     ])
                     .margin(1)
                     .split(mainlayout[1]);
@@ -54,8 +54,14 @@ impl App {
                         Block::default().style(Style::default().bg(Color::from_u32(0x182226)));
                     frame.render_widget(background, mainlayout[1]);
 
-                    let status_text = Paragraph::new("\u{f0fb1} bulletty");
+                    let status_text =
+                        Paragraph::new(format!("\u{f0fb1} bulletty | {}", state.get_state_name()));
                     frame.render_widget(status_text, statusline[0]);
+
+                    let instructions_text = Paragraph::new(state.get_state_instructions().clone())
+                        .style(Style::default().dim())
+                        .alignment(ratatui::layout::Alignment::Right);
+                    frame.render_widget(instructions_text, statusline[2]);
                 })?;
 
                 match state.handle_events()? {
