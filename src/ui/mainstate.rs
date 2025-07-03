@@ -7,6 +7,7 @@ use ratatui::{
 };
 
 use crate::{
+    app::AppWorkStatus,
     library::feedlibrary::FeedLibrary,
     ui::{
         appstate::{AppState, AppStateEvent},
@@ -41,7 +42,15 @@ impl MainState {
 }
 
 impl AppState for MainState {
-    fn start(&mut self) {}
+    fn start(&mut self) {
+        self.library.update();
+    }
+
+    fn quit(&mut self) {}
+
+    fn pause(&mut self) {}
+
+    fn unpause(&mut self) {}
 
     fn render(&mut self, frame: &mut ratatui::Frame, area: Rect) {
         let chunks =
@@ -162,12 +171,6 @@ impl AppState for MainState {
         }
     }
 
-    fn quit(&mut self) {}
-
-    fn pause(&mut self) {}
-
-    fn unpause(&mut self) {}
-
     fn get_state_name(&self) -> String {
         String::from("Main")
     }
@@ -178,5 +181,9 @@ impl AppState for MainState {
         } else {
             String::from("j/k/↓/↑: move selection | Enter: read entry | Esc/q: back")
         }
+    }
+
+    fn get_state_work_status(&self) -> AppWorkStatus {
+        self.library.get_update_status()
     }
 }

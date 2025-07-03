@@ -5,12 +5,22 @@ use ratatui::{
     DefaultTerminal,
     layout::{Constraint, Layout},
     style::{Color, Style, Stylize},
-    widgets::{Block, Paragraph},
+    widgets::{Block, Borders, Gauge, Paragraph},
 };
 
 use crate::ui::appstate::{AppState, AppStateEvent};
 
-// #[derive(Debug)]
+pub enum AppWorkStatus {
+    None,
+    Working(f32, String),
+}
+
+impl AppWorkStatus {
+    pub fn is_none(&self) -> bool {
+        matches!(self, AppWorkStatus::None)
+    }
+}
+
 pub struct App {
     running: bool,
     current_state: Option<Box<dyn AppState>>,
@@ -32,6 +42,7 @@ impl App {
 
     pub fn run(&mut self, mut terminal: DefaultTerminal) -> Result<()> {
         while self.running {
+            let work_status = self.get_work_status();
             if let Some(state) = self.current_state.as_mut() {
                 terminal.draw(|frame| {
                     let mainlayout =
@@ -43,9 +54,9 @@ impl App {
 
                     // Bottom status line
                     let statusline = Layout::horizontal([
-                        Constraint::Min(20),
-                        Constraint::Percentage(40),
-                        Constraint::Percentage(50),
+                        Constraint::Min(30),
+                        Constraint::Percentage(60),
+                        Constraint::Percentage(30),
                     ])
                     .margin(1)
                     .split(mainlayout[1]);
@@ -62,6 +73,15 @@ impl App {
                         .style(Style::default().dim())
                         .alignment(ratatui::layout::Alignment::Right);
                     frame.render_widget(instructions_text, statusline[2]);
+
+                    // work status
+                    if let AppWorkStatus::Working(percentage, description) = work_status {
+                        let gauge = Gauge::default()
+                            .gauge_style(Style::default().fg(Color::Green).bg(Color::Black))
+                            .percent((percentage * 100.0).round() as u16)
+                            .label(&description);
+                        frame.render_widget(gauge, statusline[1]);
+                    }
                 })?;
 
                 match state.handle_events()? {
@@ -110,5 +130,20 @@ impl App {
         } else {
             self.running = false;
         }
+    }
+
+    fn get_work_status(&self) -> AppWorkStatus {
+        if let Some(state) = self.current_state.as_ref() {
+            let status = state.get_state_work_status();
+            if !status.is_none() {
+                return status;
+            }
+        }
+
+        self.states_queue
+            .iter()
+            .map(|state| state.get_state_work_status())
+            .find(|state| !state.is_none())
+            .unwrap_or(AppWorkStatus::None)
     }
 }

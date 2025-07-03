@@ -6,6 +6,7 @@ use ratatui::widgets::{
     Block, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
 };
 
+use crate::app::AppWorkStatus;
 use crate::{
     feed::feedentry::FeedEntry,
     ui::appstate::{AppState, AppStateEvent},
@@ -140,5 +141,9 @@ impl AppState for ReaderState {
 
     fn get_state_instructions(&self) -> String {
         String::from("j/k/↓/↑: scroll | Esc/q: leave")
+    }
+
+    fn get_state_work_status(&self) -> AppWorkStatus {
+        AppWorkStatus::None
     }
 }

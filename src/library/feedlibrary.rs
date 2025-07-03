@@ -2,13 +2,11 @@ use color_eyre::eyre::eyre;
 use tracing::error;
 
 use crate::{
-    defs,
-    feed::{self, feedentry::FeedEntry},
-    library::{
+    app::AppWorkStatus, defs, feed::{self, feedentry::FeedEntry}, library::{
         data::{config::Config, librarydata::LibraryData},
         feedcategory::FeedCategory,
         feeditem::FeedItem,
-    },
+    }
 };
 
 pub struct FeedLibrary {
@@ -97,5 +95,13 @@ impl FeedLibrary {
         }
 
         vec![]
+    }
+
+    pub fn update(&mut self) {
+
+    }
+
+    pub fn get_update_status(&self) -> AppWorkStatus {
+        AppWorkStatus::None
     }
 }
