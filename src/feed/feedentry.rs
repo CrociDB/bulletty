@@ -11,4 +11,5 @@ pub struct FeedEntry {
     pub text: String,
 
     pub lastupdated: DateTime<Utc>,
+    pub seen: bool,
 }

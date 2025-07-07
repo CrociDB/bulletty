@@ -125,6 +125,7 @@ pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result
             date: parse_date(&datestr),
             description: desc,
             lastupdated: Utc::now(),
+            seen: false,
         };
 
         feedentries.push(fe);
