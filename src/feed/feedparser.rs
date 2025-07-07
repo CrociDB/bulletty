@@ -62,6 +62,8 @@ pub fn parse(url: &str) -> color_eyre::Result<FeedItem> {
 
     feed.slug = slugify(&feed.title);
 
+    feed.lastupdated = Utc::now();
+
     Ok(feed)
 }
 
@@ -122,6 +124,7 @@ pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result
             text: content,
             date: parse_date(&datestr),
             description: desc,
+            lastupdated: Utc::now(),
         };
 
         feedentries.push(fe);

@@ -4,6 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use chrono::Utc;
 use color_eyre::eyre::eyre;
 use slug::slugify;
 
@@ -53,7 +54,8 @@ impl LibraryData {
 
         match OpenOptions::new()
             .write(true)
-            .create_new(true)
+            .create(true)
+            .truncate(true)
             .open(&feeddata)
         {
             Ok(mut file) => {
@@ -171,6 +173,10 @@ impl LibraryData {
                 file.write_all(&entrytext.into_bytes())?;
             }
         }
+
+        let mut feed = feed.clone();
+        feed.lastupdated = Utc::now();
+        self.feed_create(&feed, &category.title)?;
 
         Ok(())
     }

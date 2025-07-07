@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, Serialize, Deserialize)]
@@ -7,4 +8,6 @@ pub struct FeedItem {
     pub url: String,
     pub author: String,
     pub slug: String,
+
+    pub lastupdated: DateTime<Utc>,
 }

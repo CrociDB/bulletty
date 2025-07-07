@@ -9,4 +9,6 @@ pub struct FeedEntry {
     pub url: String,
     pub author: String,
     pub text: String,
+
+    pub lastupdated: DateTime<Utc>,
 }
