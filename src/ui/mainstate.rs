@@ -78,7 +78,7 @@ impl AppState for MainState {
             )
         };
 
-        let treelist = List::new(self.feedtreestate.get_items())
+        let treelist = List::new(self.feedtreestate.get_items(&self.library))
             .block(treestyle)
             .highlight_style(treeselectionstyle);
 

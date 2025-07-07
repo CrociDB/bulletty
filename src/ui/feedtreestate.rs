@@ -1,10 +1,13 @@
 use ratatui::widgets::{ListItem, ListState};
+use tracing::error;
 
 use crate::library::feedlibrary::FeedLibrary;
 
 pub enum FeedItemInfo {
+    /// Represents the category title
     Category(String),
-    Item(String, String),
+    /// Represents an item in the feed tree with a title, categore, and slug
+    Item(String, String, String),
 }
 
 pub struct FeedTreeState {
@@ -27,19 +30,33 @@ impl FeedTreeState {
             self.treeitems
                 .push(FeedItemInfo::Category(category.title.clone()));
             for item in category.feeds.iter() {
-                self.treeitems
-                    .push(FeedItemInfo::Item(item.title.clone(), item.slug.clone()));
+                self.treeitems.push(FeedItemInfo::Item(
+                    item.title.clone(),
+                    category.title.clone(),
+                    item.slug.clone(),
+                ));
             }
         }
     }
 
-    pub fn get_items(&self) -> Vec<ListItem> {
+    pub fn get_items(&self, library: &FeedLibrary) -> Vec<ListItem> {
         self.treeitems
             .iter()
             .map(|item| {
                 let title = match item {
                     FeedItemInfo::Category(t) => format!("\u{f07c} {}", t),
-                    FeedItemInfo::Item(t, _) => format!(" \u{f09e}  {}", t),
+                    FeedItemInfo::Item(t, c, s) => {
+                        if let Ok(unread) = library.data.get_unread_feed(c, s) {
+                            if unread > 0 {
+                                format!(" \u{f09e}  {} ({})", t, unread)
+                            } else {
+                                format!(" \u{f09e}  {}", t)
+                            }
+                        } else {
+                            error!("Couldn't get unread feed entries for '{}'", t);
+                            format!(" \u{f09e}  {}", t)
+                        }
+                    }
                 };
 
                 ListItem::new(title.clone())

@@ -33,7 +33,7 @@ impl FeedEntryState {
                 self.previous_selected = t.to_string();
                 library.get_feed_entries_by_category(t)
             }
-            Some(FeedItemInfo::Item(_, s)) => {
+            Some(FeedItemInfo::Item(_, _, s)) => {
                 self.previous_selected = s.to_string();
                 library.get_feed_entries_by_item_slug(s)
             }
@@ -52,10 +52,18 @@ impl FeedEntryState {
                 let mut item_content_lines: Vec<Line> = Vec::new();
 
                 item_content_lines.push(Line::from(""));
-                item_content_lines.push(Line::from(Span::styled(
-                    entry.title.clone(),
-                    Style::default().bold().underline_color(Color::Blue),
-                )));
+
+                if !entry.seen {
+                    item_content_lines.push(Line::from(Span::styled(
+                        format!("\u{f1ea} {} \u{e3e3}", entry.title),
+                        Style::default().fg(Color::Green),
+                    )));
+                } else {
+                    item_content_lines.push(Line::from(Span::styled(
+                        format!("\u{f1ea} {}", entry.title),
+                        Style::default().bold().underline_color(Color::Blue),
+                    )));
+                };
 
                 item_content_lines.push(Line::from(Span::styled(
                     format!(

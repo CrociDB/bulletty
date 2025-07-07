@@ -211,6 +211,34 @@ impl LibraryData {
 
         Ok(entries)
     }
+
+    pub fn get_unread_feed(&self, category: &str, feed_slug: &str) -> color_eyre::Result<u16> {
+        let mut unread: u16 = 0;
+
+        let feedir = self
+            .path
+            .join(DATA_CATEGORIES_DIR)
+            .join(category)
+            .join(feed_slug);
+
+        for entry in fs::read_dir(feedir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_file() {
+                let contents = std::fs::read_to_string(&path)?;
+                let parts: Vec<&str> = contents.split("---").collect();
+                if parts.len() < 2 {
+                    continue;
+                }
+                let entry: FeedEntry = toml::from_str(parts[1])?;
+                if !entry.seen {
+                    unread += 1;
+                }
+            }
+        }
+
+        Ok(unread)
+    }
 }
 
 pub fn load_or_create(path: &Path) {
