@@ -30,14 +30,14 @@ impl FeedEntryState {
 
         self.entries = match treestate.get_selected() {
             Some(FeedItemInfo::Category(t)) => {
-                        self.previous_selected = t.to_string();
-                        library.get_feed_entries_by_category(t)
-                    }
+                self.previous_selected = t.to_string();
+                library.get_feed_entries_by_category(t)
+            }
             Some(FeedItemInfo::Item(_, s)) => {
-                        self.previous_selected = s.to_string();
-                        library.get_feed_entries_by_item_slug(s)
-                    }
-            None => vec![]
+                self.previous_selected = s.to_string();
+                library.get_feed_entries_by_item_slug(s)
+            }
+            None => vec![],
         };
 
         if prev != self.previous_selected {
@@ -92,7 +92,9 @@ impl FeedEntryState {
     }
 
     pub fn select_next(&mut self) {
-        if self.entries.is_empty() { return; }
+        if self.entries.is_empty() {
+            return;
+        }
 
         if self.listatate.selected().unwrap_or(0) < self.entries.len() - 1 {
             self.listatate.select_next();
@@ -100,7 +102,9 @@ impl FeedEntryState {
     }
 
     pub fn select_previous(&mut self) {
-        if self.entries.is_empty() { return; }
+        if self.entries.is_empty() {
+            return;
+        }
 
         if self.listatate.selected().unwrap_or(0) > 0 {
             self.listatate.select_previous();

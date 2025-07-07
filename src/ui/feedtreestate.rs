@@ -53,11 +53,12 @@ impl FeedTreeState {
         } else {
             None
         }
-
     }
 
     pub fn select_next(&mut self) {
-        if self.treeitems.is_empty() { return; }
+        if self.treeitems.is_empty() {
+            return;
+        }
 
         if self.listatate.selected().unwrap_or(0) < self.treeitems.len() - 1 {
             self.listatate.select_next();
@@ -65,7 +66,9 @@ impl FeedTreeState {
     }
 
     pub fn select_previous(&mut self) {
-        if self.treeitems.is_empty() { return; }
+        if self.treeitems.is_empty() {
+            return;
+        }
 
         if self.listatate.selected().unwrap_or(0) > 0 {
             self.listatate.select_previous();
