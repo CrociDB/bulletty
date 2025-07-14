@@ -10,4 +10,7 @@ pub struct FeedItem {
     pub slug: String,
 
     pub lastupdated: DateTime<Utc>,
+
+    #[serde(skip_serializing, skip_deserializing)]
+    pub category: String,
 }

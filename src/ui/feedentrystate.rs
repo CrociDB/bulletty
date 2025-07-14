@@ -99,6 +99,14 @@ impl FeedEntryState {
         }
     }
 
+    pub fn set_current_read(&mut self) {
+        if let Some(selected) = self.listatate.selected() {
+            if selected < self.entries.len() {
+                self.entries[selected].seen = true;
+            }
+        }
+    }
+
     pub fn select_next(&mut self) {
         if self.entries.is_empty() {
             return;
