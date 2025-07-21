@@ -30,17 +30,13 @@ impl LibraryData {
     }
 
     pub fn feed_exists(&self, slug: &str, category: &str) -> bool {
-        let feedir = self
+        let feeddata = self
             .path
             .join(DATA_CATEGORIES_DIR)
             .join(category)
-            .join(slug);
-        if feedir.exists() {
-            let feeddata = feedir.join(DATA_FEED);
-            return feeddata.exists();
-        }
-
-        false
+            .join(slug)
+            .join(DATA_FEED);
+        feeddata.exists()
     }
 
     pub fn feed_create(&self, feed: &FeedItem) -> color_eyre::Result<()> {
@@ -52,22 +48,18 @@ impl LibraryData {
         fs::create_dir_all(&feedir)?;
 
         let feeddata = feedir.join(DATA_FEED);
+        let toml_str = toml::to_string(feed)
+            .map_err(|e| eyre!("Failed to serialize feed: {}", e))?;
 
-        match OpenOptions::new()
+        let mut file = OpenOptions::new()
             .write(true)
             .create(true)
             .truncate(true)
             .open(&feeddata)
-        {
-            Ok(mut file) => {
-                if let Err(e) = file.write_all(&toml::to_string(&feed).unwrap().into_bytes()) {
-                    Err(eyre!("Failed to write file {}: {}", feeddata.display(), e))
-                } else {
-                    Ok(())
-                }
-            }
-            Err(e) => Err(eyre!("Couldn't open file {}: {}", feeddata.display(), e)),
-        }
+            .map_err(|e| eyre!("Couldn't open file {}: {}", feeddata.display(), e))?;
+
+        file.write_all(toml_str.as_bytes())
+            .map_err(|e| eyre!("Failed to write file {}: {}", feeddata.display(), e))
     }
 
     pub fn generate_categories_tree(&self) -> color_eyre::Result<Vec<FeedCategory>> {
