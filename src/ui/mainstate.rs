@@ -160,7 +160,11 @@ impl AppState for MainState {
                     Ok(AppStateEvent::None)
                 }
                 (_, KeyCode::Enter) => {
+                    tracing::info!("Enter pressed");
                     if let Some(entry) = self.feedentrystate.get_selected() {
+                        self.library.data.set_entry_seen(&entry);
+                        self.feedentrystate.set_current_read();
+
                         Ok(AppStateEvent::ChangeState(Box::new(ReaderState::new(
                             entry,
                         ))))

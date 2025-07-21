@@ -7,6 +7,7 @@ use std::{
 use chrono::Utc;
 use color_eyre::eyre::eyre;
 use slug::slugify;
+use tracing::{error, info};
 
 use crate::feed::feedentry::FeedEntry;
 use crate::feed::feedparser;
@@ -29,44 +30,36 @@ impl LibraryData {
     }
 
     pub fn feed_exists(&self, slug: &str, category: &str) -> bool {
-        let feedir = self
+        let feeddata = self
             .path
             .join(DATA_CATEGORIES_DIR)
             .join(category)
-            .join(slug);
-        if feedir.exists() {
-            let feeddata = feedir.join(DATA_FEED);
-            return feeddata.exists();
-        }
-
-        false
+            .join(slug)
+            .join(DATA_FEED);
+        feeddata.exists()
     }
 
-    pub fn feed_create(&self, feed: &FeedItem, category: &str) -> color_eyre::Result<()> {
+    pub fn feed_create(&self, feed: &FeedItem) -> color_eyre::Result<()> {
         let feedir = self
             .path
             .join(DATA_CATEGORIES_DIR)
-            .join(category)
+            .join(&feed.category)
             .join(&feed.slug);
         fs::create_dir_all(&feedir)?;
 
         let feeddata = feedir.join(DATA_FEED);
+        let toml_str = toml::to_string(feed)
+            .map_err(|e| eyre!("Failed to serialize feed: {}", e))?;
 
-        match OpenOptions::new()
+        let mut file = OpenOptions::new()
             .write(true)
             .create(true)
             .truncate(true)
             .open(&feeddata)
-        {
-            Ok(mut file) => {
-                if let Err(e) = file.write_all(&toml::to_string(&feed).unwrap().into_bytes()) {
-                    Err(eyre!("Failed to write file {}: {}", feeddata.display(), e))
-                } else {
-                    Ok(())
-                }
-            }
-            Err(e) => Err(eyre!("Couldn't open file {}: {}", feeddata.display(), e)),
-        }
+            .map_err(|e| eyre!("Couldn't open file {}: {}", feeddata.display(), e))?;
+
+        file.write_all(toml_str.as_bytes())
+            .map_err(|e| eyre!("Failed to write file {}: {}", feeddata.display(), e))
     }
 
     pub fn generate_categories_tree(&self) -> color_eyre::Result<Vec<FeedCategory>> {
@@ -79,7 +72,7 @@ impl LibraryData {
                 if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
                     let cat = FeedCategory {
                         title: String::from(name),
-                        feeds: self.load_feeds_from_category(path.as_path())?,
+                        feeds: self.load_feeds_from_category(name, path.as_path())?,
                     };
 
                     categories.push(cat);
@@ -90,7 +83,11 @@ impl LibraryData {
         Ok(categories)
     }
 
-    pub fn load_feeds_from_category(&self, category: &Path) -> color_eyre::Result<Vec<FeedItem>> {
+    pub fn load_feeds_from_category(
+        &self,
+        category_name: &str,
+        category: &Path,
+    ) -> color_eyre::Result<Vec<FeedItem>> {
         let mut feeds = Vec::new();
 
         for entry in fs::read_dir(category)? {
@@ -99,13 +96,14 @@ impl LibraryData {
                 let feedpath = path.join(defs::DATA_FEED);
 
                 if let Ok(file) = std::fs::read_to_string(&feedpath) {
-                    let feed = match toml::from_str(&file) {
+                    let mut feed: FeedItem = match toml::from_str(&file) {
                         Ok(f) => f,
                         Err(e) => {
                             return Err(eyre!("Error: feed file can't be parsed: {}", e));
                         }
                     };
 
+                    feed.category = category_name.to_string();
                     feeds.push(feed);
                 }
             }
@@ -120,23 +118,14 @@ impl LibraryData {
         feed: &FeedItem,
         feedxml: Option<String>,
     ) -> color_eyre::Result<()> {
-        let feedentries = if let Some(txt) = feedxml {
+        let mut feedentries = if let Some(txt) = feedxml {
             feedparser::get_feed_entries_doc(feed, &txt)
         } else {
             feedparser::get_feed_entries(feed)
         }?;
 
-        self.update_entries(category, feed, feedentries)
-    }
-
-    fn update_entries(
-        &self,
-        category: &FeedCategory,
-        feed: &FeedItem,
-        entries: Vec<FeedEntry>,
-    ) -> color_eyre::Result<()> {
-        for entry in entries.iter().as_ref() {
-            let item_slug = slugify(&entry.title);
+        feedentries.iter_mut().for_each(|e| {
+            let item_slug = slugify(&e.title);
             let entrypath = self
                 .path
                 .join(defs::DATA_CATEGORIES_DIR)
@@ -144,18 +133,26 @@ impl LibraryData {
                 .join(&feed.slug)
                 .join(format!("{}.md", item_slug));
 
+            e.filepath = entrypath;
+        });
+
+        self.update_entries(feed, feedentries)
+    }
+
+    fn update_entries(&self, feed: &FeedItem, entries: Vec<FeedEntry>) -> color_eyre::Result<()> {
+        for entry in entries.iter().as_ref() {
             // if it exists, it means the entry has been setup already
-            if !entrypath.exists() {
+            if !entry.filepath.exists() {
                 let mut file = match OpenOptions::new()
                     .write(true)
                     .create_new(true)
-                    .open(&entrypath)
+                    .open(&entry.filepath)
                 {
                     Ok(file) => file,
                     Err(error) => {
                         return Err(eyre!(
                             "Error creating file '{}': {}",
-                            entrypath.display(),
+                            entry.filepath.display(),
                             error
                         ));
                     }
@@ -176,7 +173,40 @@ impl LibraryData {
 
         let mut feed = feed.clone();
         feed.lastupdated = Utc::now();
-        self.feed_create(&feed, &category.title)?;
+        self.feed_create(&feed)?;
+
+        Ok(())
+    }
+
+    pub fn save_feed_entry(&self, entry: &FeedEntry) -> color_eyre::Result<()> {
+        info!("Saving {:?}", entry.filepath);
+
+        let mut file = match OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&entry.filepath)
+        {
+            Ok(file) => file,
+            Err(error) => {
+                return Err(eyre!(
+                    "Error creating file '{}': {}",
+                    entry.filepath.display(),
+                    error
+                ));
+            }
+        };
+
+        let mut entryclone = (*entry).clone();
+        entryclone.text = String::new();
+
+        let entrytext = format!(
+            "---\n{}---\n{}",
+            toml::to_string(&entryclone).unwrap_or_default(),
+            &entry.text,
+        );
+
+        file.write_all(&entrytext.into_bytes())?;
 
         Ok(())
     }
@@ -194,7 +224,7 @@ impl LibraryData {
             .join(&category.title)
             .join(&item.slug);
 
-        for entry in fs::read_dir(feedir)? {
+        for entry in fs::read_dir(&feedir)? {
             let entry = entry?;
             let path = entry.path();
             if path.is_file() {
@@ -204,6 +234,9 @@ impl LibraryData {
                     continue;
                 }
                 let mut entry: FeedEntry = toml::from_str(parts[1])?;
+
+                entry.filepath = path.clone();
+
                 entry.text = parts[2..].join("---");
                 entries.push(entry);
             }
@@ -212,6 +245,8 @@ impl LibraryData {
         Ok(entries)
     }
 
+    // TODO: this needs to be cached and only updated every now and then, since it's beeing pretty
+    // intensive now
     pub fn get_unread_feed(&self, category: &str, feed_slug: &str) -> color_eyre::Result<u16> {
         let mut unread: u16 = 0;
 
@@ -238,6 +273,16 @@ impl LibraryData {
         }
 
         Ok(unread)
+    }
+
+    pub fn set_entry_seen(&self, entry: &FeedEntry) {
+        if !entry.seen {
+            let mut entry = entry.clone();
+            entry.seen = true;
+            if let Err(e) = self.save_feed_entry(&entry) {
+                error!("Couldn't set entry seen: {:?}", e);
+            }
+        }
     }
 }
 

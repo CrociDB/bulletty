@@ -44,20 +44,19 @@ impl FeedLibrary {
         url: &str,
         category: &Option<String>,
     ) -> color_eyre::Result<FeedItem> {
-        let feed = feed::feedparser::parse(url)?;
+        let mut feed = feed::feedparser::parse(url)?;
 
-        let category_string = category
+        feed.category = category
             .clone()
             .unwrap_or_else(|| String::from(defs::DATA_CATEGORY_DEFAULT));
 
         // check if feed already in library
-        if self.data.feed_exists(&feed.slug, &category_string) {
+        if self.data.feed_exists(&feed.slug, &feed.category) {
             return Err(eyre!("Feed already exists"));
         }
 
         // then create
-        self.data.feed_create(&feed, &category_string)?;
-
+        self.data.feed_create(&feed)?;
         Ok(feed)
     }
 

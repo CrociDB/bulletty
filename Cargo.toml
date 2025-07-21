@@ -11,10 +11,10 @@ crossterm = "0.29.0"
 ratatui = "0.29.0"
 color-eyre = "0.6.5"
 dirs = "6"
-toml = "0.8.23"
+toml = "0.9.2"
 serde = { version = "1.0.219", features = ["derive"] }
-clap = { version = "4.5.40", features = ["derive"] }
 reqwest = { version = "0.12.22", features = ["blocking"] }
+clap = { version = "4.5.41", features = ["derive"] }
 roxmltree = "0.20.0"
 openssl = { version = "0.10", features = ["vendored"] }
 slug = "0.1"

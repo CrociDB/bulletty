@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use chrono::{DateTime, Utc};
 use html2md::parse_html;
 use regex::Regex;
@@ -126,6 +128,7 @@ pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result
             description: desc,
             lastupdated: Utc::now(),
             seen: false,
+            filepath: PathBuf::default(),
         };
 
         feedentries.push(fe);
