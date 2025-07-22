@@ -5,7 +5,7 @@
   <img src="img/screenshot.gif" alt="bulletty" />
 </p>
 
-**bulletty** is a TUI feed (RSS and ATOM) reader. Read your subscriptions within your terminal. It downloads the entries for offline reading so all the data is yours: your subscriptions, highlights, comments, etc. You only need to sync the `data` folder.
+**bulletty** is a TUI feed (RSS and ATOM) reader. Read your subscriptions within your terminal. It downloads the entries for offline reading so all the data is local and yours: your subscriptions, highlights, comments, etc. You only need to sync the `data` folder.
 
 It's in active development.
 
@@ -15,16 +15,17 @@ It's in active development.
  - [X] All your data in one place
  - [X] Download entries
  - [X] Render Markdown
- - [ ] Mouse support
- - [ ] Image support (depending on your terminal emulator)
  - [ ] Themes
+ - [ ] Read later
  - [ ] Highlight
  - [ ] Notes
  - [ ] Web view
+ - [ ] Mouse support
+ - [ ] Image support
 
 ## Philosophy
 
-The whole idea is bringing back the syndicalized internet. You subscribe to the sources you like the most and you get their content whenever it's available. When you get it, it's yours. **bulletty** will generate a Markdown file of each entry from each source. You can read through the embedded reader, straight from your terminal, or using any text editor. Much like the posix philosophy, everything here is a file.
+The whole idea is bringing back the syndicalized internet. You subscribe to the sources you like the most and you get their content whenever it's available. When you get it, it's local, it's yours. **bulletty** will generate a Markdown file of each entry from each source. You can read through the embedded reader, straight from your terminal, or using any text editor. Much like the posix philosophy, everything here is a file.
 
 Registering a new feed is as easy as:
 
@@ -34,12 +35,6 @@ bulletty add https://crocidb.com/index.xml Programming
 ```
 
 This will add the feed for my own blog into the **Programming** category. If no category is passed, it adds to **General**.
-
-Then update all sources:
-
-```shell
-bulletty update
-```
 
 In the end, it will generate a structure of files like this:
 
