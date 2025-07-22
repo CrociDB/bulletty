@@ -56,12 +56,12 @@ impl FeedEntryState {
                 if !entry.seen {
                     item_content_lines.push(Line::from(Span::styled(
                         format!("\u{f1ea} {} \u{e3e3}", entry.title),
-                        Style::default().fg(Color::Green),
+                        Style::default().bold().fg(Color::from_u32(0x81ae80)),
                     )));
                 } else {
                     item_content_lines.push(Line::from(Span::styled(
                         format!("\u{f1ea} {}", entry.title),
-                        Style::default().bold().underline_color(Color::Blue),
+                        Style::default().bold(),
                     )));
                 };
 

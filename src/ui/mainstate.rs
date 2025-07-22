@@ -66,7 +66,7 @@ impl AppState for MainState {
                 Block::default()
                     .style(Style::default().bg(Color::from_u32(0x262626)))
                     .padding(Padding::new(2, 2, 2, 2)),
-                Style::default().bg(Color::Yellow),
+                Style::default().bg(Color::from_u32(0x514537)),
             )
         } else {
             (
@@ -92,7 +92,7 @@ impl AppState for MainState {
         let mut entryliststate = self.feedentrystate.listatate.clone();
 
         let entryselectionstyle = if self.inputstate == MainInputState::Content {
-            Style::default().bg(Color::Blue)
+            Style::default().bg(Color::from_u32(0x514537))
         } else {
             Style::default().bg(Color::DarkGray)
         };
