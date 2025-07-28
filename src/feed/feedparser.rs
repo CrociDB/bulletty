@@ -1,11 +1,12 @@
 use std::path::PathBuf;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
 use html2md::parse_html;
 use regex::Regex;
 use reqwest::blocking::get;
 use roxmltree::Node;
 use slug::slugify;
+use tracing::error;
 
 use crate::{feed::feedentry::FeedEntry, library::feeditem::FeedItem};
 
@@ -124,7 +125,7 @@ pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result
                 .to_string(),
 
             text: content,
-            date: parse_date(&datestr),
+            date: parse_date(&datestr).map_err(|err| error!("{:?}", err)).unwrap_or_default(),
             description: desc,
             lastupdated: Utc::now(),
             seen: false,
@@ -137,30 +138,41 @@ pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result
     Ok(feedentries)
 }
 
-fn parse_date(date_str: &str) -> DateTime<Utc> {
-    DateTime::parse_from_rfc3339(date_str)
-        .map(|dt| dt.with_timezone(&Utc))
-        .or_else(|_| {
-            chrono::NaiveDateTime::parse_from_str(date_str, "%Y-%m-%d %H:%M:%S")
-                .map(|naive| DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc))
-        })
-        .or_else(|_| {
-            chrono::NaiveDate::parse_from_str(date_str, "%Y-%m-%d").map(|naive_date| {
-                let naive = naive_date.and_hms_opt(0, 0, 0).unwrap();
-                DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc)
-            })
-        })
-        .or_else(|_| {
-            DateTime::parse_from_str(date_str, "%a, %d %b %Y %H:%M:%S %z")
-                .map(|dt| dt.with_timezone(&Utc))
-        })
-        .unwrap_or_else(|_| {
-            let fallback = chrono::NaiveDate::from_ymd_opt(1990, 9, 19)
-                .unwrap()
-                .and_hms_opt(0, 0, 0)
-                .unwrap();
-            DateTime::<Utc>::from_naive_utc_and_offset(fallback, Utc)
-        })
+fn parse_date(date_str: &str) -> color_eyre::Result<DateTime<Utc>> {
+    // Attempt to parse as RFC3339 (e.g., "2024-01-01T12:00:00Z" or "2024-01-01T12:00:00+01:00")
+    if let Ok(dt) = DateTime::parse_from_rfc3339(date_str) {
+        return Ok(dt.with_timezone(&Utc));
+    }
+
+    // Attempt to parse as RFC2822 (e.g., "Tue, 01 Jan 2024 12:00:00 +0000")
+    if let Ok(dt) = DateTime::parse_from_rfc2822(date_str) {
+        return Ok(dt.with_timezone(&Utc));
+    }
+
+    // Attempt to parse with the specific format "Tue, 01 Jan 2024 12:00:00 +0000"
+    let format_with_offset = "%a, %d %b %Y %H:%M:%S %z";
+    if let Ok(dt) = DateTime::parse_from_str(date_str, format_with_offset) {
+        return Ok(dt.with_timezone(&Utc));
+    }
+
+    // Attempt to parse a NaiveDateTime with no offset (e.g., "2024-01-01 12:00:00")
+    let format_naive_datetime = "%Y-%m-%d %H:%M:%S";
+    if let Ok(naive) = NaiveDateTime::parse_from_str(date_str, format_naive_datetime) {
+        return Ok(DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc));
+    }
+
+    // Attempt to parse a NaiveDate (e.g., "2024-01-01") and set time to midnight UTC
+    let format_naive_date = "%Y-%m-%d";
+    if let Ok(naive_date) = NaiveDate::parse_from_str(date_str, format_naive_date) {
+        if let Some(naive_datetime) = naive_date.and_hms_opt(0, 0, 0) {
+            return Ok(DateTime::<Utc>::from_naive_utc_and_offset(
+                naive_datetime,
+                Utc,
+            ));
+        }
+    }
+
+    Err(color_eyre::eyre::eyre!("Couldn't parse date: {:?}", date_str))
 }
 
 fn get_description_content(entry: &Node) -> (String, String) {
@@ -204,9 +216,9 @@ fn strip_markdown_tags(input: &str) -> String {
         r"\*(.*?)\*",         // italic *
         r"`(.*?)`",           // inline code
         r"~~(.*?)~~",         // strikethrough
-        r"\[(.*?)\]\(.*?\)",  // links
+        r"#+\s*",             // headings
         r"!\[(.*?)\]\(.*?\)", // images
-        r"^#+\s*",            // headings
+        r"\[(.*?)\]\(.*?\)",  // links
         r">+\s*",             // blockquotes
         r"[-*_=]{3,}",        // horizontal rules
         r"`{3}.*?`{3}",       // code blocks
@@ -217,4 +229,48 @@ fn strip_markdown_tags(input: &str) -> String {
         result = re.replace_all(&result, "$1").to_string();
     }
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use chrono::TimeZone;
+
+    use super::*;
+
+    #[test]
+    fn test_strip_markdown_tags() {
+        let input = "**bold** *italic* `code` ~~strike~~ [link](url) ![image](url) # heading > blockquote\n---\n";
+        let expected = "bold italic code strike link image heading blockquote\n\n";
+        assert_eq!(strip_markdown_tags(input), expected);
+    }
+
+    #[test]
+    fn test_parse_date_various_formats() {
+        let datetime_strings = [
+            "2024-01-01T12:00:00Z",            // RFC3339 UTC
+            "2024-01-01T13:00:00+01:00",       // RFC3339 with offset
+            "2024-02-29 09:00:00",             // Naive datetime
+            "2023-11-20",                      // Naive date
+            "Invalid Date String",             // Invalid format
+        ];
+
+        let expected = [
+            Some(DateTime::parse_from_rfc3339("2024-01-01T12:00:00+00:00").unwrap().with_timezone(&Utc)),
+            Some(DateTime::parse_from_rfc3339("2024-01-01T12:00:00+00:00").unwrap().with_timezone(&Utc)), // 13:00+01:00 == 12:00Z
+            Some(Utc.with_ymd_and_hms(2024, 2, 29, 9, 0, 0).unwrap()),
+            Some(Utc.with_ymd_and_hms(2023, 11, 20, 0, 0, 0).unwrap()),
+            None,
+        ];
+
+        for (input, expected_str) in datetime_strings.iter().zip(expected.iter()) {
+            let result = parse_date(input);
+            match expected_str {
+                Some(exp) => match result {
+                    Ok(ref dt) => assert_eq!(dt, exp, "Failed on input: {}", input),
+                    Err(_) => panic!("Expected Ok for input: {}", input),
+                },
+                None => assert!(result.is_err(), "Expected error for input: {}", input),
+            }
+        }
+    }
 }
