@@ -118,7 +118,7 @@ pub fn get_feed_entries_doc(doctxt: &str) -> color_eyre::Result<Vec<FeedEntry>> 
             .to_string();
 
         // author extraction
-        let entryauthor: String = if let Some(author_tag) = feed_tag
+        let entryauthor: String = if let Some(author_tag) = entry
             .descendants()
             .find(|t| t.tag_name().name() == "author")
         {
@@ -174,14 +174,8 @@ fn parse_date(date_str: &str) -> color_eyre::Result<DateTime<Utc>> {
         return Ok(dt.with_timezone(&Utc));
     }
 
-    // Attempt to parse as RFC2822 (e.g., "Tue, 01 Jan 2024 12:00:00 +0000")
+    // Attempt to parse as RFC2822 (e.g., "Mon, 01 Jan 2024 12:00:00 +0000")
     if let Ok(dt) = DateTime::parse_from_rfc2822(date_str) {
-        return Ok(dt.with_timezone(&Utc));
-    }
-
-    // Attempt to parse with the specific format "Tue, 01 Jan 2024 12:00:00 +0000"
-    let format_with_offset = "%a, %d %b %Y %H:%M:%S %z";
-    if let Ok(dt) = DateTime::parse_from_str(date_str, format_with_offset) {
         return Ok(dt.with_timezone(&Utc));
     }
 
@@ -280,11 +274,12 @@ mod tests {
     #[test]
     fn test_parse_date_various_formats() {
         let datetime_strings = [
-            "2024-01-01T12:00:00Z",      // RFC3339 UTC
-            "2024-01-01T13:00:00+01:00", // RFC3339 with offset
-            "2024-02-29 09:00:00",       // Naive datetime
-            "2023-11-20",                // Naive date
-            "Invalid Date String",       // Invalid format
+            "2024-01-01T12:00:00Z",            // RFC3339 UTC
+            "2024-01-01T13:00:00+01:00",       // RFC3339 with offset
+            "2024-02-29 09:00:00",             // Naive datetime
+            "2023-11-20",                      // Naive date
+            "Mon, 01 Jan 2024 12:00:00 +0000", // RFC2822
+            "Invalid Date String",             // Invalid format
         ];
 
         let expected = [
@@ -300,6 +295,7 @@ mod tests {
             ), // 13:00+01:00 == 12:00Z
             Some(Utc.with_ymd_and_hms(2024, 2, 29, 9, 0, 0).unwrap()),
             Some(Utc.with_ymd_and_hms(2023, 11, 20, 0, 0, 0).unwrap()),
+            Some(Utc.with_ymd_and_hms(2024, 1, 1, 12, 0, 0).unwrap()),
             None,
         ];
 
@@ -308,7 +304,7 @@ mod tests {
             match expected_str {
                 Some(exp) => match result {
                     Ok(ref dt) => assert_eq!(dt, exp, "Failed on input: {}", input),
-                    Err(_) => panic!("Expected Ok for input: {}", input),
+                    Err(e) => panic!("Expected Ok for input: {} - Error: {}", input, e),
                 },
                 None => assert!(result.is_err(), "Expected error for input: {}", input),
             }
@@ -378,5 +374,195 @@ mod tests {
         assert_eq!(feed.url, "NOURL");
         assert!(feed.author.contains("Carol"));
     }
-} 
 
+    #[test]
+    fn get_feed_entries_doc_parses_rss_items_variants() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+ <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+   <channel>
+     <title>Example RSS</title>
+     <link>https://example.com/</link>
+     <description>RSS description</description>
+     <author>Carol</author>
+     <item>
+       <title>Item A</title>
+       <link>https://example.com/a</link>
+       <description>Item A description</description>
+       <pubDate>Mon, 01 Jan 2024 12:00:00 +0000</pubDate>
+       <content:encoded>Item A content</content:encoded>
+     </item>
+     <item>
+       <title>Item B</title>
+       <link>https://example.com/b</link>
+       <dc:date>2024-03-10T09:30:00Z</dc:date>
+       <description>Item B description</description>
+     </item>
+   </channel>
+ </rss>"#;
+
+        let entries = get_feed_entries_doc(xml).expect("failed to parse RSS entries");
+        assert_eq!(entries.len(), 2);
+
+        // Item A: prefers content:encoded for text, description for description, channel-level author
+        let a = &entries[0];
+        assert_eq!(a.title, "Item A");
+        assert_eq!(a.url, "https://example.com/a");
+        assert_eq!(a.author, "Carol");
+        assert_eq!(a.text, "Item A content");
+        assert_eq!(a.description, "Item A description");
+        let expected_a_date = parse_date("Mon, 01 Jan 2024 12:00:00 +0000").unwrap();
+        assert_eq!(a.date, expected_a_date);
+
+        // Item B: no content:encoded, uses description for both text and description, dc:date supported
+        let b = &entries[1];
+        assert_eq!(b.title, "Item B");
+        assert_eq!(b.url, "https://example.com/b");
+        assert_eq!(b.author, "Carol");
+        assert_eq!(b.text, "Item B description");
+        assert_eq!(b.description, "Item B description");
+        let expected_b_date = DateTime::parse_from_rfc3339("2024-03-10T09:30:00Z")
+            .unwrap()
+            .with_timezone(&Utc);
+        assert_eq!(b.date, expected_b_date);
+    }
+
+    #[test]
+    fn get_feed_entries_doc_parses_atom_entries_variants() {
+        let xml = r#"<?xml version="1.0" encoding="utf-8"?>
+ <feed xmlns="http://www.w3.org/2005/Atom">
+   <title>Example Atom</title>
+   <link href="https://example.org/"/>
+   <author>
+     <name>Bob</name>
+   </author>
+   <id>urn:uuid:feedid</id>
+   <updated>2024-01-01T00:00:00Z</updated>
+   <entry>
+     <title>Entry 1</title>
+     <id>https://example.org/e1</id>
+     <summary>Summary 1</summary>
+     <content>Entry 1 content</content>
+     <published>2024-02-01T10:00:00Z</published>
+   </entry>
+   <entry>
+     <title>Entry 2</title>
+     <id>https://example.org/e2</id>
+     <content>Entry 2 content</content>
+     <updated>2024-02-05T11:30:00Z</updated>
+   </entry>
+ </feed>"#;
+
+        let entries = get_feed_entries_doc(xml).expect("failed to parse Atom entries");
+        assert_eq!(entries.len(), 2);
+
+        // Entry 1: uses summary for description, content for text, published for date, id for URL, feed-level author
+        let e1 = &entries[0];
+        assert_eq!(e1.title, "Entry 1");
+        assert_eq!(e1.url, "https://example.org/e1");
+        assert_eq!(e1.author, "Bob");
+        assert_eq!(e1.text, "Entry 1 content");
+        assert_eq!(e1.description, "Summary 1");
+        let expected_e1_date = DateTime::parse_from_rfc3339("2024-02-01T10:00:00Z")
+            .unwrap()
+            .with_timezone(&Utc);
+        assert_eq!(e1.date, expected_e1_date);
+
+        // Entry 2: no summary -> description falls back to content, updated for date, id for URL
+        let e2 = &entries[1];
+        assert_eq!(e2.title, "Entry 2");
+        assert_eq!(e2.url, "https://example.org/e2");
+        assert_eq!(e2.author, "Bob");
+        assert_eq!(e2.text, "Entry 2 content");
+        assert_eq!(e2.description, "Entry 2 content");
+        let expected_e2_date = DateTime::parse_from_rfc3339("2024-02-05T11:30:00Z")
+            .unwrap()
+            .with_timezone(&Utc);
+        assert_eq!(e2.date, expected_e2_date);
+    }
+
+    #[test]
+    fn get_feed_entries_doc_parses_atom_entry_level_author_overrides_feed() {
+        let xml = r#"<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Example Atom</title>
+  <link href="https://example.org/"/>
+  <author>
+    <name>Feed Author</name>
+  </author>
+  <id>urn:uuid:feedid</id>
+  <updated>2024-01-01T00:00:00Z</updated>
+
+  <entry>
+    <title>Entry Has Own Author</title>
+    <id>https://example.org/own</id>
+    <author>
+      <name>Alice</name>
+    </author>
+    <content>Own author content</content>
+    <published>2024-02-01T10:00:00Z</published>
+  </entry>
+
+  <entry>
+    <title>Entry Falls Back To Feed Author</title>
+    <id>https://example.org/fallback</id>
+    <content>No entry author here</content>
+    <updated>2024-02-05T11:30:00Z</updated>
+  </entry>
+</feed>"#;
+
+        let entries = get_feed_entries_doc(xml)
+            .expect("failed to parse Atom entries with entry-level authors");
+        assert_eq!(entries.len(), 2);
+
+        let e1 = &entries[0];
+        assert_eq!(e1.title, "Entry Has Own Author");
+        assert_eq!(e1.url, "https://example.org/own");
+        assert_eq!(e1.author, "Alice"); // entry-level author should override feed-level author
+
+        let e2 = &entries[1];
+        assert_eq!(e2.title, "Entry Falls Back To Feed Author");
+        assert_eq!(e2.url, "https://example.org/fallback");
+        assert_eq!(e2.author, "Feed Author"); // falls back to feed-level author
+    }
+
+    #[test]
+    fn get_feed_entries_doc_parses_rss_item_level_author_overrides_channel() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Example RSS</title>
+    <link>https://example.com/</link>
+    <description>RSS description</description>
+    <author>Channel Author</author>
+    <item>
+      <title>Item With Author</title>
+      <link>https://example.com/with-author</link>
+      <description>Has its own author</description>
+      <author>Alice</author>
+      <pubDate>Mon, 01 Jan 2024 12:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Item With DC Creator</title>
+      <link>https://example.com/with-dc-creator</link>
+      <description>Has dc:creator</description>
+      <dc:creator>Dave</dc:creator>
+      <dc:date>2024-02-01T10:00:00Z</dc:date>
+    </item>
+  </channel>
+</rss>"#;
+
+        let entries =
+            get_feed_entries_doc(xml).expect("failed to parse RSS entries with item-level authors");
+        assert_eq!(entries.len(), 2);
+
+        let a = &entries[0];
+        assert_eq!(a.title, "Item With Author");
+        assert_eq!(a.url, "https://example.com/with-author");
+        assert_eq!(a.author, "Alice"); // item-level <author> should override channel author
+
+        let b = &entries[1];
+        assert_eq!(b.title, "Item With DC Creator");
+        assert_eq!(b.url, "https://example.com/with-dc-creator");
+        assert_eq!(b.author, "Dave"); // item-level <dc:creator> should override channel author
+    }
+}
