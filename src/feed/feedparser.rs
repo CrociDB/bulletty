@@ -82,10 +82,10 @@ fn parse(doc: &str, feed_url: &str) -> color_eyre::Result<FeedItem> {
 
 pub fn get_feed_entries(feed: &FeedItem) -> color_eyre::Result<Vec<FeedEntry>> {
     let response = get(&feed.feed_url)?.text()?;
-    get_feed_entries_doc(feed, &response)
+    get_feed_entries_doc(&response)
 }
 
-pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result<Vec<FeedEntry>> {
+pub fn get_feed_entries_doc(doctxt: &str) -> color_eyre::Result<Vec<FeedEntry>> {
     let doc = roxmltree::Document::parse(doctxt)?;
 
     let mut feed_tag = doc.root();
@@ -104,6 +104,7 @@ pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result
     {
         let (desc, content) = get_description_content(&entry);
 
+        // date extraction
         let datestr = entry
             .descendants()
             .find(|t| {
@@ -116,6 +117,27 @@ pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result
             .unwrap_or("1990-09-19")
             .to_string();
 
+        // author extraction
+        let entryauthor: String = if let Some(author_tag) = feed_tag
+            .descendants()
+            .find(|t| t.tag_name().name() == "author")
+        {
+            if let Some(nametag) = author_tag
+                .descendants()
+                .find(|t| t.tag_name().name() == "name")
+                .and_then(|t| t.text())
+            {
+                String::from(nametag)
+            } else if let Some(text) = author_tag.text() {
+                String::from(text)
+            } else {
+                "".to_string()
+            }
+        } else {
+            "".to_string()
+        };
+
+        // feed creation
         let fe = FeedEntry {
             title: entry
                 .descendants()
@@ -123,17 +145,13 @@ pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result
                 .and_then(|t| t.text())
                 .unwrap_or("NOTITLE")
                 .to_string(),
-
-            // TODO: find author
-            author: feed.author.clone(),
-
+            author: entryauthor,
             url: entry
                 .descendants()
                 .find(|t| t.tag_name().name() == "id" || t.tag_name().name() == "link")
                 .and_then(|t| t.text())
                 .unwrap_or("NOURL")
                 .to_string(),
-
             text: content,
             date: parse_date(&datestr)
                 .map_err(|err| error!("{:?}", err))
@@ -360,4 +378,5 @@ mod tests {
         assert_eq!(feed.url, "NOURL");
         assert!(feed.author.contains("Carol"));
     }
-}
+} 
+
