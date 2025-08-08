@@ -119,7 +119,7 @@ impl LibraryData {
         feedxml: Option<String>,
     ) -> color_eyre::Result<()> {
         let mut feedentries = if let Some(txt) = feedxml {
-            feedparser::get_feed_entries_doc(&txt)
+            feedparser::get_feed_entries_doc(&txt, &feed.author)
         } else {
             feedparser::get_feed_entries(feed)
         }?;

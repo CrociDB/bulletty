@@ -82,10 +82,13 @@ fn parse(doc: &str, feed_url: &str) -> color_eyre::Result<FeedItem> {
 
 pub fn get_feed_entries(feed: &FeedItem) -> color_eyre::Result<Vec<FeedEntry>> {
     let response = get(&feed.feed_url)?.text()?;
-    get_feed_entries_doc(&response)
+    get_feed_entries_doc(&response, &feed.author)
 }
 
-pub fn get_feed_entries_doc(doctxt: &str) -> color_eyre::Result<Vec<FeedEntry>> {
+pub fn get_feed_entries_doc(
+    doctxt: &str,
+    defaultauthor: &str,
+) -> color_eyre::Result<Vec<FeedEntry>> {
     let doc = roxmltree::Document::parse(doctxt)?;
 
     let mut feed_tag = doc.root();
@@ -120,7 +123,7 @@ pub fn get_feed_entries_doc(doctxt: &str) -> color_eyre::Result<Vec<FeedEntry>> 
         // author extraction
         let entryauthor: String = if let Some(author_tag) = entry
             .descendants()
-            .find(|t| t.tag_name().name() == "author")
+            .find(|t| t.tag_name().name() == "author" || t.tag_name().name() == "creator")
         {
             if let Some(nametag) = author_tag
                 .descendants()
@@ -131,10 +134,10 @@ pub fn get_feed_entries_doc(doctxt: &str) -> color_eyre::Result<Vec<FeedEntry>> 
             } else if let Some(text) = author_tag.text() {
                 String::from(text)
             } else {
-                "".to_string()
+                defaultauthor.to_string()
             }
         } else {
-            "".to_string()
+            defaultauthor.to_string()
         };
 
         // feed creation
@@ -400,7 +403,7 @@ mod tests {
    </channel>
  </rss>"#;
 
-        let entries = get_feed_entries_doc(xml).expect("failed to parse RSS entries");
+        let entries = get_feed_entries_doc(xml, "Carol").expect("failed to parse RSS entries");
         assert_eq!(entries.len(), 2);
 
         // Item A: prefers content:encoded for text, description for description, channel-level author
@@ -449,10 +452,13 @@ mod tests {
      <id>https://example.org/e2</id>
      <content>Entry 2 content</content>
      <updated>2024-02-05T11:30:00Z</updated>
+     <author>
+       <name>Alice</name>
+     </author>
    </entry>
  </feed>"#;
 
-        let entries = get_feed_entries_doc(xml).expect("failed to parse Atom entries");
+        let entries = get_feed_entries_doc(xml, "Bob").expect("failed to parse Atom entries");
         assert_eq!(entries.len(), 2);
 
         // Entry 1: uses summary for description, content for text, published for date, id for URL, feed-level author
@@ -471,7 +477,7 @@ mod tests {
         let e2 = &entries[1];
         assert_eq!(e2.title, "Entry 2");
         assert_eq!(e2.url, "https://example.org/e2");
-        assert_eq!(e2.author, "Bob");
+        assert_eq!(e2.author, "Alice");
         assert_eq!(e2.text, "Entry 2 content");
         assert_eq!(e2.description, "Entry 2 content");
         let expected_e2_date = DateTime::parse_from_rfc3339("2024-02-05T11:30:00Z")
@@ -510,7 +516,7 @@ mod tests {
   </entry>
 </feed>"#;
 
-        let entries = get_feed_entries_doc(xml)
+        let entries = get_feed_entries_doc(xml, "Feed Author")
             .expect("failed to parse Atom entries with entry-level authors");
         assert_eq!(entries.len(), 2);
 
@@ -551,8 +557,8 @@ mod tests {
   </channel>
 </rss>"#;
 
-        let entries =
-            get_feed_entries_doc(xml).expect("failed to parse RSS entries with item-level authors");
+        let entries = get_feed_entries_doc(xml, "Channel Author")
+            .expect("failed to parse RSS entries with entry-level authors");
         assert_eq!(entries.len(), 2);
 
         let a = &entries[0];
@@ -563,6 +569,6 @@ mod tests {
         let b = &entries[1];
         assert_eq!(b.title, "Item With DC Creator");
         assert_eq!(b.url, "https://example.com/with-dc-creator");
-        assert_eq!(b.author, "Dave"); // item-level <dc:creator> should override channel author
+        assert_eq!(b.author, "Dave"); // entry-level <dc:creator> should override channel author
     }
 }
