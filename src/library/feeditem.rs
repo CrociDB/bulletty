@@ -6,6 +6,7 @@ pub struct FeedItem {
     pub title: String,
     pub description: String,
     pub url: String,
+    pub feed_url: String,
     pub author: String,
     pub slug: String,
 

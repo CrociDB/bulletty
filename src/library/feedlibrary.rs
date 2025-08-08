@@ -44,7 +44,7 @@ impl FeedLibrary {
         url: &str,
         category: &Option<String>,
     ) -> color_eyre::Result<FeedItem> {
-        let mut feed = feed::feedparser::parse(url)?;
+        let mut feed = feed::feedparser::get_feed(url)?;
 
         feed.category = category
             .clone()

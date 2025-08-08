@@ -10,12 +10,15 @@ use tracing::error;
 
 use crate::{feed::feedentry::FeedEntry, library::feeditem::FeedItem};
 
-pub fn parse(url: &str) -> color_eyre::Result<FeedItem> {
+pub fn get_feed(url: &str) -> color_eyre::Result<FeedItem> {
     let response = get(url)?.text()?;
+    parse(&response, url)
+}
 
+fn parse(doc: &str, feed_url: &str) -> color_eyre::Result<FeedItem> {
     let mut feed = FeedItem::default();
 
-    let doc = roxmltree::Document::parse(response.as_str())?;
+    let doc = roxmltree::Document::parse(doc)?;
     let mut feed_tag = doc.root();
     if feed_tag.tag_name().name() == "rss" {
         feed_tag = feed_tag
@@ -33,33 +36,40 @@ pub fn parse(url: &str) -> color_eyre::Result<FeedItem> {
 
     feed.description = feed_tag
         .descendants()
-        .find(|t| t.tag_name().name() == "description")
+        .find(|t| t.tag_name().name() == "description" || t.tag_name().name() == "subtitle")
         .and_then(|t| t.text())
         .unwrap_or(&feed.title)
         .to_string();
 
-    // TODO: find the proper url of the post
-    // feed.url = feed_tag
-    //     .descendants()
-    //     .find(|t| t.tag_name().name() == "link")
-    //     .and_then(|t| t.text())
-    //     .unwrap_or(url)
-    //     .to_string();
-    feed.url = String::from(url);
+    feed.url = feed_tag
+        .descendants()
+        .find(|t| t.tag_name().name() == "link")
+        .and_then(|t| {
+            if t.text().is_none() {
+                t.attribute("href")
+            } else {
+                t.text()
+            }
+        })
+        .unwrap_or(feed_url)
+        .to_string();
+
+    feed.feed_url = feed_url.to_string();
 
     if let Some(author_tag) = feed_tag
         .descendants()
         .find(|t| t.tag_name().name() == "author")
     {
-        if let Some(text) = author_tag.text() {
+        if let Some(nametag) = author_tag
+            .descendants()
+            .find(|t| t.tag_name().name() == "name")
+            .and_then(|t| t.text())
+        {
+            feed.author = String::from(nametag);
+        } else if let Some(text) = author_tag.text() {
             feed.author = String::from(text);
         } else {
-            feed.author = author_tag
-                .children()
-                .find(|t| t.tag_name().name() == "name")
-                .and_then(|t| t.text())
-                .unwrap_or("NOAUTHOR")
-                .to_string();
+            feed.author = "NOAUTHOR".to_string();
         }
     }
 
@@ -71,7 +81,7 @@ pub fn parse(url: &str) -> color_eyre::Result<FeedItem> {
 }
 
 pub fn get_feed_entries(feed: &FeedItem) -> color_eyre::Result<Vec<FeedEntry>> {
-    let response = get(&feed.url)?.text()?;
+    let response = get(&feed.feed_url)?.text()?;
     get_feed_entries_doc(feed, &response)
 }
 
@@ -125,7 +135,9 @@ pub fn get_feed_entries_doc(feed: &FeedItem, doctxt: &str) -> color_eyre::Result
                 .to_string(),
 
             text: content,
-            date: parse_date(&datestr).map_err(|err| error!("{:?}", err)).unwrap_or_default(),
+            date: parse_date(&datestr)
+                .map_err(|err| error!("{:?}", err))
+                .unwrap_or_default(),
             description: desc,
             lastupdated: Utc::now(),
             seen: false,
@@ -172,7 +184,10 @@ fn parse_date(date_str: &str) -> color_eyre::Result<DateTime<Utc>> {
         }
     }
 
-    Err(color_eyre::eyre::eyre!("Couldn't parse date: {:?}", date_str))
+    Err(color_eyre::eyre::eyre!(
+        "Couldn't parse date: {:?}",
+        date_str
+    ))
 }
 
 fn get_description_content(entry: &Node) -> (String, String) {
@@ -247,16 +262,24 @@ mod tests {
     #[test]
     fn test_parse_date_various_formats() {
         let datetime_strings = [
-            "2024-01-01T12:00:00Z",            // RFC3339 UTC
-            "2024-01-01T13:00:00+01:00",       // RFC3339 with offset
-            "2024-02-29 09:00:00",             // Naive datetime
-            "2023-11-20",                      // Naive date
-            "Invalid Date String",             // Invalid format
+            "2024-01-01T12:00:00Z",      // RFC3339 UTC
+            "2024-01-01T13:00:00+01:00", // RFC3339 with offset
+            "2024-02-29 09:00:00",       // Naive datetime
+            "2023-11-20",                // Naive date
+            "Invalid Date String",       // Invalid format
         ];
 
         let expected = [
-            Some(DateTime::parse_from_rfc3339("2024-01-01T12:00:00+00:00").unwrap().with_timezone(&Utc)),
-            Some(DateTime::parse_from_rfc3339("2024-01-01T12:00:00+00:00").unwrap().with_timezone(&Utc)), // 13:00+01:00 == 12:00Z
+            Some(
+                DateTime::parse_from_rfc3339("2024-01-01T12:00:00+00:00")
+                    .unwrap()
+                    .with_timezone(&Utc),
+            ),
+            Some(
+                DateTime::parse_from_rfc3339("2024-01-01T12:00:00+00:00")
+                    .unwrap()
+                    .with_timezone(&Utc),
+            ), // 13:00+01:00 == 12:00Z
             Some(Utc.with_ymd_and_hms(2024, 2, 29, 9, 0, 0).unwrap()),
             Some(Utc.with_ymd_and_hms(2023, 11, 20, 0, 0, 0).unwrap()),
             None,
@@ -272,5 +295,73 @@ mod tests {
                 None => assert!(result.is_err(), "Expected error for input: {}", input),
             }
         }
+    }
+
+    #[test]
+    fn parses_rss2_channel_fields() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Example RSS</title>
+    <link>https://example.com/</link>
+    <description>RSS description</description>
+    <author>Alice</author>
+    <item>
+      <title>Item 1</title>
+      <link>https://example.com/item1</link>
+      <description>Item 1 description</description>
+      <author>alice@example.com (Alice)</author>
+    </item>
+  </channel>
+</rss>"#;
+
+        let feed = parse(xml, "NOURL").expect("failed to parse RSS 2.0");
+        assert_eq!(feed.title, "Example RSS");
+        assert_eq!(feed.description, "RSS description");
+        assert_eq!(feed.url, "https://example.com/");
+        assert!(feed.author.contains("Alice"));
+    }
+
+    #[test]
+    fn parses_atom_feed_fields() {
+        // Note: Atom <link> commonly uses href attribute. If parser doesn't handle it,
+        // this test will fail and should drive support for link @href.
+        let xml = r#"<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Example Atom</title>
+  <subtitle>Atom description</subtitle>
+  <link href="https://example.org/"/>
+  <author>
+    <name>Bob</name>
+  </author>
+  <id>urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6</id>
+  <updated>2003-12-13T18:30:02Z</updated>
+</feed>"#;
+
+        let feed = parse(xml, "NOURL").expect("failed to parse Atom");
+        assert_eq!(feed.title, "Example Atom");
+        assert_eq!(feed.description, "Atom description");
+        assert_eq!(feed.url, "https://example.org/");
+        assert_eq!(feed.author, "Bob");
+        // assert!(feed.author.contains("Bob"));
+    }
+
+    #[test]
+    fn rss_missing_link_uses_default_url() {
+        // Based on implementation snippet: missing link should default to "NOURL".
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>No Link RSS</title>
+    <description>No link here</description>
+    <author>Carol</author>
+  </channel>
+</rss>"#;
+
+        let feed = parse(xml, "NOURL").expect("failed to parse RSS without link");
+        assert_eq!(feed.title, "No Link RSS");
+        assert_eq!(feed.description, "No link here");
+        assert_eq!(feed.url, "NOURL");
+        assert!(feed.author.contains("Carol"));
     }
 }
