@@ -77,7 +77,11 @@ impl App {
                     // work status
                     if let AppWorkStatus::Working(percentage, description) = work_status {
                         let gauge = Gauge::default()
-                            .gauge_style(Style::default().fg(Color::from_u32(0x81ae80)).bg(Color::Black))
+                            .gauge_style(
+                                Style::default()
+                                    .fg(Color::from_u32(0x81ae80))
+                                    .bg(Color::Black),
+                            )
                             .percent((percentage * 100.0).round() as u16)
                             .label(&description);
                         frame.render_widget(gauge, statusline[1]);

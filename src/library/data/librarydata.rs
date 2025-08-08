@@ -48,8 +48,8 @@ impl LibraryData {
         fs::create_dir_all(&feedir)?;
 
         let feeddata = feedir.join(DATA_FEED);
-        let toml_str = toml::to_string(feed)
-            .map_err(|e| eyre!("Failed to serialize feed: {}", e))?;
+        let toml_str =
+            toml::to_string(feed).map_err(|e| eyre!("Failed to serialize feed: {}", e))?;
 
         let mut file = OpenOptions::new()
             .write(true)

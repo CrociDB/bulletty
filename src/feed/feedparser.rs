@@ -324,8 +324,6 @@ mod tests {
 
     #[test]
     fn parses_atom_feed_fields() {
-        // Note: Atom <link> commonly uses href attribute. If parser doesn't handle it,
-        // this test will fail and should drive support for link @href.
         let xml = r#"<?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>Example Atom</title>
@@ -343,12 +341,10 @@ mod tests {
         assert_eq!(feed.description, "Atom description");
         assert_eq!(feed.url, "https://example.org/");
         assert_eq!(feed.author, "Bob");
-        // assert!(feed.author.contains("Bob"));
     }
 
     #[test]
     fn rss_missing_link_uses_default_url() {
-        // Based on implementation snippet: missing link should default to "NOURL".
         let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
