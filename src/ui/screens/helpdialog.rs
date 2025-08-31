@@ -3,7 +3,7 @@ use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifier
 
 use crate::app::AppWorkStatus;
 
-use crate::core::ui::appstate::{AppState, AppStateEvent};
+use crate::core::ui::appscreen::{AppScreen, AppScreenEvent};
 
 pub struct HelpDialog {
     help_string: String,
@@ -15,7 +15,7 @@ impl HelpDialog {
     }
 }
 
-impl AppState for HelpDialog {
+impl AppScreen for HelpDialog {
     fn start(&mut self) {}
 
     fn quit(&mut self) {}
@@ -26,22 +26,22 @@ impl AppState for HelpDialog {
 
     fn render(&mut self, frame: &mut ratatui::Frame, area: ratatui::prelude::Rect) {}
 
-    fn handle_events(&mut self) -> Result<AppStateEvent> {
+    fn handle_events(&mut self) -> Result<AppScreenEvent> {
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => self.handle_keypress(key),
-            Event::Mouse(_) => Ok(AppStateEvent::None),
-            Event::Resize(_, _) => Ok(AppStateEvent::None),
-            _ => Ok(AppStateEvent::None),
+            Event::Mouse(_) => Ok(AppScreenEvent::None),
+            Event::Resize(_, _) => Ok(AppScreenEvent::None),
+            _ => Ok(AppScreenEvent::None),
         }
     }
 
-    fn handle_keypress(&mut self, key: KeyEvent) -> Result<AppStateEvent> {
+    fn handle_keypress(&mut self, key: KeyEvent) -> Result<AppScreenEvent> {
         match (key.modifiers, key.code) {
             (_, KeyCode::Esc | KeyCode::Char('q'))
             | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
-                Ok(AppStateEvent::CloseDialog)
+                Ok(AppScreenEvent::CloseDialog)
             }
-            _ => Ok(AppStateEvent::None),
+            _ => Ok(AppScreenEvent::None),
         }
     }
 

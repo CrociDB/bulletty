@@ -4,19 +4,19 @@ use ratatui::{Frame, layout::Rect};
 
 use crate::app::AppWorkStatus;
 
-pub enum AppStateEvent {
+pub enum AppScreenEvent {
     None,
 
-    ChangeState(Box<dyn AppState>),
+    ChangeState(Box<dyn AppScreen>),
     ExitState,
 
-    OpenDialog(Box<dyn AppState>),
+    OpenDialog(Box<dyn AppScreen>),
     CloseDialog,
 
     ExitApp,
 }
 
-pub trait AppState {
+pub trait AppScreen {
     fn start(&mut self);
     fn quit(&mut self);
 
@@ -24,8 +24,8 @@ pub trait AppState {
     fn unpause(&mut self);
 
     fn render(&mut self, frame: &mut Frame, area: Rect);
-    fn handle_events(&mut self) -> Result<AppStateEvent>;
-    fn handle_keypress(&mut self, key: KeyEvent) -> Result<AppStateEvent>;
+    fn handle_events(&mut self) -> Result<AppScreenEvent>;
+    fn handle_keypress(&mut self, key: KeyEvent) -> Result<AppScreenEvent>;
 
     fn get_state_work_status(&self) -> AppWorkStatus;
     fn get_state_name(&self) -> String;

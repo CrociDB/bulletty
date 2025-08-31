@@ -9,7 +9,7 @@ use ratatui::widgets::{
 use crate::app::AppWorkStatus;
 use crate::core::{
     feed::feedentry::FeedEntry,
-    ui::appstate::{AppState, AppStateEvent},
+    ui::appscreen::{AppScreen, AppScreenEvent},
 };
 
 pub struct ReaderState {
@@ -38,7 +38,7 @@ impl ReaderState {
     }
 }
 
-impl AppState for ReaderState {
+impl AppScreen for ReaderState {
     fn start(&mut self) {}
 
     fn render(&mut self, frame: &mut ratatui::Frame, area: ratatui::prelude::Rect) {
@@ -99,33 +99,33 @@ impl AppState for ReaderState {
         frame.render_stateful_widget(scrollbar, sizelayout[2], &mut scrollbarstate);
     }
 
-    fn handle_events(&mut self) -> Result<AppStateEvent> {
+    fn handle_events(&mut self) -> Result<AppScreenEvent> {
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => self.handle_keypress(key),
-            Event::Mouse(_) => Ok(AppStateEvent::None),
-            Event::Resize(_, _) => Ok(AppStateEvent::None),
-            _ => Ok(AppStateEvent::None),
+            Event::Mouse(_) => Ok(AppScreenEvent::None),
+            Event::Resize(_, _) => Ok(AppScreenEvent::None),
+            _ => Ok(AppScreenEvent::None),
         }
     }
 
     fn handle_keypress(
         &mut self,
         key: crossterm::event::KeyEvent,
-    ) -> color_eyre::eyre::Result<AppStateEvent> {
+    ) -> color_eyre::eyre::Result<AppScreenEvent> {
         match (key.modifiers, key.code) {
             (_, KeyCode::Esc | KeyCode::Char('q'))
             | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
-                Ok(AppStateEvent::ExitState)
+                Ok(AppScreenEvent::ExitState)
             }
             (_, KeyCode::Down | KeyCode::Char('j')) => {
                 self.scrolldown();
-                Ok(AppStateEvent::None)
+                Ok(AppScreenEvent::None)
             }
             (_, KeyCode::Up | KeyCode::Char('k')) => {
                 self.scrollup();
-                Ok(AppStateEvent::None)
+                Ok(AppScreenEvent::None)
             }
-            _ => Ok(AppStateEvent::None),
+            _ => Ok(AppScreenEvent::None),
         }
     }
 

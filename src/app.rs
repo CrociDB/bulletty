@@ -8,7 +8,7 @@ use ratatui::{
     widgets::{Block, Clear, Gauge, Paragraph},
 };
 
-use crate::core::ui::appstate::{AppState, AppStateEvent};
+use crate::core::ui::appscreen::{AppScreen, AppScreenEvent};
 
 pub enum AppWorkStatus {
     None,
@@ -23,9 +23,9 @@ impl AppWorkStatus {
 
 pub struct App {
     running: bool,
-    current_state: Option<Box<dyn AppState>>,
-    states_queue: VecDeque<Box<dyn AppState>>,
-    dialog_queue: VecDeque<Box<dyn AppState>>,
+    current_state: Option<Box<dyn AppScreen>>,
+    states_queue: VecDeque<Box<dyn AppScreen>>,
+    dialog_queue: VecDeque<Box<dyn AppScreen>>,
 }
 
 impl App {
@@ -33,12 +33,12 @@ impl App {
         App {
             running: true,
             current_state: None,
-            states_queue: VecDeque::<Box<dyn AppState>>::new(),
-            dialog_queue: VecDeque::<Box<dyn AppState>>::new(),
+            states_queue: VecDeque::<Box<dyn AppScreen>>::new(),
+            dialog_queue: VecDeque::<Box<dyn AppScreen>>::new(),
         }
     }
 
-    pub fn init(&mut self, mut state: Box<dyn AppState>) {
+    pub fn init(&mut self, mut state: Box<dyn AppScreen>) {
         state.start();
         self.current_state = Some(state);
     }
@@ -123,23 +123,23 @@ impl App {
                 };
 
                 match event {
-                    AppStateEvent::None => {}
+                    AppScreenEvent::None => {}
 
-                    AppStateEvent::ChangeState(app_state) => {
+                    AppScreenEvent::ChangeState(app_state) => {
                         self.change_state(app_state);
                     }
-                    AppStateEvent::ExitState => {
+                    AppScreenEvent::ExitState => {
                         self.exit_state();
                     }
 
-                    AppStateEvent::OpenDialog(app_state) => {
+                    AppScreenEvent::OpenDialog(app_state) => {
                         self.open_dialog(app_state);
                     }
-                    AppStateEvent::CloseDialog => {
+                    AppScreenEvent::CloseDialog => {
                         self.close_current_dialog();
                     }
 
-                    AppStateEvent::ExitApp => {
+                    AppScreenEvent::ExitApp => {
                         self.running = false;
                     }
                 }
@@ -156,7 +156,7 @@ impl App {
         Ok(())
     }
 
-    fn change_state(&mut self, mut new_state: Box<dyn AppState>) {
+    fn change_state(&mut self, mut new_state: Box<dyn AppScreen>) {
         if let Some(mut state) = self.current_state.take() {
             state.pause();
             self.states_queue.push_back(state);
@@ -198,7 +198,7 @@ impl App {
             .unwrap_or(AppWorkStatus::None)
     }
 
-    fn open_dialog(&mut self, mut dialog_state: Box<dyn AppState>) {
+    fn open_dialog(&mut self, mut dialog_state: Box<dyn AppScreen>) {
         if let Some(state) = self.current_state.as_mut() {
             state.pause();
         }

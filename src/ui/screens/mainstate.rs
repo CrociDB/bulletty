@@ -9,7 +9,7 @@ use ratatui::{
 use crate::{
     app::AppWorkStatus,
     core::library::feedlibrary::FeedLibrary,
-    core::ui::appstate::{AppState, AppStateEvent},
+    core::ui::appscreen::{AppScreen, AppScreenEvent},
     ui::{
         screens::readerstate::ReaderState, states::feedentrystate::FeedEntryState,
         states::feedtreestate::FeedTreeState,
@@ -42,7 +42,7 @@ impl MainState {
     }
 }
 
-impl AppState for MainState {
+impl AppScreen for MainState {
     fn start(&mut self) {
         self.library.start_updater();
     }
@@ -109,76 +109,76 @@ impl AppState for MainState {
         frame.render_stateful_widget(list_widget, chunks[1], &mut entryliststate);
     }
 
-    fn handle_events(&mut self) -> Result<AppStateEvent> {
+    fn handle_events(&mut self) -> Result<AppScreenEvent> {
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => self.handle_keypress(key),
-            Event::Mouse(_) => Ok(AppStateEvent::None),
-            Event::Resize(_, _) => Ok(AppStateEvent::None),
-            _ => Ok(AppStateEvent::None),
+            Event::Mouse(_) => Ok(AppScreenEvent::None),
+            Event::Resize(_, _) => Ok(AppScreenEvent::None),
+            _ => Ok(AppScreenEvent::None),
         }
     }
 
-    fn handle_keypress(&mut self, key: crossterm::event::KeyEvent) -> Result<AppStateEvent> {
+    fn handle_keypress(&mut self, key: crossterm::event::KeyEvent) -> Result<AppScreenEvent> {
         match self.inputstate {
             MainInputState::Menu => match (key.modifiers, key.code) {
                 (_, KeyCode::Esc | KeyCode::Char('q'))
                 | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
-                    Ok(AppStateEvent::ExitApp)
+                    Ok(AppScreenEvent::ExitApp)
                 }
                 (_, KeyCode::Down | KeyCode::Char('j')) => {
                     self.feedtreestate.select_next();
-                    Ok(AppStateEvent::None)
+                    Ok(AppScreenEvent::None)
                 }
                 (_, KeyCode::Up | KeyCode::Char('k')) => {
                     self.feedtreestate.select_previous();
-                    Ok(AppStateEvent::None)
+                    Ok(AppScreenEvent::None)
                 }
                 (_, KeyCode::Right | KeyCode::Enter | KeyCode::Tab | KeyCode::Char('l')) => {
                     self.inputstate = MainInputState::Content;
-                    Ok(AppStateEvent::None)
+                    Ok(AppScreenEvent::None)
                 }
-                (_, KeyCode::Char('?')) => Ok(AppStateEvent::OpenDialog(Box::new(
+                (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
                     HelpDialog::new(self.get_state_instructions()),
                 ))),
-                _ => Ok(AppStateEvent::None),
+                _ => Ok(AppScreenEvent::None),
             },
             MainInputState::Content => match (key.modifiers, key.code) {
                 (_, KeyCode::Char('q'))
                 | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
-                    Ok(AppStateEvent::ExitApp)
+                    Ok(AppScreenEvent::ExitApp)
                 }
                 (_, KeyCode::Down | KeyCode::Char('j')) => {
                     self.feedentrystate.select_next();
-                    Ok(AppStateEvent::None)
+                    Ok(AppScreenEvent::None)
                 }
                 (_, KeyCode::Up | KeyCode::Char('k')) => {
                     self.feedentrystate.select_previous();
-                    Ok(AppStateEvent::None)
+                    Ok(AppScreenEvent::None)
                 }
                 (_, KeyCode::Esc) => {
                     self.inputstate = MainInputState::Menu;
-                    Ok(AppStateEvent::None)
+                    Ok(AppScreenEvent::None)
                 }
                 (_, KeyCode::Right | KeyCode::Char('h')) => {
                     self.inputstate = MainInputState::Menu;
-                    Ok(AppStateEvent::None)
+                    Ok(AppScreenEvent::None)
                 }
                 (_, KeyCode::Enter) => {
                     if let Some(entry) = self.feedentrystate.get_selected() {
                         self.library.data.set_entry_seen(&entry);
                         self.feedentrystate.set_current_read();
 
-                        Ok(AppStateEvent::ChangeState(Box::new(ReaderState::new(
+                        Ok(AppScreenEvent::ChangeState(Box::new(ReaderState::new(
                             entry,
                         ))))
                     } else {
-                        Ok(AppStateEvent::None)
+                        Ok(AppScreenEvent::None)
                     }
                 }
-                (_, KeyCode::Char('?')) => Ok(AppStateEvent::OpenDialog(Box::new(
+                (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
                     HelpDialog::new(self.get_state_instructions()),
                 ))),
-                _ => Ok(AppStateEvent::None),
+                _ => Ok(AppScreenEvent::None),
             },
         }
     }
