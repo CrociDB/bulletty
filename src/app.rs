@@ -2,7 +2,10 @@ use std::collections::VecDeque;
 
 use color_eyre::{Result, eyre};
 use ratatui::{
-    layout::{Constraint, Flex, Layout, Margin, Rect}, style::{Color, Style, Stylize}, widgets::{Block, Clear, Gauge, Paragraph}, DefaultTerminal
+    DefaultTerminal,
+    layout::{Constraint, Flex, Layout, Margin, Rect},
+    style::{Color, Style, Stylize},
+    widgets::{Block, Clear, Gauge, Paragraph},
 };
 
 use crate::core::ui::{
@@ -69,7 +72,7 @@ impl App {
                     frame.render_widget(background, mainlayout[1]);
 
                     let title = if let Some(dialog) = self.dialog_queue.front() {
-                        dialog.get_title()
+                        dialog.as_screen().get_title()
                     } else {
                         state.get_title()
                     };
@@ -106,12 +109,12 @@ impl App {
                     if let Some(dialog) = self.dialog_queue.get_mut(0) {
                         let overlay = Block::default()
                             .style(Style::default().bg(Color::DarkGray).fg(Color::Reset));
-                        frame.render_widget(overlay, frame.area());
-// 0x1d1c1c
+                        frame.render_widget(overlay, mainlayout[0]);
+
                         let border = Block::new().style(Style::new().bg(Color::from_u32(0x262626)));
                         let block = Block::new().style(Style::new().bg(Color::from_u32(0x3a3a3a)));
 
-                        let area = popup_area(frame.area(), dialog.get_size().width, dialog.get_size().height);
+                        let area = popup_area(mainlayout[0], dialog.get_size());
                         let inner_area = area.inner(Margin::new(2, 1));
 
                         frame.render_widget(Clear, area);
@@ -221,10 +224,18 @@ impl App {
     }
 }
 
-fn popup_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
-    let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Center);
-    let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::Center);
+fn popup_area(area: Rect, size: Rect) -> Rect {
+    let mut vertical = Layout::vertical([Constraint::Percentage(size.height)]).flex(Flex::Center);
+    let mut horizontal =
+        Layout::horizontal([Constraint::Percentage(size.width)]).flex(Flex::Center);
+
+    if size.x + size.y > 0 {
+        vertical = Layout::vertical([Constraint::Min(size.y)]).flex(Flex::Center);
+        horizontal = Layout::horizontal([Constraint::Min(size.x)]).flex(Flex::Center);
+    }
+
     let [area] = vertical.areas(area);
     let [area] = horizontal.areas(area);
+
     area
 }

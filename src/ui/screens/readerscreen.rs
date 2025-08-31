@@ -12,6 +12,8 @@ use crate::core::{
     ui::appscreen::{AppScreen, AppScreenEvent},
 };
 
+use super::helpdialog::HelpDialog;
+
 pub struct ReaderScreen {
     feedentry: FeedEntry,
     scroll: usize,
@@ -65,7 +67,6 @@ impl AppScreen for ReaderScreen {
         .split(sizelayout[1]);
 
         let title = Paragraph::new(self.feedentry.title.as_str())
-            // .block(block)
             .style(Style::new().fg(Color::LightRed))
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
@@ -125,6 +126,9 @@ impl AppScreen for ReaderScreen {
                 self.scrollup();
                 Ok(AppScreenEvent::None)
             }
+            (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(HelpDialog::new(
+                self.get_full_instructions(),
+            )))),
             _ => Ok(AppScreenEvent::None),
         }
     }
@@ -145,5 +149,9 @@ impl AppScreen for ReaderScreen {
 
     fn get_work_status(&self) -> AppWorkStatus {
         AppWorkStatus::None
+    }
+
+    fn get_full_instructions(&self) -> String {
+        String::from("j/k/↓/↑: scroll\nEsc/q: leave")
     }
 }

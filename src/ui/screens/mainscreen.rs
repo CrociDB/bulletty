@@ -138,7 +138,7 @@ impl AppScreen for MainScreen {
                     Ok(AppScreenEvent::None)
                 }
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
-                    HelpDialog::new(self.get_instructions()),
+                    HelpDialog::new(self.get_full_instructions()),
                 ))),
                 _ => Ok(AppScreenEvent::None),
             },
@@ -176,7 +176,7 @@ impl AppScreen for MainScreen {
                     }
                 }
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
-                    HelpDialog::new(self.get_instructions()),
+                    HelpDialog::new(self.get_full_instructions()),
                 ))),
                 _ => Ok(AppScreenEvent::None),
             },
@@ -186,7 +186,6 @@ impl AppScreen for MainScreen {
     fn get_title(&self) -> String {
         String::from("Main")
     }
-
     fn get_instructions(&self) -> String {
         if self.inputstate == MainInputState::Menu {
             String::from("j/k/↓/↑: move selection | Enter: select | Esc/q: quit")
@@ -197,5 +196,11 @@ impl AppScreen for MainScreen {
 
     fn get_work_status(&self) -> AppWorkStatus {
         self.library.get_update_status()
+    }
+
+    fn get_full_instructions(&self) -> String {
+        String::from(
+            "j/k/↓/↑: move selection\nEnter: select category or read entry\nEsc/q: back from entries or quit",
+        )
     }
 }

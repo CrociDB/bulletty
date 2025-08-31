@@ -32,4 +32,5 @@ pub trait AppScreen {
     fn get_work_status(&self) -> AppWorkStatus;
     fn get_title(&self) -> String;
     fn get_instructions(&self) -> String;
+    fn get_full_instructions(&self) -> String;
 }
