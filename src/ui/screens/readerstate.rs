@@ -135,15 +135,15 @@ impl AppScreen for ReaderState {
 
     fn quit(&mut self) {}
 
-    fn get_state_name(&self) -> String {
+    fn get_title(&self) -> String {
         String::from("Reader")
     }
 
-    fn get_state_instructions(&self) -> String {
+    fn get_instructions(&self) -> String {
         String::from("j/k/↓/↑: scroll | Esc/q: leave")
     }
 
-    fn get_state_work_status(&self) -> AppWorkStatus {
+    fn get_work_status(&self) -> AppWorkStatus {
         AppWorkStatus::None
     }
 }

@@ -1,9 +1,11 @@
 use color_eyre::eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use ratatui::layout::Rect;
 
 use crate::app::AppWorkStatus;
 
 use crate::core::ui::appscreen::{AppScreen, AppScreenEvent};
+use crate::core::ui::dialog::Dialog;
 
 pub struct HelpDialog {
     help_string: String,
@@ -12,6 +14,24 @@ pub struct HelpDialog {
 impl HelpDialog {
     pub fn new(help_string: String) -> HelpDialog {
         HelpDialog { help_string }
+    }
+}
+
+impl Dialog for HelpDialog {
+    fn get_size(&self) -> ratatui::prelude::Rect {
+        Rect::new(0, 0, 50, 60)
+    }
+
+    fn get_title(&self) -> String {
+        "Help".to_string()
+    }
+
+    fn as_screen(&self) -> &dyn AppScreen {
+        self
+    }
+
+    fn as_screen_mut(&mut self) -> &mut dyn AppScreen {
+        self
     }
 }
 
@@ -45,15 +65,15 @@ impl AppScreen for HelpDialog {
         }
     }
 
-    fn get_state_work_status(&self) -> AppWorkStatus {
+    fn get_work_status(&self) -> AppWorkStatus {
         AppWorkStatus::None
     }
 
-    fn get_state_name(&self) -> String {
+    fn get_title(&self) -> String {
         String::from("Help")
     }
 
-    fn get_state_instructions(&self) -> String {
+    fn get_instructions(&self) -> String {
         String::from("Esc/q: close help")
     }
 }
