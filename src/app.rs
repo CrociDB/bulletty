@@ -3,10 +3,11 @@ use std::collections::VecDeque;
 use color_eyre::{Result, eyre};
 use ratatui::{
     DefaultTerminal,
-    layout::{Constraint, Layout},
+    layout::{Constraint, Flex, Layout, Rect},
     style::{Color, Style, Stylize},
-    widgets::{Block, Gauge, Paragraph},
+    widgets::{Block, Clear, Gauge, Paragraph},
 };
+use tracing::info;
 
 use crate::ui::appstate::{AppState, AppStateEvent};
 
@@ -25,6 +26,7 @@ pub struct App {
     running: bool,
     current_state: Option<Box<dyn AppState>>,
     states_queue: VecDeque<Box<dyn AppState>>,
+    dialog_queue: VecDeque<Box<dyn AppState>>,
 }
 
 impl App {
@@ -33,6 +35,7 @@ impl App {
             running: true,
             current_state: None,
             states_queue: VecDeque::<Box<dyn AppState>>::new(),
+            dialog_queue: VecDeque::<Box<dyn AppState>>::new(),
         }
     }
 
@@ -66,14 +69,27 @@ impl App {
                         Block::default().style(Style::default().bg(Color::from_u32(0x1d1c1c)));
                     frame.render_widget(background, mainlayout[1]);
 
-                    let status_text =
-                        Paragraph::new(format!("\u{f0fb1} bulletty | {}", state.get_state_name()));
+                    let title = if let Some(dialog) = self.dialog_queue.front() {
+                        dialog.get_state_name()
+                    } else {
+                        state.get_state_name()
+                    };
+
+                    let status_text = Paragraph::new(format!("\u{f0fb1} bulletty | {title}"));
+
                     frame.render_widget(status_text, statusline[0]);
 
-                    let instructions_text = Paragraph::new(state.get_state_instructions().clone())
+                    let instructions = if let Some(dialog) = self.dialog_queue.front() {
+                        dialog.get_state_instructions()
+                    } else {
+                        state.get_state_instructions()
+                    };
+
+                    let instructions_text = Paragraph::new(instructions.to_string())
                         .style(Style::default().dim())
                         .alignment(ratatui::layout::Alignment::Right);
                     frame.render_widget(instructions_text, statusline[2]);
+
                     // work status
                     if let AppWorkStatus::Working(percentage, description) = work_status {
                         let gauge = Gauge::default()
@@ -86,18 +102,46 @@ impl App {
                             .label(&description);
                         frame.render_widget(gauge, statusline[1]);
                     }
+
+                    // After drawing the state, needs to check if there's a dialog
+                    if let Some(_dialog) = self.dialog_queue.get_mut(0) {
+                        let overlay = Block::default()
+                            .style(Style::default().bg(Color::DarkGray).fg(Color::Reset));
+                        frame.render_widget(overlay, frame.area());
+
+                        let block = Block::bordered().title("Popup");
+                        let area = popup_area(frame.area(), 60, 20);
+                        frame.render_widget(Clear, area);
+                        frame.render_widget(block, area);
+                    }
                 })?;
 
-                match state.handle_events()? {
+                // Checking the dialog or the state events
+                let event = if let Some(dialog) = self.dialog_queue.get_mut(0) {
+                    dialog.handle_events()?
+                } else {
+                    state.handle_events()?
+                };
+
+                match event {
                     AppStateEvent::None => {}
+
                     AppStateEvent::ChangeState(app_state) => {
                         self.change_state(app_state);
                     }
-                    AppStateEvent::ExitApp => {
-                        self.running = false;
-                    }
                     AppStateEvent::ExitState => {
                         self.exit_state();
+                    }
+
+                    AppStateEvent::OpenDialog(app_state) => {
+                        self.open_dialog(app_state);
+                    }
+                    AppStateEvent::CloseDialog => {
+                        self.close_current_dialog();
+                    }
+
+                    AppStateEvent::ExitApp => {
+                        self.running = false;
                     }
                 }
             } else {
@@ -154,4 +198,27 @@ impl App {
             .find(|state| !state.is_none())
             .unwrap_or(AppWorkStatus::None)
     }
+
+    fn open_dialog(&mut self, mut dialog_state: Box<dyn AppState>) {
+        if let Some(state) = self.current_state.as_mut() {
+            state.pause();
+        }
+
+        dialog_state.start();
+        self.dialog_queue.push_back(dialog_state);
+    }
+
+    fn close_current_dialog(&mut self) {
+        if let Some(mut state) = self.dialog_queue.pop_back() {
+            state.quit();
+        }
+    }
+}
+
+fn popup_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
+    let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Center);
+    let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::Center);
+    let [area] = vertical.areas(area);
+    let [area] = horizontal.areas(area);
+    area
 }

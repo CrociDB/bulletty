@@ -17,6 +17,8 @@ use crate::{
     },
 };
 
+use super::helpdialog::HelpDialog;
+
 #[derive(PartialEq, Eq)]
 enum MainInputState {
     Menu,
@@ -136,6 +138,9 @@ impl AppState for MainState {
                     self.inputstate = MainInputState::Content;
                     Ok(AppStateEvent::None)
                 }
+                (_, KeyCode::Char('?')) => Ok(AppStateEvent::OpenDialog(Box::new(
+                    HelpDialog::new(self.get_state_instructions()),
+                ))),
                 _ => Ok(AppStateEvent::None),
             },
             MainInputState::Content => match (key.modifiers, key.code) {
@@ -160,7 +165,6 @@ impl AppState for MainState {
                     Ok(AppStateEvent::None)
                 }
                 (_, KeyCode::Enter) => {
-                    tracing::info!("Enter pressed");
                     if let Some(entry) = self.feedentrystate.get_selected() {
                         self.library.data.set_entry_seen(&entry);
                         self.feedentrystate.set_current_read();
@@ -172,6 +176,9 @@ impl AppState for MainState {
                         Ok(AppStateEvent::None)
                     }
                 }
+                (_, KeyCode::Char('?')) => Ok(AppStateEvent::OpenDialog(Box::new(
+                    HelpDialog::new(self.get_state_instructions()),
+                ))),
                 _ => Ok(AppStateEvent::None),
             },
         }

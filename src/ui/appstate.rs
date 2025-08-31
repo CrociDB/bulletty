@@ -6,8 +6,13 @@ use crate::app::AppWorkStatus;
 
 pub enum AppStateEvent {
     None,
+
     ChangeState(Box<dyn AppState>),
     ExitState,
+
+    OpenDialog(Box<dyn AppState>),
+    CloseDialog,
+
     ExitApp,
 }
 
