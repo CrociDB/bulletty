@@ -1,8 +1,8 @@
 use clap::Parser;
 
-mod core;
 mod app;
 mod cli;
+mod core;
 mod logging;
 mod mainui;
 mod ui;
