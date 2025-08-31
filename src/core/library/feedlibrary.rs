@@ -3,14 +3,14 @@ use tracing::error;
 
 use crate::{
     app::AppWorkStatus,
-    defs,
-    feed::{self, feedentry::FeedEntry},
-    library::{
+    core::feed::{self, feedentry::FeedEntry},
+    core::library::{
         data::{config::Config, librarydata::LibraryData},
         feedcategory::FeedCategory,
         feeditem::FeedItem,
         updater::Updater,
     },
+    core::defs,
 };
 
 pub struct FeedLibrary {

@@ -5,9 +5,9 @@ use ratatui::{
 };
 
 use crate::{
-    feed::feedentry::FeedEntry,
-    library::feedlibrary::FeedLibrary,
-    ui::feedtreestate::{FeedItemInfo, FeedTreeState},
+    core::feed::feedentry::FeedEntry,
+    core::library::feedlibrary::FeedLibrary,
+    ui::states::feedtreestate::{FeedItemInfo, FeedTreeState},
 };
 
 pub struct FeedEntryState {

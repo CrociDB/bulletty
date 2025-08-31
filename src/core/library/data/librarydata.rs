@@ -9,10 +9,10 @@ use color_eyre::eyre::eyre;
 use slug::slugify;
 use tracing::{error, info};
 
-use crate::feed::feedentry::FeedEntry;
-use crate::feed::feedparser;
-use crate::library::feedcategory::FeedCategory;
-use crate::{
+use crate::core::feed::feedentry::FeedEntry;
+use crate::core::feed::feedparser;
+use crate::core::library::feedcategory::FeedCategory;
+use crate::core::{
     defs::{self, DATA_CATEGORIES_DIR, DATA_FEED},
     library::feeditem::FeedItem,
 };
@@ -131,7 +131,7 @@ impl LibraryData {
                 .join(defs::DATA_CATEGORIES_DIR)
                 .join(&category.title)
                 .join(&feed.slug)
-                .join(format!("{}.md", item_slug));
+                .join(format!("{item_slug}.md"));
 
             e.filepath = entrypath;
         });

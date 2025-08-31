@@ -8,12 +8,11 @@ use ratatui::{
 
 use crate::{
     app::AppWorkStatus,
-    library::feedlibrary::FeedLibrary,
+    core::library::feedlibrary::FeedLibrary,
+    core::ui::appstate::{AppState, AppStateEvent},
     ui::{
-        appstate::{AppState, AppStateEvent},
-        feedentrystate::FeedEntryState,
-        feedtreestate::FeedTreeState,
-        readerstate::ReaderState,
+        screens::readerstate::ReaderState, states::feedentrystate::FeedEntryState,
+        states::feedtreestate::FeedTreeState,
     },
 };
 

@@ -7,7 +7,7 @@ use ratatui::widgets::{
 };
 
 use crate::app::AppWorkStatus;
-use crate::{
+use crate::core::{
     feed::feedentry::FeedEntry,
     ui::appstate::{AppState, AppStateEvent},
 };
@@ -111,7 +111,7 @@ impl AppState for ReaderState {
     fn handle_keypress(
         &mut self,
         key: crossterm::event::KeyEvent,
-    ) -> color_eyre::eyre::Result<super::appstate::AppStateEvent> {
+    ) -> color_eyre::eyre::Result<AppStateEvent> {
         match (key.modifiers, key.code) {
             (_, KeyCode::Esc | KeyCode::Char('q'))
             | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {

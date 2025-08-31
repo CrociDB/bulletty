@@ -7,7 +7,8 @@ use std::path::{Path, PathBuf};
 use toml;
 use tracing::error;
 
-use crate::defs;
+use crate::core::defs;
+
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     pub datapath: PathBuf,

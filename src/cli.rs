@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 use tracing::info;
 
-use crate::library::feedlibrary::FeedLibrary;
+use crate::core::library::feedlibrary::FeedLibrary;
 
 #[derive(Parser)]
 #[command(name = "bulletty")]
@@ -57,8 +57,8 @@ fn command_add(_cli: &Cli, url: &str, category: &Option<String>) -> color_eyre::
     let mut library = FeedLibrary::new();
     let feed = library.add_feed(url, category)?;
 
-    info!("Feed added: {:?}", feed);
-    println!("Feed added: {:?}", feed);
+    info!("Feed added: {feed:?}");
+    println!("Feed added: {feed:?}");
 
     Ok(())
 }

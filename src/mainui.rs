@@ -1,6 +1,6 @@
 use tracing::info;
 
-use crate::{app, ui::mainstate};
+use crate::{app, ui::screens::mainstate};
 
 pub fn run_main_ui() -> color_eyre::Result<()> {
     info!("Initializing UI");

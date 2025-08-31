@@ -1,10 +1,9 @@
 use color_eyre::eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
-use tracing::info;
 
 use crate::app::AppWorkStatus;
 
-use super::appstate::{AppState, AppStateEvent};
+use crate::core::ui::appstate::{AppState, AppStateEvent};
 
 pub struct HelpDialog {
     help_string: String,

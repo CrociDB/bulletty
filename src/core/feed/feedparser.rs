@@ -8,7 +8,7 @@ use roxmltree::Node;
 use slug::slugify;
 use tracing::error;
 
-use crate::{feed::feedentry::FeedEntry, library::feeditem::FeedItem};
+use crate::core::{feed::feedentry::FeedEntry, library::feeditem::FeedItem};
 
 pub fn get_feed(url: &str) -> color_eyre::Result<FeedItem> {
     let response = get(url)?.text()?;
@@ -306,10 +306,10 @@ mod tests {
             let result = parse_date(input);
             match expected_str {
                 Some(exp) => match result {
-                    Ok(ref dt) => assert_eq!(dt, exp, "Failed on input: {}", input),
-                    Err(e) => panic!("Expected Ok for input: {} - Error: {}", input, e),
+                    Ok(ref dt) => assert_eq!(dt, exp, "Failed on input: {input}"),
+                    Err(e) => panic!("Expected Ok for input: {input} - Error: {e}"),
                 },
-                None => assert!(result.is_err(), "Expected error for input: {}", input),
+                None => assert!(result.is_err(), "Expected error for input: {input}"),
             }
         }
     }

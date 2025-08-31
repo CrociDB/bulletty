@@ -8,7 +8,7 @@ use std::{
 
 use tracing::{error, info};
 
-use crate::library::{feedcategory::FeedCategory, feedlibrary::FeedLibrary};
+use crate::core::library::{feedcategory::FeedCategory, feedlibrary::FeedLibrary};
 
 pub struct Updater {
     pub last_completed: Arc<Mutex<String>>,

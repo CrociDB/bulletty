@@ -1,7 +1,7 @@
 use ratatui::widgets::{ListItem, ListState};
 use tracing::error;
 
-use crate::library::feedlibrary::FeedLibrary;
+use crate::core::library::feedlibrary::FeedLibrary;
 
 pub enum FeedItemInfo {
     /// Represents the category title
@@ -44,17 +44,17 @@ impl FeedTreeState {
             .iter()
             .map(|item| {
                 let title = match item {
-                    FeedItemInfo::Category(t) => format!("\u{f07c} {}", t),
+                    FeedItemInfo::Category(t) => format!("\u{f07c} {t}"),
                     FeedItemInfo::Item(t, c, s) => {
                         if let Ok(unread) = library.data.get_unread_feed(c, s) {
                             if unread > 0 {
-                                format!(" \u{f09e}  {} ({})", t, unread)
+                                format!(" \u{f09e}  {t} ({unread})")
                             } else {
-                                format!(" \u{f09e}  {}", t)
+                                format!(" \u{f09e}  {t}")
                             }
                         } else {
                             error!("Couldn't get unread feed entries for '{}'", t);
-                            format!(" \u{f09e}  {}", t)
+                            format!(" \u{f09e}  {t}")
                         }
                     }
                 };

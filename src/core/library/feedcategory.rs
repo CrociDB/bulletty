@@ -1,4 +1,4 @@
-use crate::library::feeditem::FeedItem;
+use crate::core::library::feeditem::FeedItem;
 
 #[derive(Clone)]
 pub struct FeedCategory {

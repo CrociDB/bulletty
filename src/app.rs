@@ -7,9 +7,8 @@ use ratatui::{
     style::{Color, Style, Stylize},
     widgets::{Block, Clear, Gauge, Paragraph},
 };
-use tracing::info;
 
-use crate::ui::appstate::{AppState, AppStateEvent};
+use crate::core::ui::appstate::{AppState, AppStateEvent};
 
 pub enum AppWorkStatus {
     None,
