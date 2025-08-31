@@ -55,7 +55,7 @@ fn command_list(_cli: &Cli) -> color_eyre::Result<()> {
 
 fn command_add(_cli: &Cli, url: &str, category: &Option<String>) -> color_eyre::Result<()> {
     let mut library = FeedLibrary::new();
-    let feed = library.add_feed(url, category)?;
+    let feed = library.add_feed_from_url(url, category)?;
 
     info!("Feed added: {feed:?}");
     println!("Feed added: {feed:?}");

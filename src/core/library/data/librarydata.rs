@@ -12,13 +12,16 @@ use tracing::{error, info};
 use crate::core::feed::feedentry::FeedEntry;
 use crate::core::feed::feedparser;
 use crate::core::library::feedcategory::FeedCategory;
-use crate::core::{
-    defs::{self, DATA_CATEGORIES_DIR, DATA_FEED},
-    library::feeditem::FeedItem,
+use crate::{
+    core::defs::{self, DATA_CATEGORIES_DIR, DATA_FEED},
+    core::library::feeditem::FeedItem,
 };
 
+#[cfg(test)]
+use tempfile::TempDir;
+
 pub struct LibraryData {
-    path: PathBuf,
+    pub path: PathBuf,
 }
 
 impl LibraryData {
@@ -29,6 +32,14 @@ impl LibraryData {
         }
     }
 
+    #[cfg(test)]
+    pub fn new_for_test() -> (LibraryData, TempDir) {
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
+        let path = temp_dir.path().to_path_buf();
+        load_or_create(&path);
+        (LibraryData { path }, temp_dir)
+    }
+
     pub fn feed_exists(&self, slug: &str, category: &str) -> bool {
         let feeddata = self
             .path
@@ -37,6 +48,25 @@ impl LibraryData {
             .join(slug)
             .join(DATA_FEED);
         feeddata.exists()
+    }
+    pub fn delete_feed(&self, slug: &str, category: &str) -> color_eyre::Result<()> {
+        let feed_dir = self
+            .path
+            .join(DATA_CATEGORIES_DIR)
+            .join(category)
+            .join(slug);
+
+        if feed_dir.exists() {
+            fs::remove_dir_all(&feed_dir).map_err(|e| {
+                eyre!(
+                    "Failed to delete feed directory {}: {}",
+                    feed_dir.display(),
+                    e
+                )
+            })
+        } else {
+            Ok(()) // Nothing to delete
+        }
     }
 
     pub fn feed_create(&self, feed: &FeedItem) -> color_eyre::Result<()> {
@@ -288,9 +318,7 @@ impl LibraryData {
 
 pub fn load_or_create(path: &Path) {
     let datapath = Path::new(path);
-    if !datapath.exists() {
-        std::fs::create_dir_all(datapath).expect("Error: Failed to create datapath directory");
-        std::fs::create_dir_all(datapath.join(defs::DATA_CATEGORIES_DIR))
-            .expect("Error: Failed to create datapath directory");
-    }
+    std::fs::create_dir_all(datapath).expect("Error: Failed to create datapath directory");
+    std::fs::create_dir_all(datapath.join(defs::DATA_CATEGORIES_DIR))
+        .expect("Error: Failed to create datapath directory");
 }

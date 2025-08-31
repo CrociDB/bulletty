@@ -13,14 +13,23 @@ use crate::{
     },
 };
 
+#[cfg(test)]
+use tempfile::TempDir;
+
 pub struct FeedLibrary {
     pub feedcategories: Vec<FeedCategory>,
     pub data: LibraryData,
     pub updater: Option<Updater>,
 }
 
+impl Default for FeedLibrary {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FeedLibrary {
-    pub fn new() -> FeedLibrary {
+    pub fn new() -> Self {
         let config_obj = Config::new();
         let data_obj = LibraryData::new(config_obj.datapath.as_ref());
 
@@ -32,14 +41,28 @@ impl FeedLibrary {
             }
         };
 
-        FeedLibrary {
+        Self {
             feedcategories: categories,
             data: data_obj,
             updater: None,
         }
     }
 
-    pub fn add_feed(
+    #[cfg(test)]
+    pub fn new_for_test() -> (Self, TempDir) {
+        let (data_obj, temp_dir) = LibraryData::new_for_test();
+        let categories = data_obj.generate_categories_tree().unwrap();
+        (
+            Self {
+                feedcategories: categories,
+                data: data_obj,
+                updater: None,
+            },
+            temp_dir,
+        )
+    }
+
+    pub fn add_feed_from_url(
         &mut self,
         url: &str,
         category: &Option<String>,
@@ -50,6 +73,10 @@ impl FeedLibrary {
             .clone()
             .unwrap_or_else(|| String::from(defs::DATA_CATEGORY_DEFAULT));
 
+        self.add_feed(feed)
+    }
+
+    pub fn add_feed(&mut self, feed: FeedItem) -> color_eyre::Result<FeedItem> {
         // check if feed already in library
         if self.data.feed_exists(&feed.slug, &feed.category) {
             return Err(eyre!("Feed already exists"));
@@ -58,6 +85,10 @@ impl FeedLibrary {
         // then create
         self.data.feed_create(&feed)?;
         Ok(feed)
+    }
+
+    pub fn delete_feed(&self, slug: &str, category: &str) -> color_eyre::Result<()> {
+        self.data.delete_feed(slug, category)
     }
 
     pub fn get_feed_entries_by_category(&self, categorytitle: &str) -> Vec<FeedEntry> {
@@ -134,5 +165,36 @@ impl FeedLibrary {
         } else {
             AppWorkStatus::None
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_add_and_delete_feed() {
+        // 1. Create a FeedLibrary that uses a temporary, in-memory database
+        let (mut library, _temp_dir) = FeedLibrary::new_for_test();
+
+        // 2. Create a dummy FeedItem to add
+        let feed_to_add = crate::core::library::feeditem::FeedItem {
+            title: "My Test Feed".to_string(),
+            slug: "my-test-feed".to_string(),
+            category: "testing".to_string(),
+            ..Default::default()
+        };
+
+        // 3. Add the feed to the library and verify
+        assert!(library.add_feed(feed_to_add.clone()).is_ok());
+        assert!(library.data.feed_exists("my-test-feed", "testing"));
+
+        // 4. Delete the feed and verify
+        assert!(
+            library
+                .delete_feed(&feed_to_add.slug, &feed_to_add.category)
+                .is_ok()
+        );
+        assert!(!library.data.feed_exists("my-test-feed", "testing"));
     }
 }
