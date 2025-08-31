@@ -1,3 +1,3 @@
 pub mod helpdialog;
-pub mod mainstate;
-pub mod readerstate;
+pub mod mainscreen;
+pub mod readerscreen;

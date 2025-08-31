@@ -11,7 +11,7 @@ use crate::{
     core::library::feedlibrary::FeedLibrary,
     core::ui::appscreen::{AppScreen, AppScreenEvent},
     ui::{
-        screens::readerstate::ReaderState, states::feedentrystate::FeedEntryState,
+        screens::readerscreen::ReaderScreen, states::feedentrystate::FeedEntryState,
         states::feedtreestate::FeedTreeState,
     },
 };
@@ -24,16 +24,16 @@ enum MainInputState {
     Content,
 }
 
-pub struct MainState {
+pub struct MainScreen {
     library: FeedLibrary,
     feedtreestate: FeedTreeState,
     feedentrystate: FeedEntryState,
     inputstate: MainInputState,
 }
 
-impl MainState {
-    pub fn new() -> MainState {
-        MainState {
+impl MainScreen {
+    pub fn new() -> MainScreen {
+        MainScreen {
             library: FeedLibrary::new(),
             feedtreestate: FeedTreeState::new(),
             feedentrystate: FeedEntryState::new(),
@@ -42,7 +42,7 @@ impl MainState {
     }
 }
 
-impl AppScreen for MainState {
+impl AppScreen for MainScreen {
     fn start(&mut self) {
         self.library.start_updater();
     }
@@ -168,7 +168,7 @@ impl AppScreen for MainState {
                         self.library.data.set_entry_seen(&entry);
                         self.feedentrystate.set_current_read();
 
-                        Ok(AppScreenEvent::ChangeState(Box::new(ReaderState::new(
+                        Ok(AppScreenEvent::ChangeState(Box::new(ReaderScreen::new(
                             entry,
                         ))))
                     } else {

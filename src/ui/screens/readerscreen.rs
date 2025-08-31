@@ -12,15 +12,15 @@ use crate::core::{
     ui::appscreen::{AppScreen, AppScreenEvent},
 };
 
-pub struct ReaderState {
+pub struct ReaderScreen {
     feedentry: FeedEntry,
     scroll: usize,
     scrollmax: usize,
 }
 
-impl ReaderState {
-    pub fn new(entry: FeedEntry) -> ReaderState {
-        ReaderState {
+impl ReaderScreen {
+    pub fn new(entry: FeedEntry) -> ReaderScreen {
+        ReaderScreen {
             feedentry: entry,
             scroll: 0,
             scrollmax: 1,
@@ -38,7 +38,7 @@ impl ReaderState {
     }
 }
 
-impl AppScreen for ReaderState {
+impl AppScreen for ReaderScreen {
     fn start(&mut self) {}
 
     fn render(&mut self, frame: &mut ratatui::Frame, area: ratatui::prelude::Rect) {
