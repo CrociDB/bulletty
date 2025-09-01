@@ -14,8 +14,14 @@ pub struct Config {
     pub datapath: PathBuf,
 }
 
+impl Default for Config {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Config {
-    pub fn new() -> Config {
+    pub fn new() -> Self {
         if let Some(config_dir) = dirs::config_dir() {
             let config_file = Path::new(&config_dir)
                 .join(defs::CONFIG_PATH)

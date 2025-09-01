@@ -31,9 +31,15 @@ pub struct MainScreen {
     inputstate: MainInputState,
 }
 
+impl Default for MainScreen {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MainScreen {
-    pub fn new() -> MainScreen {
-        MainScreen {
+    pub fn new() -> Self {
+        Self {
             library: FeedLibrary::new(),
             feedtreestate: FeedTreeState::new(),
             feedentrystate: FeedEntryState::new(),

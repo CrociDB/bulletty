@@ -15,9 +15,15 @@ pub struct FeedTreeState {
     pub listatate: ListState,
 }
 
+impl Default for FeedTreeState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FeedTreeState {
-    pub fn new() -> FeedTreeState {
-        FeedTreeState {
+    pub fn new() -> Self {
+        Self {
             treeitems: vec![],
             listatate: ListState::default().with_selected(Some(0)),
         }

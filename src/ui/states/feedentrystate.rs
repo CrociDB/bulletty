@@ -16,9 +16,15 @@ pub struct FeedEntryState {
     pub previous_selected: String,
 }
 
+impl Default for FeedEntryState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FeedEntryState {
-    pub fn new() -> FeedEntryState {
-        FeedEntryState {
+    pub fn new() -> Self {
+        Self {
             entries: vec![],
             listatate: ListState::default().with_selected(Some(0)),
             previous_selected: String::new(),

@@ -31,9 +31,15 @@ pub struct App {
     dialog_queue: VecDeque<Box<dyn Dialog>>,
 }
 
+impl Default for App {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl App {
     pub fn new() -> Self {
-        App {
+        Self {
             running: true,
             current_state: None,
             states_queue: VecDeque::<Box<dyn AppScreen>>::new(),
