@@ -314,6 +314,14 @@ impl LibraryData {
             }
         }
     }
+
+    pub fn toggle_entry_seen(&self, entry: &FeedEntry) {
+        let mut entry = entry.clone();
+        entry.seen = !entry.seen;
+        if let Err(e) = self.save_feed_entry(&entry) {
+            error!("Couldn't toggle entry seen: {:?}", e);
+        }
+    }
 }
 
 pub fn load_or_create(path: &Path) {

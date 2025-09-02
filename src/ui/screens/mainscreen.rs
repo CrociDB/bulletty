@@ -181,6 +181,12 @@ impl AppScreen for MainScreen {
                         Ok(AppScreenEvent::None)
                     }
                 }
+                (_, KeyCode::Char('r')) => {
+                    if let Some(entry) = self.feedentrystate.get_selected() {
+                        self.library.data.toggle_entry_seen(&entry);
+                    }
+                    Ok(AppScreenEvent::None)
+                }
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
                     HelpDialog::new(self.get_full_instructions()),
                 ))),
@@ -206,7 +212,7 @@ impl AppScreen for MainScreen {
 
     fn get_full_instructions(&self) -> String {
         String::from(
-            "j/k/↓/↑: move selection\nEnter: select category or read entry\nEsc/q: back from entries or quit",
+            "j/k/↓/↑: move selection\nEnter: select category or read entry\nr: toggle item read state\nEsc/q: back from entries or quit",
         )
     }
 }
