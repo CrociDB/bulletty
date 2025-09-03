@@ -8,11 +8,16 @@ use ratatui::{
 
 use crate::{
     app::AppWorkStatus,
-    core::library::feedlibrary::FeedLibrary,
-    core::ui::appscreen::{AppScreen, AppScreenEvent},
+    core::{
+        library::feedlibrary::FeedLibrary,
+        ui::appscreen::{AppScreen, AppScreenEvent},
+    },
     ui::{
-        screens::readerscreen::ReaderScreen, states::feedentrystate::FeedEntryState,
-        states::feedtreestate::FeedTreeState,
+        screens::readerscreen::ReaderScreen,
+        states::{
+            feedentrystate::FeedEntryState,
+            feedtreestate::{FeedItemInfo, FeedTreeState},
+        },
     },
 };
 
@@ -44,6 +49,18 @@ impl MainScreen {
             feedtreestate: FeedTreeState::new(),
             feedentrystate: FeedEntryState::new(),
             inputstate: MainInputState::Menu,
+        }
+    }
+
+    fn set_all_read(&self) {
+        let entries = match self.feedtreestate.get_selected() {
+            Some(FeedItemInfo::Category(t)) => self.library.get_feed_entries_by_category(t),
+            Some(FeedItemInfo::Item(_, _, s)) => self.library.get_feed_entries_by_item_slug(s),
+            None => vec![],
+        };
+
+        for entry in entries.iter() {
+            self.library.data.set_entry_seen(entry);
         }
     }
 }
@@ -151,6 +168,10 @@ impl AppScreen for MainScreen {
                     self.inputstate = MainInputState::Content;
                     Ok(AppScreenEvent::None)
                 }
+                (_, KeyCode::Char('R')) => {
+                    self.set_all_read();
+                    Ok(AppScreenEvent::None)
+                }
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
                     HelpDialog::new(self.get_full_instructions()),
                 ))),
@@ -203,6 +224,10 @@ impl AppScreen for MainScreen {
                     }
                     Ok(AppScreenEvent::None)
                 }
+                (_, KeyCode::Char('R')) => {
+                    self.set_all_read();
+                    Ok(AppScreenEvent::None)
+                }
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
                     HelpDialog::new(self.get_full_instructions()),
                 ))),
@@ -228,7 +253,7 @@ impl AppScreen for MainScreen {
 
     fn get_full_instructions(&self) -> String {
         String::from(
-            "j/k/↓/↑: move selection\ng/G/Home/End: beginning and end of the list\nEnter: select category or read entry\nr: toggle item read state\nEsc/q: back from entries or quit",
+            "j/k/↓/↑: move selection\ng/G/Home/End: beginning and end of the list\nEnter: select category or read entry\n\nr: toggle item read state\nR: mark all of the items as read\n\nEsc/q: back from entries or quit",
         )
     }
 }
