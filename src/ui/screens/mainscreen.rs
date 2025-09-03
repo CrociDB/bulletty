@@ -139,6 +139,14 @@ impl AppScreen for MainScreen {
                     self.feedtreestate.select_previous();
                     Ok(AppScreenEvent::None)
                 }
+                (_, KeyCode::Home | KeyCode::Char('g')) => {
+                    self.feedtreestate.select_first();
+                    Ok(AppScreenEvent::None)
+                }
+                (_, KeyCode::End | KeyCode::Char('G')) => {
+                    self.feedtreestate.select_last();
+                    Ok(AppScreenEvent::None)
+                }
                 (_, KeyCode::Right | KeyCode::Enter | KeyCode::Tab | KeyCode::Char('l')) => {
                     self.inputstate = MainInputState::Content;
                     Ok(AppScreenEvent::None)
@@ -159,6 +167,14 @@ impl AppScreen for MainScreen {
                 }
                 (_, KeyCode::Up | KeyCode::Char('k')) => {
                     self.feedentrystate.select_previous();
+                    Ok(AppScreenEvent::None)
+                }
+                (_, KeyCode::Home | KeyCode::Char('g')) => {
+                    self.feedentrystate.select_first();
+                    Ok(AppScreenEvent::None)
+                }
+                (_, KeyCode::End | KeyCode::Char('G')) => {
+                    self.feedentrystate.select_last();
                     Ok(AppScreenEvent::None)
                 }
                 (_, KeyCode::Esc) => {
@@ -212,7 +228,7 @@ impl AppScreen for MainScreen {
 
     fn get_full_instructions(&self) -> String {
         String::from(
-            "j/k/↓/↑: move selection\nEnter: select category or read entry\nr: toggle item read state\nEsc/q: back from entries or quit",
+            "j/k/↓/↑: move selection\ng/G/Home/End: beginning and end of the list\nEnter: select category or read entry\nr: toggle item read state\nEsc/q: back from entries or quit",
         )
     }
 }

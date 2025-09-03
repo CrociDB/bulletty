@@ -132,4 +132,20 @@ impl FeedEntryState {
             self.listatate.select_previous();
         }
     }
+
+    pub fn select_first(&mut self) {
+        if self.entries.is_empty() {
+            return;
+        }
+
+        self.listatate.select_first();
+    }
+
+    pub fn select_last(&mut self) {
+        if self.entries.is_empty() {
+            return;
+        }
+
+        self.listatate.select(Some(self.entries.len() - 1));
+    }
 }
