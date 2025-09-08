@@ -1,0 +1,25 @@
+site_name: bulletty
+theme:
+  name: shadcn
+  show_title: true
+  show_stargazers: true
+  pygments_style:
+        light: shadcn-light
+        dark: gruvbox-dark
+  icon: heroicons:newspaper
+  topbar_sections: false
+  katex_options:
+    macros:
+      "\\RR": "\\mathbb{R}"
+      "\\dx": "\\mathrm{d}x"
+  show_datetime: false 
+
+markdown_extensions:
+  - codehilite
+
+nav:
+  - bulletty:
+    - Home: 'index.md'
+    - Install: 'install.md'
+    - Contributing: 'contributing.md'
+  - Docs: 'docs/code.md'
