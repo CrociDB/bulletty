@@ -45,7 +45,6 @@ jobs:
       - name: Install dependencies and build website
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          uv sync
           uv pip install mkdocs
           uv pip install mkdocs-shadcn
           cd site/
