@@ -14,3 +14,4 @@ We use [GitHub Issues](https://github.com/CrociDB/bulletty/issues) to discuss th
 2. Write code without compiler warnings
 3. On your PR, explain exactly what your code is doing and, even more importantly, why.
 4. Write tests for components that are testable (library managing, feed logic, filesystem, etc)
+

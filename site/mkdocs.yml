@@ -16,6 +16,7 @@ theme:
 
 markdown_extensions:
   - codehilite
+  - admonition
 
 nav:
   - bulletty:

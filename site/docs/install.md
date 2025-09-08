@@ -15,6 +15,9 @@ cargo install bulletty
 
 You can download the [latest release on GitHub](https://github.com/CrociDB/bulletty/releases).
 
+!!! note "Note:"
+    At the moment, there's there are no releases.
+
 ## Building
 
 ```shell
