@@ -5,6 +5,10 @@ description = "a terminal feed (RSS+ATOM) reader"
 authors = ["Bruno Croci <crocidb@gmail.com>"]
 license = "MIT"
 edition = "2024"
+repository = "https://github.com/CrociDB/bulletty"
+readme = "README.md"
+homepage = "https://github.com/CrociDB/bulletty"
+documentation = "https://docs.rs/bulletty"
 
 [dependencies]
 crossterm = "0.29.0"
