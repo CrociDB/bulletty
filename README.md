@@ -23,20 +23,38 @@ It's in active development.
  - [ ] Mouse support
  - [ ] Image support
 
-## Philosophy
+## Install
 
-The whole idea is bringing back the syndicalized internet. You subscribe to the sources you like the most and you get their content whenever it's available. When you get it, it's local, it's yours. **bulletty** will generate a Markdown file of each entry from each source. You can read through the embedded reader, straight from your terminal, or using any text editor. Much like the posix philosophy, everything here is a file.
-
-Registering a new feed is as easy as:
-
+The easiest way to install **bulletty** is through Cargo:
 
 ```shell
-bulletty add https://crocidb.com/index.xml Programming
+cargo install bulletty
 ```
 
-This will add the feed for my own blog into the **Programming** category. If no category is passed, it adds to **General**.
+### Adding new sources
 
-In the end, it will generate a structure of files like this:
+For now, you can only add new feed sources through the CLI:
+
+```shell
+bulletty add https://crocidb.com/index.xml [Category]
+```
+**bulletty** will syncronize all your sources when you open the TUI, by just invoking `bulletty`. Another way to update every entry is through: 
+
+```shell
+bulletty update
+```
+
+More on the CLI commands with:
+
+```shell
+bulletty help
+```
+
+## Philosophy
+
+The whole idea is bringing back the descentralized internet. You subscribe to the sources you like the most and you get their content whenever it's available. When you get it, it's local, it's yours. **bulletty** will generate a Markdown file of each entry from each source. You can read through the embedded reader, straight from your terminal, or using any text editor.
+
+All your feed data will be at `$HOME/.local/share/bulletty/`, in this structure:
 
 ```shell
 [~/.local/share/bulletty]$ tree
@@ -58,13 +76,13 @@ In the end, it will generate a structure of files like this:
 
 ```
 
-All the needs to be done is to synchronize `$HOME/.local/share/bulletty/` to save your data, similarly to an Obsidian vault.
+All the needs to be done is to synchronize the `bulletty` directory to save your data, similarly to an Obsidian vault.
 
 ## Build
 
-Clone the repository, then:
-
 ```shell
+git clone https://github.com/CrociDB/bulletty.git
+cd bulletty
 cargo build --release
 ```
 
