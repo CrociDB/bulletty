@@ -1,4 +1,5 @@
 site_name: bulletty
+site_url: https://bulletty.croci.dev/
 repo_url: https://github.com/CrociDB/bulletty
 theme:
   name: shadcn
