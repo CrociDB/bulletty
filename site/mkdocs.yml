@@ -22,4 +22,5 @@ nav:
     - Home: 'index.md'
     - Install: 'install.md'
     - Contributing: 'contributing.md'
-  - Docs: 'docs/code.md'
+  - Docs:
+    - Reference: 'docs/bulletty.md'
