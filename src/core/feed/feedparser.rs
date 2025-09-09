@@ -142,6 +142,20 @@ pub fn get_feed_entries_doc(
             defaultauthor.to_string()
         };
 
+        // url extraction
+        let entryurl = entry
+            .descendants()
+            .find(|t| t.tag_name().name() == "id" || t.tag_name().name() == "link")
+            .and_then(|t| {
+                if t.text().is_none() {
+                    t.attribute("href")
+                } else {
+                    t.text()
+                }
+            })
+            .unwrap_or("NOURL")
+            .to_string();
+
         // feed creation
         let fe = FeedEntry {
             title: entry
@@ -151,12 +165,7 @@ pub fn get_feed_entries_doc(
                 .unwrap_or("NOTITLE")
                 .to_string(),
             author: entryauthor,
-            url: entry
-                .descendants()
-                .find(|t| t.tag_name().name() == "id" || t.tag_name().name() == "link")
-                .and_then(|t| t.text())
-                .unwrap_or("NOURL")
-                .to_string(),
+            url: entryurl,
             text: content,
             date: parse_date(&datestr)
                 .map_err(|err| error!("{:?}", err))
@@ -414,7 +423,7 @@ mod tests {
      </item>
      <item>
        <title>Item B</title>
-       <link>https://example.com/b</link>
+       <id>https://example.com/b</id>
        <dc:date>2024-03-10T09:30:00Z</dc:date>
        <description>Item B description</description>
      </item>
@@ -474,10 +483,20 @@ mod tests {
        <name>Alice</name>
      </author>
    </entry>
+   <entry>
+     <title>Entry 3</title>
+     <link rel="alternate" href="https://example.org/e3" type="text/html"/>
+     <id>https://example.org/e3</id>
+     <content>Entry 3 content</content>
+     <updated>2024-02-05T11:30:00Z</updated>
+     <author>
+       <name>Alice</name>
+     </author>
+   </entry>
  </feed>"#;
 
         let entries = get_feed_entries_doc(xml, "Bob").expect("failed to parse Atom entries");
-        assert_eq!(entries.len(), 2);
+        assert_eq!(entries.len(), 3);
 
         // Entry 1: uses summary for description, content for text, published for date, id for URL, feed-level author
         let e1 = &entries[0];
@@ -502,6 +521,18 @@ mod tests {
             .unwrap()
             .with_timezone(&Utc);
         assert_eq!(e2.date, expected_e2_date);
+
+        // Entry 3: both link tags
+        let e3 = &entries[2];
+        assert_eq!(e3.title, "Entry 3");
+        assert_eq!(e3.url, "https://example.org/e3");
+        assert_eq!(e3.author, "Alice");
+        assert_eq!(e3.text, "Entry 3 content");
+        assert_eq!(e3.description, "Entry 3 content");
+        let expected_e3_date = DateTime::parse_from_rfc3339("2024-02-05T11:30:00Z")
+            .unwrap()
+            .with_timezone(&Utc);
+        assert_eq!(e3.date, expected_e3_date);
     }
 
     #[test]
