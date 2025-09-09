@@ -48,6 +48,7 @@ jobs:
           uv venv
           uv pip install mkdocs
           uv pip install mkdocs-shadcn
+          cargo install rustdoc-md
           cd site/
           ./make.sh
 
