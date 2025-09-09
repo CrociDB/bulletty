@@ -69,8 +69,10 @@ fn parse(doc: &str, feed_url: &str) -> color_eyre::Result<FeedItem> {
         } else if let Some(text) = author_tag.text() {
             feed.author = String::from(text);
         } else {
-            feed.author = "NOAUTHOR".to_string();
+            feed.author = feed.title.to_string();
         }
+    } else {
+        feed.author = feed.title.to_string();
     }
 
     feed.slug = slugify(&feed.title);
@@ -376,6 +378,22 @@ mod tests {
         assert_eq!(feed.description, "No link here");
         assert_eq!(feed.url, "NOURL");
         assert!(feed.author.contains("Carol"));
+    }
+
+    #[test]
+    fn rss_missing_author_uses_feed_title() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>No Author RSS</title>
+    <description>No author here</description>
+  </channel>
+</rss>"#;
+
+        let feed = parse(xml, "NOURL").expect("failed to parse RSS without author");
+        assert_eq!(feed.title, "No Author RSS");
+        assert_eq!(feed.description, "No author here");
+        assert_eq!(feed.author, "No Author RSS");
     }
 
     #[test]
