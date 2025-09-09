@@ -59,29 +59,33 @@ impl FeedEntryState {
 
                 item_content_lines.push(Line::from(""));
 
+                // Title
                 if !entry.seen {
                     item_content_lines.push(Line::from(Span::styled(
-                        format!("\u{f1ea} {} \u{e3e3}", entry.title),
+                        format!(" \u{f1ea} {} \u{e3e3}", entry.title),
                         Style::default().bold().fg(Color::from_u32(0x81ae80)),
                     )));
                 } else {
                     item_content_lines.push(Line::from(Span::styled(
-                        format!("\u{f1ea} {}", entry.title),
+                        format!(" \u{f1ea} {}", entry.title),
                         Style::default().bold(),
                     )));
                 };
 
+                // Date
                 item_content_lines.push(Line::from(Span::styled(
                     format!(
-                        "\u{f0520} {}",
-                        entry.date.with_timezone(&chrono::Local).format("%Y-%m-%d")
+                        " \u{f0520} {} | \u{f09e} {}",
+                        entry.date.with_timezone(&chrono::Local).format("%Y-%m-%d"),
+                        entry.author
                     ),
-                    Style::default().italic().dim(),
+                    Style::default().dim().fg(Color::from_u32(0x777777)),
                 )));
 
+                // Description
                 item_content_lines.push(Line::from(Span::styled(
-                    format!("{}...", entry.description),
-                    Style::default().dim(),
+                    format!(" {}...", entry.description),
+                    Style::default().dim().fg(Color::from_u32(0xaaaaaa)),
                 )));
 
                 item_content_lines.push(Line::from(""));

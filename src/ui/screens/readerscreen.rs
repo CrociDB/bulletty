@@ -60,17 +60,22 @@ impl AppScreen for ReaderScreen {
         .split(area);
 
         let contentlayout = Layout::vertical([
-            Constraint::Length(1),
-            Constraint::Length(2),
-            Constraint::Fill(1),
+            Constraint::Length(1), // Title
+            Constraint::Length(1), // Date
+            Constraint::Length(2), // URL
+            Constraint::Fill(1),   // Content
         ])
         .split(sizelayout[1]);
 
+        // Title
         let title = Paragraph::new(self.feedentry.title.as_str())
             .style(Style::new().fg(Color::LightRed))
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
 
+        frame.render_widget(title, contentlayout[0]);
+
+        // Date
         let date = Paragraph::new(format!(
             "\u{f0520} {} | \u{f09e} {}",
             self.feedentry
@@ -79,10 +84,21 @@ impl AppScreen for ReaderScreen {
                 .format("%Y-%m-%d"),
             self.feedentry.author
         ))
-        .style(Style::new().fg(Color::White))
+        .style(Style::new().fg(Color::from_u32(0x777777)))
         .alignment(Alignment::Center)
         .wrap(Wrap { trim: true });
 
+        frame.render_widget(date, contentlayout[1]);
+
+        // URL
+        let date = Paragraph::new(self.feedentry.url.to_string())
+            .style(Style::new().fg(Color::Blue))
+            .alignment(Alignment::Center)
+            .wrap(Wrap { trim: true });
+
+        frame.render_widget(date, contentlayout[2]);
+
+        // Content
         let textwidget = tui_markdown::from_str(&self.feedentry.text);
         self.scrollmax = textwidget.height();
 
@@ -91,9 +107,7 @@ impl AppScreen for ReaderScreen {
             .alignment(Alignment::Left)
             .wrap(Wrap { trim: true });
 
-        frame.render_widget(title, contentlayout[0]);
-        frame.render_widget(date, contentlayout[1]);
-        frame.render_widget(text, contentlayout[2]);
+        frame.render_widget(text, contentlayout[3]);
 
         let mut scrollbarstate = ScrollbarState::new(self.scrollmax).position(self.scroll);
         let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight);
