@@ -1,6 +1,6 @@
 [package]
 name = "bulletty"
-version = "0.1.1"
+version = "0.1.2"
 description = "a terminal feed (RSS+ATOM) reader"
 authors = ["Bruno Croci <crocidb@gmail.com>"]
 license = "MIT"
