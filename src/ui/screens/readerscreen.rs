@@ -160,6 +160,14 @@ impl AppScreen for ReaderScreen {
                 self.scrollup();
                 Ok(AppScreenEvent::None)
             }
+            (_, KeyCode::Home | KeyCode::Char('g')) => {
+                self.scroll = 0;
+                Ok(AppScreenEvent::None)
+            }
+            (_, KeyCode::End | KeyCode::Char('G')) => {
+                self.scroll = self.scrollmax;
+                Ok(AppScreenEvent::None)
+            }
             (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(HelpDialog::new(
                 self.get_full_instructions(),
             )))),
@@ -178,7 +186,7 @@ impl AppScreen for ReaderScreen {
     }
 
     fn get_instructions(&self) -> String {
-        String::from("j/k/↓/↑: scroll | Esc/q: leave")
+        String::from("j/k/↓/↑: scroll | g/G: beginning or end of file | Esc/q: leave")
     }
 
     fn get_work_status(&self) -> AppWorkStatus {
@@ -186,6 +194,6 @@ impl AppScreen for ReaderScreen {
     }
 
     fn get_full_instructions(&self) -> String {
-        String::from("j/k/↓/↑: scroll\nEsc/q: leave")
+        String::from("j/k/↓/↑: scroll\ng/G: go to beginning or end of file\nEsc/q: leave")
     }
 }
