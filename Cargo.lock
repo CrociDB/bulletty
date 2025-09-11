@@ -182,6 +182,7 @@ dependencies = [
  "tracing-error",
  "tracing-subscriber",
  "tui-markdown",
+ "unicode-width 0.2.0",
 ]
 
 [[package]]

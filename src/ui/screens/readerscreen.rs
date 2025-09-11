@@ -5,6 +5,7 @@ use ratatui::style::{Color, Style};
 use ratatui::widgets::{
     Block, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
 };
+use unicode_width::UnicodeWidthStr;
 
 use crate::app::AppWorkStatus;
 use crate::core::{
@@ -99,16 +100,35 @@ impl AppScreen for ReaderScreen {
         frame.render_widget(date, contentlayout[2]);
 
         // Content
-        let textwidget = tui_markdown::from_str(&self.feedentry.text);
-        self.scrollmax = textwidget.height();
+        let text = tui_markdown::from_str(&self.feedentry.text);
+        let textheight = text.height() as usize;
 
-        let text = Paragraph::new(textwidget)
+        // This is a workaround to get more or less the amount of wrapped lines, to be used on the
+        // scrollbar
+        let mut wrapped_lines = 0;
+        for line in text.lines.iter() {
+            let content: String = line
+                .spans
+                .iter()
+                .map(|span| span.content.to_string())
+                .collect();
+            let line_width = UnicodeWidthStr::width(content.as_str());
+            let wrapped = line_width.div_ceil(contentlayout[3].width as usize);
+            wrapped_lines += wrapped - wrapped.min(1);
+        }
+
+        let scrollheight = textheight + wrapped_lines + 4;
+        self.scrollmax = scrollheight - (contentlayout[3].height as usize).min(scrollheight);
+
+        // Content Paragraph component
+        let paragraph = Paragraph::new(text)
             .scroll((self.scroll as u16, 0))
             .alignment(Alignment::Left)
             .wrap(Wrap { trim: true });
 
-        frame.render_widget(text, contentlayout[3]);
+        frame.render_widget(paragraph, contentlayout[3]);
 
+        // Scrollbar
         let mut scrollbarstate = ScrollbarState::new(self.scrollmax).position(self.scroll);
         let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight);
         frame.render_stateful_widget(scrollbar, sizelayout[2], &mut scrollbarstate);
