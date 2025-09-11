@@ -117,7 +117,7 @@ impl AppScreen for ReaderScreen {
             wrapped_lines += wrapped - wrapped.min(1);
         }
 
-        let scrollheight = textheight + wrapped_lines + 4;
+        let scrollheight = textheight + (wrapped_lines as f32 * 1.06) as usize + 4;
         self.scrollmax = scrollheight - (contentlayout[3].height as usize).min(scrollheight);
 
         // Content Paragraph component
