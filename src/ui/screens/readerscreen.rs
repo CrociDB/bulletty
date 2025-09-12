@@ -5,8 +5,8 @@ use ratatui::style::{Color, Style};
 use ratatui::widgets::{
     Block, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
 };
-use unicode_width::UnicodeWidthStr;
 use tracing::error;
+use unicode_width::UnicodeWidthStr;
 
 use crate::app::AppWorkStatus;
 use crate::core::{
@@ -162,7 +162,8 @@ impl AppScreen for ReaderScreen {
         key: crossterm::event::KeyEvent,
     ) -> color_eyre::eyre::Result<AppScreenEvent> {
         match (key.modifiers, key.code) {
-            (_, KeyCode::Esc | KeyCode::Char('q')) | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
+            (_, KeyCode::Esc | KeyCode::Char('q'))
+            | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
                 Ok(AppScreenEvent::ExitState)
             }
             (_, KeyCode::Down | KeyCode::Char('j')) => {
@@ -181,9 +182,7 @@ impl AppScreen for ReaderScreen {
                 self.scroll = self.scrollmax;
                 Ok(AppScreenEvent::None)
             }
-            (_, KeyCode::Char('o')) => {
-                self.open_external_url(&self.feedentry.url)
-            }
+            (_, KeyCode::Char('o')) => self.open_external_url(&self.feedentry.url),
             (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(HelpDialog::new(
                 self.get_full_instructions(),
             )))),
@@ -210,6 +209,8 @@ impl AppScreen for ReaderScreen {
     }
 
     fn get_full_instructions(&self) -> String {
-        String::from("j/k/↓/↑: scroll\ng/G: go to beginning or end of file\n\no: open externally\n\nEsc/q: leave")
+        String::from(
+            "j/k/↓/↑: scroll\ng/G: go to beginning or end of file\n\no: open externally\n\nEsc/q: leave",
+        )
     }
 }
