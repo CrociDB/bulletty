@@ -5,6 +5,7 @@ use ratatui::{
     style::{Color, Style, Stylize},
     widgets::{Block, List, Padding},
 };
+use tracing::error;
 
 use crate::{
     app::AppWorkStatus,
@@ -13,7 +14,7 @@ use crate::{
         ui::appscreen::{AppScreen, AppScreenEvent},
     },
     ui::{
-        screens::readerscreen::ReaderScreen,
+        screens::{readerscreen::ReaderScreen, urldialog::UrlDialog},
         states::{
             feedentrystate::FeedEntryState,
             feedtreestate::{FeedItemInfo, FeedTreeState},
@@ -61,6 +62,18 @@ impl MainScreen {
 
         for entry in entries.iter() {
             self.library.data.set_entry_seen(entry);
+        }
+    }
+
+    fn open_external_url(&self, url: &str) -> Result<AppScreenEvent> {
+        match open::that(url) {
+            Ok(_) => Ok(AppScreenEvent::None),
+            Err(_) => {
+                error!("Couldn't invoke system browser");
+                Ok(AppScreenEvent::OpenDialog(Box::new(UrlDialog::new(
+                    url.to_string(),
+                ))))
+            }
         }
     }
 }
@@ -228,6 +241,14 @@ impl AppScreen for MainScreen {
                     self.set_all_read();
                     Ok(AppScreenEvent::None)
                 }
+                (_, KeyCode::Char('o')) => {
+                    if let Some(entry) = self.feedentrystate.get_selected() {
+                        self.library.data.set_entry_seen(&entry);
+                        self.open_external_url(&entry.url)
+                    } else {
+                        Ok(AppScreenEvent::None)
+                    }
+                }
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
                     HelpDialog::new(self.get_full_instructions()),
                 ))),
@@ -239,11 +260,12 @@ impl AppScreen for MainScreen {
     fn get_title(&self) -> String {
         String::from("Main")
     }
+
     fn get_instructions(&self) -> String {
         if self.inputstate == MainInputState::Menu {
             String::from("j/k/↓/↑: move selection | Enter: select | Esc/q: quit")
         } else {
-            String::from("j/k/↓/↑: move selection | Enter: read entry | Esc/q: back")
+            String::from("j/k/↓/↑: move | o: open externally | Enter: read | Esc/q: back")
         }
     }
 
@@ -253,7 +275,7 @@ impl AppScreen for MainScreen {
 
     fn get_full_instructions(&self) -> String {
         String::from(
-            "j/k/↓/↑: move selection\ng/G/Home/End: beginning and end of the list\nEnter: select category or read entry\n\nr: toggle item read state\nR: mark all of the items as read\n\nEsc/q: back from entries or quit",
+            "j/k/↓/↑: move selection\ng/G/Home/End: beginning and end of the list\no: open link externally\nEnter: select category or read entry\n\nr: toggle item read state\nR: mark all of the items as read\n\nEsc/q: back from entries or quit",
         )
     }
 }

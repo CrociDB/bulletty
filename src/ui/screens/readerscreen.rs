@@ -6,12 +6,14 @@ use ratatui::widgets::{
     Block, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
 };
 use unicode_width::UnicodeWidthStr;
+use tracing::error;
 
 use crate::app::AppWorkStatus;
 use crate::core::{
     feed::feedentry::FeedEntry,
     ui::appscreen::{AppScreen, AppScreenEvent},
 };
+use crate::ui::screens::urldialog::UrlDialog;
 
 use super::helpdialog::HelpDialog;
 
@@ -38,6 +40,18 @@ impl ReaderScreen {
 
     pub fn scrolldown(&mut self) {
         self.scroll = std::cmp::min(self.scroll + 1, self.scrollmax);
+    }
+
+    fn open_external_url(&self, url: &str) -> Result<AppScreenEvent> {
+        match open::that(url) {
+            Ok(_) => Ok(AppScreenEvent::None),
+            Err(_) => {
+                error!("Couldn't invoke system browser");
+                Ok(AppScreenEvent::OpenDialog(Box::new(UrlDialog::new(
+                    url.to_string(),
+                ))))
+            }
+        }
     }
 }
 
@@ -148,8 +162,7 @@ impl AppScreen for ReaderScreen {
         key: crossterm::event::KeyEvent,
     ) -> color_eyre::eyre::Result<AppScreenEvent> {
         match (key.modifiers, key.code) {
-            (_, KeyCode::Esc | KeyCode::Char('q'))
-            | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
+            (_, KeyCode::Esc | KeyCode::Char('q')) | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
                 Ok(AppScreenEvent::ExitState)
             }
             (_, KeyCode::Down | KeyCode::Char('j')) => {
@@ -167,6 +180,9 @@ impl AppScreen for ReaderScreen {
             (_, KeyCode::End | KeyCode::Char('G')) => {
                 self.scroll = self.scrollmax;
                 Ok(AppScreenEvent::None)
+            }
+            (_, KeyCode::Char('o')) => {
+                self.open_external_url(&self.feedentry.url)
             }
             (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(HelpDialog::new(
                 self.get_full_instructions(),
@@ -186,7 +202,7 @@ impl AppScreen for ReaderScreen {
     }
 
     fn get_instructions(&self) -> String {
-        String::from("j/k/↓/↑: scroll | g/G: beginning or end of file | Esc/q: leave")
+        String::from("j/k/↓/↑: scroll | o: open externally | Esc/q: leave")
     }
 
     fn get_work_status(&self) -> AppWorkStatus {
@@ -194,6 +210,6 @@ impl AppScreen for ReaderScreen {
     }
 
     fn get_full_instructions(&self) -> String {
-        String::from("j/k/↓/↑: scroll\ng/G: go to beginning or end of file\nEsc/q: leave")
+        String::from("j/k/↓/↑: scroll\ng/G: go to beginning or end of file\n\no: open externally\n\nEsc/q: leave")
     }
 }
