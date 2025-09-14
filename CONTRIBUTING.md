@@ -41,7 +41,7 @@ To start contributing, you'll need to set up your local environment.
 ### Clone the repository:
 
 ```shell
-git clone [https://github.com/CrociDB/bulletty.git](https://github.com/CrociDB/bulletty.git)
+git clone https://github.com/CrociDB/bulletty.git
 cd bulletty
 ```
 

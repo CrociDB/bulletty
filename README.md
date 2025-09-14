@@ -38,7 +38,8 @@ For now, you can only add new feed sources through the CLI:
 ```shell
 bulletty add https://crocidb.com/index.xml [Category]
 ```
-**bulletty** will syncronize all your sources when you open the TUI, by just invoking `bulletty`. Another way to update every entry is through: 
+
+If no category is passed, the feed source will be added to the `General` category. **bulletty** will syncronize all your sources when you open the TUI, by just invoking `bulletty`. Another way to update every entry is through: 
 
 ```shell
 bulletty update
@@ -86,9 +87,9 @@ cd bulletty
 cargo build --release
 ```
 
-## Contributing
+## Contributing to bulletty
 
-I am very open for contributions to help make **bulletty** the best feed reader out there.
+I am very open for contributions to help make **bulletty** the best feed reader out there. For more information on how to contribute, refer to the **CONTRIBUTING.md**.
 
 ## License
 
