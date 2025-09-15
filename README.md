@@ -31,6 +31,9 @@ The easiest way to install **bulletty** is through Cargo:
 cargo install bulletty
 ```
 
+
+## Usage
+
 ### Adding new sources
 
 For now, you can only add new feed sources through the CLI:
@@ -50,6 +53,12 @@ More on the CLI commands with:
 ```shell
 bulletty help
 ```
+
+### TUI
+
+On any screen, you can press question mark `?` and it will show you the available commands for that screen. Also, on the bottom right, it shows the most important commands for that context.
+
+In general, it supports `j/k/up/down` to select items, navigate and scroll, as well as `g/G/Home/End` to go to the begginning/end of a list or file and `Enter` and `q/Esc` to navigate into and out of Categories and Entries. In order to open an Entry externally, press `o`.
 
 ## Philosophy
 
