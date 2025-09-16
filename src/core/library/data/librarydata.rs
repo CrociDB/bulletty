@@ -155,15 +155,21 @@ impl LibraryData {
         }?;
 
         feedentries.iter_mut().for_each(|e| {
-            let item_slug = slugify(&e.title);
             let entrypath = self
                 .path
                 .join(defs::DATA_CATEGORIES_DIR)
                 .join(&category.title)
-                .join(&feed.slug)
-                .join(format!("{item_slug}.md"));
+                .join(&feed.slug);
 
-            e.filepath = entrypath;
+            let item_slug = {
+                let base_path = entrypath.to_string_lossy();
+                let max_slug_len = 250usize.saturating_sub(base_path.len() + 1);
+                let slug = slugify(&e.title);
+                let slug_cut = &slug[..slug.len().min(max_slug_len)];
+                slug_cut.to_string()
+            };
+
+            e.filepath = entrypath.join(format!("{item_slug}.md"));
         });
 
         self.update_entries(feed, feedentries)
