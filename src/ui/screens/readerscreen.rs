@@ -144,7 +144,8 @@ impl AppScreen for ReaderScreen {
 
         // Scrollbar
         let mut scrollbarstate = ScrollbarState::new(self.scrollmax).position(self.scroll);
-        let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight);
+        let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
+            .style(Style::new().fg(Color::from_u32(0x444444)));
         frame.render_stateful_widget(scrollbar, sizelayout[2], &mut scrollbarstate);
     }
 
