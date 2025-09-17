@@ -12,7 +12,6 @@ use crate::core::{feed::feedentry::FeedEntry, library::feeditem::FeedItem};
 
 pub fn get_feed(url: &str) -> color_eyre::Result<FeedItem> {
     let response = reqwest::blocking::get(url)?;
-    tracing::warn!("GOT RESPONSE: {:?}", response);
     if !response.status().is_success() {
         return Err(eyre!(
             "Request to \"{}\" returned status code {:?}",
