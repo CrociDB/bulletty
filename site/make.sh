@@ -1,6 +1,9 @@
 # Generating rustdoc using `rustdoc-md`. It uses a nightly version or rust
 RUSTC_BOOTSTRAP=1 RUSTDOCFLAGS="-Z unstable-options --output-format json" cargo doc --no-deps
 rustdoc-md --path ../target/doc/bulletty.json --output docs/docs/bulletty.md
+cat ./docs/docs/_reference.md > ./docs/docs/reference.md
+echo "" >> ./docs/docs/reference.md
+cat ./docs/docs/bulletty.md >> ./docs/docs/reference.md
 
 # Generate index page using README.md
 cat ./docs/_index.md > ./docs/index.md
@@ -13,5 +16,5 @@ tail -n +3 ../CONTRIBUTING.md >> ./docs/contributing.md
 cp -R ../img ./docs/img
 uv venv --clear
 uv tool install mkdocs
-uv pip install mkdocs-shadcn
+uv pip install mkdocs-material
 uv run mkdocs build

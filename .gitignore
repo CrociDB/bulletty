@@ -1,5 +1,7 @@
 /target
 site/site
 site/docs/img
+site/docs/index.md
 site/docs/docs/bulletty.md
-site/docs/docs/contributing.md
+site/docs/docs/reference.md
+site/docs/contributing.md
