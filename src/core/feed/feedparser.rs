@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
 use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
+use color_eyre::eyre::eyre;
 use html2md::parse_html;
 use regex::Regex;
-use reqwest::blocking::get;
 use roxmltree::Node;
 use slug::slugify;
 use tracing::error;
@@ -11,8 +11,18 @@ use tracing::error;
 use crate::core::{feed::feedentry::FeedEntry, library::feeditem::FeedItem};
 
 pub fn get_feed(url: &str) -> color_eyre::Result<FeedItem> {
-    let response = get(url)?.text()?;
-    parse(&response, url)
+    let response = reqwest::blocking::get(url)?;
+    tracing::warn!("GOT RESPONSE: {:?}", response);
+    if !response.status().is_success() {
+        return Err(eyre!(
+            "Request to \"{}\" returned status code {:?}",
+            url,
+            response.status()
+        ));
+    }
+
+    let body = response.text()?;
+    parse(&body, url)
 }
 
 fn parse(doc: &str, feed_url: &str) -> color_eyre::Result<FeedItem> {
@@ -83,8 +93,17 @@ fn parse(doc: &str, feed_url: &str) -> color_eyre::Result<FeedItem> {
 }
 
 pub fn get_feed_entries(feed: &FeedItem) -> color_eyre::Result<Vec<FeedEntry>> {
-    let response = get(&feed.feed_url)?.text()?;
-    get_feed_entries_doc(&response, &feed.author)
+    let response = reqwest::blocking::get(&feed.feed_url)?;
+    if !response.status().is_success() {
+        return Err(eyre!(
+            "Request to \"{}\" returned status code {:?}",
+            feed.feed_url,
+            response.status()
+        ));
+    }
+
+    let body = response.text()?;
+    get_feed_entries_doc(&body, &feed.author)
 }
 
 pub fn get_feed_entries_doc(
@@ -210,10 +229,7 @@ fn parse_date(date_str: &str) -> color_eyre::Result<DateTime<Utc>> {
         }
     }
 
-    Err(color_eyre::eyre::eyre!(
-        "Couldn't parse date: {:?}",
-        date_str
-    ))
+    Err(eyre!("Couldn't parse date: {:?}", date_str))
 }
 
 fn get_description_content(entry: &Node) -> (String, String) {

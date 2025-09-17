@@ -186,11 +186,13 @@ impl LibraryData {
                 {
                     Ok(file) => file,
                     Err(error) => {
-                        return Err(eyre!(
+                        error!(
                             "Error creating file '{}': {}",
                             entry.filepath.display(),
                             error
-                        ));
+                        );
+
+                        break;
                     }
                 };
 
