@@ -39,7 +39,7 @@ fn parse(doc: &str, feed_url: &str) -> color_eyre::Result<FeedItem> {
     feed.title = feed_tag
         .descendants()
         .find(|t| t.tag_name().name() == "title")
-        .and_then(|t| t.text())
+        .and_then(|t| t.text().map(|s| s.trim()))
         .unwrap_or("")
         .to_string();
 
