@@ -152,4 +152,12 @@ impl FeedEntryState {
 
         self.listatate.select(Some(self.entries.len() - 1));
     }
+
+    pub fn scroll_max(&self) -> usize {
+        self.entries.len() - 1
+    }
+
+    pub fn scroll(&self) -> usize {
+        self.listatate.selected().unwrap_or(0)
+    }
 }

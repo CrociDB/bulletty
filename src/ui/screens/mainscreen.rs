@@ -3,7 +3,7 @@ use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::{
     layout::{Constraint, Layout, Rect},
     style::{Color, Style, Stylize},
-    widgets::{Block, List, Padding},
+    widgets::{Block, List, Padding, Scrollbar, ScrollbarOrientation, ScrollbarState},
 };
 use tracing::error;
 
@@ -92,8 +92,12 @@ impl AppScreen for MainScreen {
     fn render(&mut self, frame: &mut ratatui::Frame, area: Rect) {
         self.library.update();
 
-        let chunks =
-            Layout::horizontal([Constraint::Min(30), Constraint::Percentage(85)]).split(area);
+        let chunks = Layout::horizontal([
+            Constraint::Min(30),
+            Constraint::Percentage(85),
+            Constraint::Min(1),
+        ])
+        .split(area);
 
         // Feed tree
         self.feedtreestate.update(&self.library);
@@ -143,6 +147,16 @@ impl AppScreen for MainScreen {
             .highlight_style(entryselectionstyle);
 
         frame.render_stateful_widget(list_widget, chunks[1], &mut entryliststate);
+
+        // Scrollbar
+        let mut scrollbarstate = ScrollbarState::new(self.feedentrystate.scroll_max())
+            .position(self.feedentrystate.scroll());
+        let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight).style(
+            Style::new()
+                .fg(Color::from_u32(0x555555))
+                .bg(Color::from_u32(0x3a3a3a)),
+        );
+        frame.render_stateful_widget(scrollbar, chunks[2], &mut scrollbarstate);
     }
 
     fn handle_events(&mut self) -> Result<AppScreenEvent> {
