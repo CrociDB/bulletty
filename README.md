@@ -11,17 +11,20 @@ It's in active development.
 
 ## Features
 
- - [X] Subscribe to RSS and ATOM feed types
- - [X] All your data in one place
- - [X] Download entries
- - [X] Render Markdown
- - [ ] Themes
- - [ ] Read later
- - [ ] Highlight
- - [ ] Notes
- - [ ] Web view
- - [ ] Mouse support
- - [ ] Image support
+ - Subscribe to RSS and ATOM feed types
+ - All your feed sources and entries are stored in Markdown in one place: `$(HOME)/.local/share/bulletty/`
+ - Download entries automatically
+ - Render Markdown
+
+## Feature Roadmap
+
+ - Themes
+ - Read later
+ - Highlight
+ - Notes
+ - Web view
+ - Mouse support
+ - Image support
 
 ## Install
 
@@ -30,8 +33,6 @@ The easiest way to install **bulletty** is through Cargo:
 ```shell
 cargo install bulletty
 ```
-
-
 ## Usage
 
 ### Adding new sources
