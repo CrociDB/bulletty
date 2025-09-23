@@ -12,7 +12,7 @@ It's in active development.
 ## Features
 
  - Subscribe to RSS and ATOM feed types
- - All your feed sources and entries are stored in Markdown in one place: `$(HOME)/.local/share/bulletty/`
+ - All your feed sources and entries are stored in Markdown in one place: `$HOME/.local/share/bulletty/`
  - Download entries automatically
  - Render Markdown
 
