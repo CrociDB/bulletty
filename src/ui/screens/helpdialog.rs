@@ -22,7 +22,7 @@ impl HelpDialog {
 impl Dialog for HelpDialog {
     fn get_size(&self) -> ratatui::prelude::Rect {
         let line_breaks = self.help_string.matches('\n').count() as u16;
-        Rect::new(60, line_breaks + 5, 0, 0)
+        Rect::new(60, line_breaks + 7, 0, 0)
     }
 
     fn as_screen(&self) -> &dyn AppScreen {

@@ -277,9 +277,9 @@ impl AppScreen for MainScreen {
 
     fn get_instructions(&self) -> String {
         if self.inputstate == MainInputState::Menu {
-            String::from("j/k/↓/↑: move selection | Enter: select | Esc/q: quit")
+            String::from("?: Help | j/k/↓/↑: move | Enter: select | Esc: quit")
         } else {
-            String::from("j/k/↓/↑: move | o: open externally | Enter: read | Esc/q: back")
+            String::from("?: Help | j/k/↓/↑: move | o: open | Enter: read | Esc: back")
         }
     }
 
