@@ -236,8 +236,8 @@ fn popup_area(area: Rect, size: Rect) -> Rect {
         Layout::horizontal([Constraint::Percentage(size.width)]).flex(Flex::Center);
 
     if size.x + size.y > 0 {
-        vertical = Layout::vertical([Constraint::Min(size.y)]).flex(Flex::Center);
-        horizontal = Layout::horizontal([Constraint::Min(size.x)]).flex(Flex::Center);
+        vertical = Layout::vertical([Constraint::Length(size.y)]).flex(Flex::Center);
+        horizontal = Layout::horizontal([Constraint::Length(size.x)]).flex(Flex::Center);
     }
 
     let [area] = vertical.areas(area);

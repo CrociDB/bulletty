@@ -21,7 +21,7 @@ impl UrlDialog {
 
 impl Dialog for UrlDialog {
     fn get_size(&self) -> ratatui::prelude::Rect {
-        Rect::new(0, 0, 60, 25)
+        Rect::new((self.url.len() as u16) + 10, 7, 0, 0)
     }
 
     fn as_screen(&self) -> &dyn AppScreen {
@@ -43,8 +43,6 @@ impl AppScreen for UrlDialog {
     fn unpause(&mut self) {}
 
     fn render(&mut self, frame: &mut ratatui::Frame, area: ratatui::prelude::Rect) {
-        // TODO: Find a way to centralize the URL here. Maybe having a window with exact height
-        // rather than percentage?
         let contentlayout = Layout::vertical([Constraint::Length(2), Constraint::Fill(1)])
             .split(area.inner(Margin::new(2, 1)));
 
@@ -85,7 +83,7 @@ impl AppScreen for UrlDialog {
     }
 
     fn get_title(&self) -> String {
-        String::from("Entry URL")
+        String::from("Couldn't open browser automatically")
     }
 
     fn get_instructions(&self) -> String {

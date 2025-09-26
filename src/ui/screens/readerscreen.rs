@@ -202,7 +202,7 @@ impl AppScreen for ReaderScreen {
     }
 
     fn get_instructions(&self) -> String {
-        String::from("j/k/↓/↑: scroll | o: open externally | Esc/q: leave")
+        String::from("?: Help | j/k/↓/↑: scroll | o: open externally | Esc/q: leave")
     }
 
     fn get_work_status(&self) -> AppWorkStatus {
