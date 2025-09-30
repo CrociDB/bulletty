@@ -113,8 +113,11 @@ impl App {
 
                     // After drawing the state, needs to check if there's a dialog
                     if let Some(dialog) = self.dialog_queue.get_mut(0) {
-                        let overlay = Block::default()
-                            .style(Style::default().bg(Color::from_u32(0x575653)).fg(Color::Reset));
+                        let overlay = Block::default().style(
+                            Style::default()
+                                .bg(Color::from_u32(0x575653))
+                                .fg(Color::Reset),
+                        );
                         frame.render_widget(overlay, mainlayout[0]);
 
                         let border = Block::new().style(Style::new().bg(Color::from_u32(0x262626)));
