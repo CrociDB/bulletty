@@ -95,7 +95,7 @@ impl AppScreen for MainScreen {
         let chunks = Layout::horizontal([
             Constraint::Min(30),
             Constraint::Percentage(85),
-            Constraint::Min(1),
+            Constraint::Length(1),
         ])
         .split(area);
 
