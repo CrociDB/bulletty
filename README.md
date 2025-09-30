@@ -33,6 +33,9 @@ The easiest way to install **bulletty** is through Cargo:
 ```shell
 cargo install bulletty
 ```
+
+Alternatively, you can grab the prebuild binary [here](https://github.com/CrociDB/bulletty/releases). So far, I'm only creating Linux x86_64.
+
 ## Usage
 
 ### Adding new sources

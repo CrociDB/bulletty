@@ -14,12 +14,9 @@ cargo install bulletty
 !!! note "Note:"
     [bulletty on crates.io](https://crates.io/crates/bulletty)
 
-## Pre-built binary
+## Prebuilt binary
 
-You can download the [latest release on GitHub](https://github.com/CrociDB/bulletty/releases).
-
-!!! note "Note:"
-    At the moment, there are no releases on the page, only from Cargo
+You can grab the prebuild binaries for the [latest release on GitHub](https://github.com/CrociDB/bulletty/releases).
 
 ## Building
 
