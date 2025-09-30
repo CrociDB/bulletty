@@ -1,8 +1,8 @@
 [package]
 name = "bulletty"
-version = "0.1.6"
-description = "a pretty terminal feed (RSS+ATOM) reader that stores your data locally"
-authors = ["Bruno Croci <crocidb@gmail.com>"]
+version = "0.1.7"
+description = "a pretty TUI feed reader (RSS+ATOM) that stores articles locally as Markdown files"
+authors = [ "Bruno Croci <crocidb@gmail.com>" ]
 license = "MIT"
 edition = "2024"
 repository = "https://github.com/CrociDB/bulletty"
@@ -16,18 +16,18 @@ ratatui = "0.29.0"
 color-eyre = "0.6.5"
 dirs = "6"
 toml = "0.9.6"
-serde = { version = "1.0.228", features = ["derive"] }
-reqwest = { version = "0.12.23", features = ["blocking"] }
-clap = { version = "4.5.48", features = ["derive"] }
+serde = { version = "1.0.228", features = [ "derive" ] }
+reqwest = { version = "0.12.23", features = [ "blocking" ] }
+clap = { version = "4.5.48", features = [ "derive" ] }
 roxmltree = "0.20.0"
-openssl = { version = "0.10", features = ["vendored"] }
+openssl = { version = "0.10", features = [ "vendored" ] }
 slug = "0.1"
 html2md = "0.2.15"
 regex = "1.11.3"
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { version = "0.4", features = [ "serde" ] }
 tui-markdown = "0.3.5"
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3", features = [ "env-filter" ] }
 tracing-appender = "0.2"
 tracing-error = "0.2"
 unicode-width = "0.2.0"
