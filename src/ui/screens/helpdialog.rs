@@ -48,7 +48,7 @@ impl AppScreen for HelpDialog {
             .split(area.inner(Margin::new(2, 1)));
 
         let title = Paragraph::new(self.get_title())
-            .style(Style::new().fg(Color::LightRed))
+            .style(Style::new().fg(Color::from_u32(0xc64b3a)))
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
 

@@ -79,13 +79,13 @@ impl FeedEntryState {
                         entry.date.with_timezone(&chrono::Local).format("%Y-%m-%d"),
                         entry.author
                     ),
-                    Style::default().dim().fg(Color::from_u32(0x777777)),
+                    Style::default().fg(Color::from_u32(0x777777)),
                 )));
 
                 // Description
                 item_content_lines.push(Line::from(Span::styled(
                     format!(" {}...", entry.description),
-                    Style::default().dim().fg(Color::from_u32(0xaaaaaa)),
+                    Style::default().fg(Color::from_u32(0xaaaaaa)),
                 )));
 
                 item_content_lines.push(Line::from(""));

@@ -135,7 +135,7 @@ impl AppScreen for MainScreen {
         let entryselectionstyle = if self.inputstate == MainInputState::Content {
             Style::default().bg(Color::from_u32(0x514537))
         } else {
-            Style::default().bg(Color::DarkGray)
+            Style::default().bg(Color::from_u32(0x575653))
         };
 
         let list_widget = List::new(self.feedentrystate.get_items())
