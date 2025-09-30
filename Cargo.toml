@@ -23,7 +23,7 @@ roxmltree = "0.20.0"
 openssl = { version = "0.10", features = ["vendored"] }
 slug = "0.1"
 html2md = "0.2.15"
-regex = "1.11.2"
+regex = "1.11.3"
 chrono = { version = "0.4", features = ["serde"] }
 tui-markdown = "0.3.5"
 tracing = "0.1"
