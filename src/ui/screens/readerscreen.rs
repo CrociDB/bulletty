@@ -21,6 +21,9 @@ pub struct ReaderScreen {
     feedentry: FeedEntry,
     scroll: usize,
     scrollmax: usize,
+    // New fields for navigation
+    entries: Vec<FeedEntry>,
+    current_index: usize,
 }
 
 impl ReaderScreen {
@@ -29,6 +32,25 @@ impl ReaderScreen {
             feedentry: entry,
             scroll: 0,
             scrollmax: 1,
+            entries: vec![],
+            current_index: 0,
+        }
+    }
+
+    // New constructor that accepts a list of entries and current index
+    pub fn new_with_entries(entries: Vec<FeedEntry>, current_index: usize) -> ReaderScreen {
+        let entry = if current_index < entries.len() {
+            entries[current_index].clone()
+        } else {
+            entries.first().cloned().unwrap_or_default()
+        };
+
+        ReaderScreen {
+            feedentry: entry,
+            scroll: 0,
+            scrollmax: 1,
+            entries,
+            current_index,
         }
     }
 
@@ -40,6 +62,24 @@ impl ReaderScreen {
 
     pub fn scrolldown(&mut self) {
         self.scroll = std::cmp::min(self.scroll + 1, self.scrollmax);
+    }
+
+    // Navigate to next entry
+    fn go_to_next_entry(&mut self) {
+        if !self.entries.is_empty() && self.current_index < self.entries.len() - 1 {
+            self.current_index += 1;
+            self.feedentry = self.entries[self.current_index].clone();
+            self.scroll = 0; // Reset scroll position
+        }
+    }
+
+    // Navigate to previous entry
+    fn go_to_previous_entry(&mut self) {
+        if !self.entries.is_empty() && self.current_index > 0 {
+            self.current_index -= 1;
+            self.feedentry = self.entries[self.current_index].clone();
+            self.scroll = 0; // Reset scroll position
+        }
     }
 
     fn open_external_url(&self, url: &str) -> Result<AppScreenEvent> {
@@ -82,8 +122,17 @@ impl AppScreen for ReaderScreen {
         ])
         .split(sizelayout[1]);
 
-        // Title
-        let title = Paragraph::new(self.feedentry.title.as_str())
+        // Title with navigation indicator
+        let title_text = if !self.entries.is_empty() {
+            format!("{} ({}/{})", 
+                self.feedentry.title, 
+                self.current_index + 1, 
+                self.entries.len())
+        } else {
+            self.feedentry.title.clone()
+        };
+        
+        let title = Paragraph::new(title_text.as_str())
             .style(Style::new().fg(Color::LightRed))
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
@@ -106,112 +155,142 @@ impl AppScreen for ReaderScreen {
         frame.render_widget(date, contentlayout[1]);
 
         // URL
-        let date = Paragraph::new(self.feedentry.url.to_string())
-            .style(Style::new().fg(Color::from_u32(0x597e9e)))
+        let url = Paragraph::new(format!("\u{f054a} {}", self.feedentry.url))
+            .style(Style::new().fg(Color::from_u32(0x777777)))
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
 
-        frame.render_widget(date, contentlayout[2]);
+        frame.render_widget(url, contentlayout[2]);
 
         // Content
-        let text = tui_markdown::from_str(&self.feedentry.text);
-        let textheight = text.height() as usize;
+        let content = Paragraph::new(self.feedentry.content.as_str())
+            .style(Style::new().fg(Color::from_u32(0xdddddd)))
+            .wrap(Wrap { trim: false })
+            .scroll((self.scroll as u16, 0));
 
-        // This is a workaround to get more or less the amount of wrapped lines, to be used on the
-        // scrollbar
-        let mut wrapped_lines = 0;
-        for line in text.lines.iter() {
-            let content: String = line
-                .spans
-                .iter()
-                .map(|span| span.content.to_string())
-                .collect();
-            let line_width = UnicodeWidthStr::width(content.as_str());
-            let wrapped = line_width.div_ceil(contentlayout[3].width as usize);
-            wrapped_lines += wrapped - wrapped.min(1);
-        }
+        frame.render_widget(content, contentlayout[3]);
 
-        let scrollheight = textheight + (wrapped_lines as f32 * 1.06) as usize + 4;
-        self.scrollmax = scrollheight - (contentlayout[3].height as usize).min(scrollheight);
+        let paragraph_height = contentlayout[3].height as usize;
+        let text_height = self
+            .feedentry
+            .content
+            .lines()
+            .map(|line| {
+                let line_width = line.width();
+                let area_width = contentlayout[3].width as usize;
+                if area_width == 0 {
+                    1
+                } else {
+                    std::cmp::max(1, (line_width + area_width - 1) / area_width)
+                }
+            })
+            .sum::<usize>();
 
-        // Content Paragraph component
-        let paragraph = Paragraph::new(text)
-            .scroll((self.scroll as u16, 0))
-            .alignment(Alignment::Left)
-            .wrap(Wrap { trim: true });
+        self.scrollmax = if text_height > paragraph_height {
+            text_height - paragraph_height
+        } else {
+            0
+        };
 
-        frame.render_widget(paragraph, contentlayout[3]);
+        if text_height > paragraph_height {
+            let mut scrollbar_state = ScrollbarState::default()
+                .content_length(text_height)
+                .viewport_content_length(paragraph_height)
+                .position(self.scroll);
 
-        // Scrollbar
-        let mut scrollbarstate = ScrollbarState::new(self.scrollmax).position(self.scroll);
-        let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
-            .style(Style::new().fg(Color::from_u32(0x444444)));
-        frame.render_stateful_widget(scrollbar, sizelayout[2], &mut scrollbarstate);
-    }
+            let scrollbar = Scrollbar::default()
+                .orientation(ScrollbarOrientation::VerticalRight)
+                .begin_symbol(None)
+                .end_symbol(None);
 
-    fn handle_events(&mut self) -> Result<AppScreenEvent> {
-        match event::read()? {
-            Event::Key(key) if key.kind == KeyEventKind::Press => self.handle_keypress(key),
-            Event::Mouse(_) => Ok(AppScreenEvent::None),
-            Event::Resize(_, _) => Ok(AppScreenEvent::None),
-            _ => Ok(AppScreenEvent::None),
-        }
-    }
-
-    fn handle_keypress(
-        &mut self,
-        key: crossterm::event::KeyEvent,
-    ) -> color_eyre::eyre::Result<AppScreenEvent> {
-        match (key.modifiers, key.code) {
-            (_, KeyCode::Esc | KeyCode::Char('q'))
-            | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
-                Ok(AppScreenEvent::ExitState)
-            }
-            (_, KeyCode::Down | KeyCode::Char('j')) => {
-                self.scrolldown();
-                Ok(AppScreenEvent::None)
-            }
-            (_, KeyCode::Up | KeyCode::Char('k')) => {
-                self.scrollup();
-                Ok(AppScreenEvent::None)
-            }
-            (_, KeyCode::Home | KeyCode::Char('g')) => {
-                self.scroll = 0;
-                Ok(AppScreenEvent::None)
-            }
-            (_, KeyCode::End | KeyCode::Char('G')) => {
-                self.scroll = self.scrollmax;
-                Ok(AppScreenEvent::None)
-            }
-            (_, KeyCode::Char('o')) => self.open_external_url(&self.feedentry.url),
-            (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(HelpDialog::new(
-                self.get_full_instructions(),
-            )))),
-            _ => Ok(AppScreenEvent::None),
+            frame.render_stateful_widget(scrollbar, sizelayout[2], &mut scrollbar_state);
         }
     }
 
-    fn pause(&mut self) {}
+    fn handle_event(&mut self, event: Event) -> Result<AppScreenEvent> {
+        if let Event::Key(key) = event {
+            if key.kind != KeyEventKind::Press {
+                return Ok(AppScreenEvent::None);
+            }
 
-    fn unpause(&mut self) {}
-
-    fn quit(&mut self) {}
+            match (key.modifiers, key.code) {
+                (_, KeyCode::Char('q'))
+                | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C'))
+                | (_, KeyCode::Esc) => Ok(AppScreenEvent::ExitState),
+                (_, KeyCode::Down | KeyCode::Char('j')) => {
+                    self.scrolldown();
+                    Ok(AppScreenEvent::None)
+                }
+                (_, KeyCode::Up | KeyCode::Char('k')) => {
+                    self.scrollup();
+                    Ok(AppScreenEvent::None)
+                }
+                (_, KeyCode::Char('o')) => self.open_external_url(&self.feedentry.url),
+                (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
+                    HelpDialog::new(self.get_full_instructions()),
+                ))),
+                // New navigation keys
+                (_, KeyCode::Char('n')) => {
+                    self.go_to_next_entry();
+                    Ok(AppScreenEvent::None)
+                }
+                (_, KeyCode::Char('p')) => {
+                    self.go_to_previous_entry();
+                    Ok(AppScreenEvent::None)
+                }
+                _ => Ok(AppScreenEvent::None),
+            }
+        } else {
+            Ok(AppScreenEvent::None)
+        }
+    }
 
     fn get_title(&self) -> String {
         String::from("Reader")
     }
 
     fn get_instructions(&self) -> String {
-        String::from("?: Help | j/k/↓/↑: scroll | o: open externally | Esc/q: leave")
+        if !self.entries.is_empty() {
+            String::from("?: Help | j/k/↓/↑: scroll | n/p: next/prev entry | o: open | Esc: back")
+        } else {
+            String::from("?: Help | j/k/↓/↑: scroll | o: open | Esc: back")
+        }
     }
 
     fn get_work_status(&self) -> AppWorkStatus {
-        AppWorkStatus::None
+        AppWorkStatus::Working
     }
 
     fn get_full_instructions(&self) -> String {
         String::from(
-            "j/k/↓/↑: scroll\ng/G: go to beginning or end of file\n\no: open externally\n\nEsc/q: leave",
+            r#"Reader Screen Instructions:
+
+j/k or ↓/↑   - Scroll content up/down
+n            - Go to next entry (when available)
+p            - Go to previous entry (when available)
+o            - Open URL in external browser
+?            - Show this help
+Esc/q        - Exit reader mode
+
+Navigation:
+When viewing entries from a feed category, you can navigate
+between entries using 'n' (next) and 'p' (previous) without
+leaving reader mode. The title shows current position (x/y).
+"#,
         )
+    }
+}
+
+// Add Default implementation for FeedEntry if it doesn't exist
+impl Default for FeedEntry {
+    fn default() -> Self {
+        FeedEntry {
+            title: String::from("No Title"),
+            content: String::from("No Content"),
+            url: String::from(""),
+            author: String::from("Unknown"),
+            date: chrono::Utc::now(),
+            seen: false,
+        }
     }
 }
