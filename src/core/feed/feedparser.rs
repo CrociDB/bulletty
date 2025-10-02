@@ -28,13 +28,7 @@ fn parse(doc: &str, feed_url: &str) -> color_eyre::Result<FeedItem> {
     let mut feed = FeedItem::default();
 
     let doc = roxmltree::Document::parse(doc)?;
-    let mut feed_tag = doc.root();
-    if feed_tag.tag_name().name() == "rss" {
-        feed_tag = feed_tag
-            .descendants()
-            .find(|t| t.tag_name().name() == "channel")
-            .unwrap();
-    }
+    let feed_tag = doc.root();
 
     feed.title = feed_tag
         .descendants()
@@ -111,13 +105,7 @@ pub fn get_feed_entries_doc(
 ) -> color_eyre::Result<Vec<FeedEntry>> {
     let doc = roxmltree::Document::parse(doctxt)?;
 
-    let mut feed_tag = doc.root();
-    if feed_tag.tag_name().name() == "rss" {
-        feed_tag = feed_tag
-            .descendants()
-            .find(|t| t.tag_name().name() == "channel")
-            .unwrap();
-    }
+    let feed_tag = doc.root();
 
     let mut feedentries = Vec::<FeedEntry>::new();
 
