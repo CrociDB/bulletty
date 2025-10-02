@@ -1,6 +1,6 @@
 # Contributing to bulletty
 
-We're excited you're interested in contributing to bulletty, a TUI (Terminal User Interface) RSS/ATOM feed reader that puts data ownership back in the user's hands. As this project is under active development, your contributions are incredibly valuable.
+I'm excited you're interested in contributing to **bulletty**, a TUI (Terminal User Interface) RSS/ATOM feed reader that puts data ownership back in the user's hands. As this project is under active development, your contributions are incredibly valuable. I hope you're having a good time using the tool, in the first place, and want to contribute because you believe in the project or because you think there's something that's very necessary to improve your and other people's experience. I assume you are familiar with the idea of this project and with its functionalities.
 
 ## Reporting Bugs
 
@@ -14,13 +14,15 @@ If you find a bug, please check the Issues to see if it has already been reporte
 
 ## Suggesting Enhancements
 
-We welcome all ideas for new features or improvements. If you have a suggestion, please create a new topic on the [discussions page](https://github.com/CrociDB/bulletty/discussions). Describe your idea and why you think it would be a good addition to the project.
+All ideas for new features or improvements are welcome. If you have a suggestion, please create a new topic on the [discussions page](https://github.com/CrociDB/bulletty/discussions). Describe your idea and why you think it would be a good addition to the project.
 
 ## Coding
 
 So you want to contribute with code. That's no doubt the best way to have an influence on **bulletty**. Ideally, you would work on a previously reported issue, either by yourself or someone else.
 
 ### Working on Issues
+
+First requirement: use the program. I've seen people wanting to contribute without using it.
 
 Issues will only be assigned to users when enough discussion about their implementation has taken place. It's important that nobody keeps an issue assigned without making progress, as this prevents others from contributing. So, if you want to write code for an existing issue, start by discussing the issue and your proposed solution first.
 
@@ -32,7 +34,7 @@ I don't want to go as far as prohibiting anyone from using AI. After all, at thi
 
 If you're using AI to generate code, you must make it very clear. And you'll have to own it and maintain it. I will review and ask as many questions as necessary about the code, and I reserve the right to judge whether I think the contribution is worth it or not.
 
-Also, not properly communicating that you're using generated code in your PR is considered dishonest. If I find out, I'll have to disapprove the PR.
+Also, not properly communicating that you're using generated code in your PR is considered dishonest. If I find out, I'll have to close the PR.
 
 ## Submitting a Pull Request
 
@@ -62,4 +64,4 @@ cd bulletty
 
 Follow the instructions in the project's README.md to install dependencies and run the application.
 
-Thank you for helping us build a better bulletty!
+Thank you for helping us build **bulletty**!
