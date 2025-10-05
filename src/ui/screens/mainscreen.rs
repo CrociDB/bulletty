@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::{
@@ -31,7 +33,7 @@ enum MainInputState {
 }
 
 pub struct MainScreen {
-    library: FeedLibrary,
+    library: Rc<RefCell<FeedLibrary>>,
     feedtreestate: FeedTreeState,
     feedentrystate: FeedEntryState,
     inputstate: MainInputState,
@@ -46,7 +48,7 @@ impl Default for MainScreen {
 impl MainScreen {
     pub fn new() -> Self {
         Self {
-            library: FeedLibrary::new(),
+            library: Rc::new(RefCell::new(FeedLibrary::new())),
             feedtreestate: FeedTreeState::new(),
             feedentrystate: FeedEntryState::new(),
             inputstate: MainInputState::Menu,
@@ -55,13 +57,17 @@ impl MainScreen {
 
     fn set_all_read(&self) {
         let entries = match self.feedtreestate.get_selected() {
-            Some(FeedItemInfo::Category(t)) => self.library.get_feed_entries_by_category(t),
-            Some(FeedItemInfo::Item(_, _, s)) => self.library.get_feed_entries_by_item_slug(s),
+            Some(FeedItemInfo::Category(t)) => {
+                self.library.borrow().get_feed_entries_by_category(t)
+            }
+            Some(FeedItemInfo::Item(_, _, s)) => {
+                self.library.borrow().get_feed_entries_by_item_slug(s)
+            }
             None => vec![],
         };
 
         for entry in entries.iter() {
-            self.library.data.set_entry_seen(entry);
+            self.library.borrow_mut().data.set_entry_seen(entry);
         }
     }
 
@@ -80,7 +86,7 @@ impl MainScreen {
 
 impl AppScreen for MainScreen {
     fn start(&mut self) {
-        self.library.start_updater();
+        self.library.borrow_mut().start_updater();
     }
 
     fn quit(&mut self) {}
@@ -90,7 +96,7 @@ impl AppScreen for MainScreen {
     fn unpause(&mut self) {}
 
     fn render(&mut self, frame: &mut ratatui::Frame, area: Rect) {
-        self.library.update();
+        self.library.borrow_mut().update();
 
         let chunks = Layout::horizontal([
             Constraint::Min(30),
@@ -100,7 +106,7 @@ impl AppScreen for MainScreen {
         .split(area);
 
         // Feed tree
-        self.feedtreestate.update(&self.library);
+        self.feedtreestate.update(&self.library.borrow());
 
         let (treestyle, treeselectionstyle) = if self.inputstate == MainInputState::Menu {
             (
@@ -119,7 +125,7 @@ impl AppScreen for MainScreen {
             )
         };
 
-        let treelist = List::new(self.feedtreestate.get_items(&self.library))
+        let treelist = List::new(self.feedtreestate.get_items(&self.library.borrow()))
             .block(treestyle)
             .highlight_style(treeselectionstyle);
 
@@ -128,7 +134,7 @@ impl AppScreen for MainScreen {
 
         // The feed entries
         self.feedentrystate
-            .update(&self.library, &self.feedtreestate);
+            .update(&self.library.borrow(), &self.feedtreestate);
 
         let mut entryliststate = self.feedentrystate.listatate.clone();
 
@@ -235,11 +241,13 @@ impl AppScreen for MainScreen {
                 }
                 (_, KeyCode::Enter) => {
                     if let Some(entry) = self.feedentrystate.get_selected() {
-                        self.library.data.set_entry_seen(&entry);
+                        self.library.borrow_mut().data.set_entry_seen(&entry);
                         self.feedentrystate.set_current_read();
 
                         Ok(AppScreenEvent::ChangeState(Box::new(ReaderScreen::new(
-                            entry,
+                            self.library.clone(),
+                            self.feedentrystate.entries.clone(),
+                            self.feedentrystate.listatate.selected().unwrap_or(0),
                         ))))
                     } else {
                         Ok(AppScreenEvent::None)
@@ -247,7 +255,7 @@ impl AppScreen for MainScreen {
                 }
                 (_, KeyCode::Char('r')) => {
                     if let Some(entry) = self.feedentrystate.get_selected() {
-                        self.library.data.toggle_entry_seen(&entry);
+                        self.library.borrow_mut().data.toggle_entry_seen(&entry);
                     }
                     Ok(AppScreenEvent::None)
                 }
@@ -257,7 +265,7 @@ impl AppScreen for MainScreen {
                 }
                 (_, KeyCode::Char('o')) => {
                     if let Some(entry) = self.feedentrystate.get_selected() {
-                        self.library.data.set_entry_seen(&entry);
+                        self.library.borrow_mut().data.set_entry_seen(&entry);
                         self.open_external_url(&entry.url)
                     } else {
                         Ok(AppScreenEvent::None)
@@ -284,7 +292,7 @@ impl AppScreen for MainScreen {
     }
 
     fn get_work_status(&self) -> AppWorkStatus {
-        self.library.get_update_status()
+        self.library.borrow().get_update_status()
     }
 
     fn get_full_instructions(&self) -> String {
