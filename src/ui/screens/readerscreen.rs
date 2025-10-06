@@ -115,8 +115,10 @@ impl AppScreen for ReaderScreen {
         ])
         .split(sizelayout[1]);
 
+        let current_entry = &self.entries[self.current_index];
+
         // Title
-        let title = Paragraph::new(self.entries[self.current_index].title.as_str())
+        let title = Paragraph::new(current_entry.title.as_str())
             .style(Style::new().fg(Color::LightRed))
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
@@ -126,11 +128,11 @@ impl AppScreen for ReaderScreen {
         // Date
         let date = Paragraph::new(format!(
             "\u{f0520} {} | \u{f09e} {}",
-            self.entries[self.current_index]
+            current_entry
                 .date
                 .with_timezone(&chrono::Local)
                 .format("%Y-%m-%d"),
-            self.entries[self.current_index].author
+            current_entry.author
         ))
         .style(Style::new().fg(Color::from_u32(0x777777)))
         .alignment(Alignment::Center)
@@ -139,7 +141,7 @@ impl AppScreen for ReaderScreen {
         frame.render_widget(date, contentlayout[1]);
 
         // URL
-        let date = Paragraph::new(self.entries[self.current_index].url.to_string())
+        let date = Paragraph::new(current_entry.url.to_string())
             .style(Style::new().fg(Color::from_u32(0x597e9e)))
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
@@ -147,7 +149,7 @@ impl AppScreen for ReaderScreen {
         frame.render_widget(date, contentlayout[2]);
 
         // Content
-        let text = tui_markdown::from_str(&self.entries[self.current_index].text);
+        let text = tui_markdown::from_str(&current_entry.text);
         let textheight = text.height() as usize;
 
         // This is a workaround to get more or less the amount of wrapped lines, to be used on the
