@@ -26,21 +26,50 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           target: ${{ matrix.target }}
+
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
-      - name: Archive binaries
-        run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            7z a ${{ matrix.artifact_name }}.zip target/${{ matrix.target }}/release/bulletty.exe
-          else
-            tar -czvf ${{ matrix.artifact_name }}.tar.gz -C target/${{ matrix.target }}/release/ bulletty
-          fi
+
+      - name: Archive binaries (Windows)
+        if: matrix.os == 'windows-latest'
+        run: 7z a ${{ matrix.artifact_name }}.zip target/${{ matrix.target }}/release/bulletty.exe
+
+      - name: Archive binaries (Unix)
+        if: matrix.os != 'windows-latest'
+        run: tar -czvf ${{ matrix.artifact_name }}.tar.gz -C target/${{ matrix.target }}/release/ bulletty
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: ${{ matrix.artifact_name }}.*
+
+  release:
+    name: Create Nightly Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Create Nightly Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: nightly
+          name: Nightly Build ${{ github.run_number }}
+          prerelease: true
+          draft: false
+          files: |
+            ./artifacts/bulletty-linux-x86_64.*
+            ./artifacts/bulletty-windows-x86_64.*
+            ./artifacts/bulletty-macos-x86_64.*
