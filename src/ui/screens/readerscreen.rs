@@ -54,7 +54,7 @@ impl ReaderScreen {
     }
 
     pub fn next_entry(&mut self) {
-        if self.current_index < self.entries.len() - 1 {
+        if self.current_index < self.entries.len().saturating_sub(1) {
             self.current_index += 1;
             self.scroll = 0;
             self.library

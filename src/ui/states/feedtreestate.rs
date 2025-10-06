@@ -83,7 +83,7 @@ impl FeedTreeState {
             return;
         }
 
-        if self.listatate.selected().unwrap_or(0) < self.treeitems.len() - 1 {
+        if self.listatate.selected().unwrap_or(0) < self.treeitems.len().saturating_sub(1) {
             self.listatate.select_next();
         }
     }
@@ -111,6 +111,7 @@ impl FeedTreeState {
             return;
         }
 
-        self.listatate.select(Some(self.treeitems.len() - 1));
+        self.listatate
+            .select(Some(self.treeitems.len().saturating_sub(1)));
     }
 }

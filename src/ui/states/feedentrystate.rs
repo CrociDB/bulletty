@@ -122,7 +122,7 @@ impl FeedEntryState {
             return;
         }
 
-        if self.listatate.selected().unwrap_or(0) < self.entries.len() - 1 {
+        if self.listatate.selected().unwrap_or(0) < self.entries.len().saturating_sub(1) {
             self.listatate.select_next();
         }
     }
@@ -150,11 +150,12 @@ impl FeedEntryState {
             return;
         }
 
-        self.listatate.select(Some(self.entries.len() - 1));
+        self.listatate
+            .select(Some(self.entries.len().saturating_sub(1)));
     }
 
     pub fn scroll_max(&self) -> usize {
-        self.entries.len() - 1
+        self.entries.len().saturating_sub(1)
     }
 
     pub fn scroll(&self) -> usize {
