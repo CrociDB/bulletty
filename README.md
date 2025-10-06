@@ -9,14 +9,14 @@
 
 It's in active development.
 
-## Features
+## 🔨 Features
 
  - Subscribe to RSS and ATOM feed types
  - All your feed sources and entries are stored in Markdown in one place: `$HOME/.local/share/bulletty/`
  - Download entries automatically
- - Render Markdown
+ - Read the articles with the embedded Markdown reader
 
-## Feature Roadmap
+## 📜 Feature Roadmap
 
  - Themes
  - Read later
@@ -26,7 +26,7 @@ It's in active development.
  - Mouse support
  - Image support
 
-## Install
+## 🚀 Install
 
 The easiest way to install **bulletty** is through Cargo:
 
@@ -38,7 +38,7 @@ This will install the latest stable version.
 
 Alternatively, you can download the prebuild binary [here](https://github.com/CrociDB/bulletty/releases). You can find binaries for stable versions and also for nightly builds, for all the major three platforms: Linux, MacOS and Windows.
 
-## Usage
+## 🚄 Usage
 
 ### Adding new sources
 
@@ -66,7 +66,7 @@ On any screen, you can press question mark `?` and it will show you the availabl
 
 In general, it supports `j/k/up/down` to select items, navigate and scroll, as well as `g/G/Home/End` to go to the begginning/end of a list or file and `Enter` and `q/Esc` to navigate into and out of Categories and Entries. In order to open an Entry externally, press `o`.
 
-## Philosophy
+## 🏫 Philosophy
 
 The whole idea is bringing back the descentralized internet. You subscribe to the sources you like the most and you get their content whenever it's available. When you get it, it's local, it's yours. **bulletty** will generate a Markdown file of each entry from each source. You can read through the embedded reader, straight from your terminal, or using any text editor.
 
@@ -94,7 +94,7 @@ All your feed data will be at `$HOME/.local/share/bulletty/`, in this structure:
 
 All the needs to be done is to synchronize the `bulletty` directory to save your data, similarly to an Obsidian vault.
 
-## Build
+## 💻 Build
 
 ```shell
 git clone https://github.com/CrociDB/bulletty.git
@@ -102,7 +102,7 @@ cd bulletty
 cargo build --release
 ```
 
-## Contributing to bulletty
+## ⌨️Contributing to bulletty
 
 I am very open for contributions to help make **bulletty** the best feed reader out there. For more information on how to contribute, refer to the **CONTRIBUTING.md**.
 
