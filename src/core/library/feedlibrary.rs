@@ -1,4 +1,5 @@
 use color_eyre::eyre::eyre;
+use fuzzt::algorithms::normalized_levenshtein;
 use tracing::error;
 
 use crate::{
@@ -165,6 +166,26 @@ impl FeedLibrary {
         } else {
             AppWorkStatus::None
         }
+    }
+
+    pub fn get_matching_feeds(&self, ident: &str) -> Vec<&FeedItem> {
+        let mut matching_vec: Vec<&FeedItem> = Vec::new();
+
+        // Check for matching feeds and push to vec
+        for category in self.feedcategories.iter() {
+            for feed in category.feeds.iter() {
+                let slug_score = normalized_levenshtein(&feed.slug, ident);
+                let title_score = normalized_levenshtein(&feed.title, ident);
+                let url_score = normalized_levenshtein(&feed.feed_url, ident);
+                let max_score = slug_score.max(title_score).max(url_score);
+
+                if max_score > 0.6 {
+                    matching_vec.push(feed);
+                }
+            }
+        }
+
+        matching_vec
     }
 }
 
