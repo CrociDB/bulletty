@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use ratatui::layout::{Alignment, Constraint, Layout};
@@ -11,6 +13,7 @@ use unicode_width::UnicodeWidthStr;
 use crate::app::AppWorkStatus;
 use crate::core::{
     feed::feedentry::FeedEntry,
+    library::feedlibrary::FeedLibrary,
     ui::appscreen::{AppScreen, AppScreenEvent},
 };
 use crate::ui::screens::urldialog::UrlDialog;
@@ -18,15 +21,23 @@ use crate::ui::screens::urldialog::UrlDialog;
 use super::helpdialog::HelpDialog;
 
 pub struct ReaderScreen {
-    feedentry: FeedEntry,
+    library: Rc<RefCell<FeedLibrary>>,
+    entries: Vec<FeedEntry>,
+    current_index: usize,
     scroll: usize,
     scrollmax: usize,
 }
 
 impl ReaderScreen {
-    pub fn new(entry: FeedEntry) -> ReaderScreen {
+    pub fn new(
+        library: Rc<RefCell<FeedLibrary>>,
+        entries: Vec<FeedEntry>,
+        current_index: usize,
+    ) -> ReaderScreen {
         ReaderScreen {
-            feedentry: entry,
+            library,
+            entries,
+            current_index,
             scroll: 0,
             scrollmax: 1,
         }
@@ -40,6 +51,28 @@ impl ReaderScreen {
 
     pub fn scrolldown(&mut self) {
         self.scroll = std::cmp::min(self.scroll + 1, self.scrollmax);
+    }
+
+    pub fn next_entry(&mut self) {
+        if self.current_index < self.entries.len() - 1 {
+            self.current_index += 1;
+            self.scroll = 0;
+            self.library
+                .borrow_mut()
+                .data
+                .set_entry_seen(&self.entries[self.current_index]);
+        }
+    }
+
+    pub fn previous_entry(&mut self) {
+        if self.current_index > 0 {
+            self.current_index -= 1;
+            self.scroll = 0;
+            self.library
+                .borrow_mut()
+                .data
+                .set_entry_seen(&self.entries[self.current_index]);
+        }
     }
 
     fn open_external_url(&self, url: &str) -> Result<AppScreenEvent> {
@@ -82,8 +115,10 @@ impl AppScreen for ReaderScreen {
         ])
         .split(sizelayout[1]);
 
+        let current_entry = &self.entries[self.current_index];
+
         // Title
-        let title = Paragraph::new(self.feedentry.title.as_str())
+        let title = Paragraph::new(current_entry.title.as_str())
             .style(Style::new().fg(Color::LightRed))
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
@@ -93,11 +128,11 @@ impl AppScreen for ReaderScreen {
         // Date
         let date = Paragraph::new(format!(
             "\u{f0520} {} | \u{f09e} {}",
-            self.feedentry
+            current_entry
                 .date
                 .with_timezone(&chrono::Local)
                 .format("%Y-%m-%d"),
-            self.feedentry.author
+            current_entry.author
         ))
         .style(Style::new().fg(Color::from_u32(0x777777)))
         .alignment(Alignment::Center)
@@ -106,7 +141,7 @@ impl AppScreen for ReaderScreen {
         frame.render_widget(date, contentlayout[1]);
 
         // URL
-        let date = Paragraph::new(self.feedentry.url.to_string())
+        let date = Paragraph::new(current_entry.url.to_string())
             .style(Style::new().fg(Color::from_u32(0x597e9e)))
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
@@ -114,7 +149,7 @@ impl AppScreen for ReaderScreen {
         frame.render_widget(date, contentlayout[2]);
 
         // Content
-        let text = tui_markdown::from_str(&self.feedentry.text);
+        let text = tui_markdown::from_str(&current_entry.text);
         let textheight = text.height() as usize;
 
         // This is a workaround to get more or less the amount of wrapped lines, to be used on the
@@ -183,7 +218,17 @@ impl AppScreen for ReaderScreen {
                 self.scroll = self.scrollmax;
                 Ok(AppScreenEvent::None)
             }
-            (_, KeyCode::Char('o')) => self.open_external_url(&self.feedentry.url),
+            (_, KeyCode::Char('o')) => {
+                self.open_external_url(&self.entries[self.current_index].url)
+            }
+            (_, KeyCode::Char('n')) => {
+                self.next_entry();
+                Ok(AppScreenEvent::None)
+            }
+            (_, KeyCode::Char('p')) => {
+                self.previous_entry();
+                Ok(AppScreenEvent::None)
+            }
             (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(HelpDialog::new(
                 self.get_full_instructions(),
             )))),
@@ -202,7 +247,7 @@ impl AppScreen for ReaderScreen {
     }
 
     fn get_instructions(&self) -> String {
-        String::from("?: Help | j/k/↓/↑: scroll | o: open externally | Esc/q: leave")
+        String::from("?: Help | j/k/↓/↑: scroll | n/p: next/prev | o: open | Esc/q: leave")
     }
 
     fn get_work_status(&self) -> AppWorkStatus {
@@ -211,7 +256,56 @@ impl AppScreen for ReaderScreen {
 
     fn get_full_instructions(&self) -> String {
         String::from(
-            "j/k/↓/↑: scroll\ng/G: go to beginning or end of file\n\no: open externally\n\nEsc/q: leave",
+            "j/k/↓/↑: scroll\ng/G: go to beginning or end of file\n\n n/p: next/previous entry\no: open externally\n\nEsc/q: leave",
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::library::feedlibrary::FeedLibrary;
+
+    fn create_test_entries() -> Vec<FeedEntry> {
+        vec![
+            FeedEntry {
+                title: "Entry 1".to_string(),
+                ..Default::default()
+            },
+            FeedEntry {
+                title: "Entry 2".to_string(),
+                ..Default::default()
+            },
+            FeedEntry {
+                title: "Entry 3".to_string(),
+                ..Default::default()
+            },
+        ]
+    }
+
+    #[test]
+    fn test_navigation() {
+        let (library, _temp_dir) = FeedLibrary::new_for_test();
+        let entries = create_test_entries();
+        let mut reader_screen = ReaderScreen::new(Rc::new(RefCell::new(library)), entries, 0);
+
+        // Test next_entry
+        assert_eq!(reader_screen.current_index, 0);
+        reader_screen.next_entry();
+        assert_eq!(reader_screen.current_index, 1);
+        reader_screen.next_entry();
+        assert_eq!(reader_screen.current_index, 2);
+        // Should not go past the last entry
+        reader_screen.next_entry();
+        assert_eq!(reader_screen.current_index, 2);
+
+        // Test previous_entry
+        reader_screen.previous_entry();
+        assert_eq!(reader_screen.current_index, 1);
+        reader_screen.previous_entry();
+        assert_eq!(reader_screen.current_index, 0);
+        // Should not go before the first entry
+        reader_screen.previous_entry();
+        assert_eq!(reader_screen.current_index, 0);
     }
 }
