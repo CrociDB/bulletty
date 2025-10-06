@@ -2,6 +2,8 @@ name: Nightly Build
 on:
   schedule:
     - cron: '0 1 * * *'
+  workflow_dispatch:
+
 jobs:
   build:
     name: Build on ${{ matrix.os }}
