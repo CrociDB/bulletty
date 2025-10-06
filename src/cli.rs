@@ -85,16 +85,13 @@ fn command_update(_cli: &Cli) -> color_eyre::Result<()> {
 
 fn command_dirs(_cli: &Cli) -> color_eyre::Result<()> {
     let config = Config::new();
-    let library_path = &config.datapath;
+    let library_path = config.datapath;
 
-    let logs_path = dirs::state_dir()
-        .or_else(|| dirs::data_dir())
-        .map(|d| Path::new(&d).join(defs::LOG_DIR))
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_else(|| String::from("<unavailable>"));
+    let logs_path = Path::new(&dirs::state_dir().unwrap()).join(defs::LOG_DIR);
 
-    println!("  ● Library: {}", library_path.to_string_lossy());
-    println!("  ● Logs: {}", logs_path);
+    println!("bulletty directories");
+    println!("\t-> Library: {}", library_path.to_string_lossy());
+    println!("\t-> Logs: {}", logs_path.to_string_lossy());
 
     Ok(())
 }
