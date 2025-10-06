@@ -91,7 +91,7 @@ fn command_dirs(_cli: &Cli) -> color_eyre::Result<()> {
 
     println!("bulletty directories");
     println!("\t-> Library: {}", library_path.to_string_lossy());
-    println!("\t-> Logs: {}", logs_path.to_string_lossy());
+    println!("\t-> Logs:    {}", logs_path.to_string_lossy());
 
     Ok(())
 }
