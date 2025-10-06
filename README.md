@@ -5,7 +5,7 @@
   <img src="img/screenshot.gif" alt="bulletty" />
 </p>
 
-**bulletty** is a TUI feed (RSS and ATOM) reader. Read your subscriptions within your terminal. It downloads the entries for offline reading so all the data is local and yours: your subscriptions, highlights, comments, etc. You only need to sync the `data` folder.
+**bulletty** is a TUI feed reader (RSS and ATOM). Read your subscriptions within your terminal. It downloads the entries for offline reading so all the data is local and yours: your subscriptions, highlights, comments, etc. All in an universal format: Markdown. Backup and sync your `data` directory your own way. 
 
 It's in active development.
 
@@ -102,7 +102,7 @@ cd bulletty
 cargo build --release
 ```
 
-## ⌨️Contributing to bulletty
+## ⌨️ Contributing to bulletty
 
 I am very open for contributions to help make **bulletty** the best feed reader out there. For more information on how to contribute, refer to the **CONTRIBUTING.md**.
 
