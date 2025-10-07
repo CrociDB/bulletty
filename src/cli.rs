@@ -1,6 +1,6 @@
-use std::io;
+use std::io::{self, Read, Write};
 
-use clap::{Parser, Subcommand};
+use clap::{Error, Parser, Subcommand};
 use tracing::info;
 
 use crate::core::library::feeditem::FeedItem;
@@ -86,6 +86,20 @@ fn command_update(_cli: &Cli) -> color_eyre::Result<()> {
     Ok(())
 }
 
+fn confirm_delete(title: &str) -> Result<bool, Error> {
+    print!(
+        "Are you sure you want to delete '{}'? That can't be reverted. [y/N] ",
+        title
+    );
+    io::stdout().flush()?;
+
+    let mut choice = String::new();
+    io::stdin().read_line(&mut choice)?;
+
+    let normalized_input = choice.trim().to_lowercase();
+    Ok(matches!(normalized_input.as_str(), "y" | "yes"))
+}
+
 fn command_delete(_cli: &Cli, ident: &str) -> color_eyre::Result<()> {
     let library = FeedLibrary::new();
 
@@ -99,29 +113,13 @@ fn command_delete(_cli: &Cli, ident: &str) -> color_eyre::Result<()> {
         }
         1 => {
             let matched = matches[0];
-            println!(
-                "Are you sure you want to delete '{}'? That can't be reverted. [y/n]",
-                matched.title
-            );
-
-            let mut choice = String::new();
-            io::stdin().read_line(&mut choice)?;
-
-            let normalized_input = choice.trim().to_lowercase();
-            match normalized_input.as_str() {
-                "y" | "yes" => {
-                    library.delete_feed(&matched.slug, &matched.category)?;
-                    info!("Feed deleted: {}", &matched.title);
-                    println!("Feed deleted: {}", &matched.title);
-                }
-                "n" | "no" => {
-                    info!("Feed was not deleted: {}", &matched.title);
-                    println!("Feed was not deleted: {}", &matched.title);
-                }
-                _ => {
-                    info!("Invalid input received: {}", normalized_input);
-                    println!("Invalid input received: {}", normalized_input);
-                }
+            if confirm_delete(&matched.title)? {
+                library.delete_feed(&matched.slug, &matched.category)?;
+                info!("Feed deleted: {}", &matched.title);
+                println!("Feed deleted: {}", &matched.title);
+            } else {
+                info!("Feed was not deleted: {}", &matched.title);
+                println!("Feed was not deleted: {}", &matched.title);
             }
         }
         _ => {
@@ -132,7 +130,8 @@ fn command_delete(_cli: &Cli, ident: &str) -> color_eyre::Result<()> {
             for (i, feed) in iter {
                 println!("\t-> {}) {}/{}", i + 1, &feed.category, &feed.title);
             }
-            println!("Which one would you like to delete?");
+            print!("Which one would you like to delete? ");
+            io::stdout().flush()?;
 
             let mut choice = String::new();
             io::stdin().read_line(&mut choice)?;
@@ -142,9 +141,18 @@ fn command_delete(_cli: &Cli, ident: &str) -> color_eyre::Result<()> {
             match normalized_input.parse::<usize>() {
                 Ok(ind) => {
                     if ind >= 1 && ind <= matches_len {
-                        library.delete_feed(&matches[ind - 1].slug, &matches[ind - 1].category)?;
-                        info!("Feed deleted: {}", &matches[ind - 1].title);
-                        println!("Feed deleted: {}", &matches[ind - 1].title);
+                        let title =
+                            format!("{}/{}", &matches[ind - 1].category, &matches[ind - 1].title);
+
+                        if confirm_delete(&title)? {
+                            library
+                                .delete_feed(&matches[ind - 1].slug, &matches[ind - 1].category)?;
+                            info!("Feed deleted: {}", &matches[ind - 1].title);
+                            println!("Feed deleted: {}", &matches[ind - 1].title);
+                        } else {
+                            info!("Feed was not deleted: {}", &title);
+                            println!("Feed was not deleted: {}", &title);
+                        }
                     } else {
                         info!("Invalid input received: {}", ind);
                         println!("Invalid input received: {}", ind);
