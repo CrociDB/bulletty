@@ -51,7 +51,7 @@ impl FeedEntryState {
         }
     }
 
-    pub fn get_items(&self) -> Vec<ListItem> {
+    pub fn get_items(&self) -> Vec<ListItem<'_>> {
         self.entries
             .iter()
             .map(|entry| {

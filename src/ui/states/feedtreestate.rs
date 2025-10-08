@@ -45,7 +45,7 @@ impl FeedTreeState {
         }
     }
 
-    pub fn get_items(&self, library: &FeedLibrary) -> Vec<ListItem> {
+    pub fn get_items(&self, library: &FeedLibrary) -> Vec<ListItem<'_>> {
         self.treeitems
             .iter()
             .map(|item| {

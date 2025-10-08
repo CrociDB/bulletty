@@ -1,11 +1,11 @@
-use std::io::{self, Read, Write};
+use std::io::{self, Write};
 
 use clap::{Error, Parser, Subcommand};
 use tracing::info;
 
-use crate::core::library::feeditem::FeedItem;
 use crate::core::defs;
 use crate::core::library::data::config::Config;
+use crate::core::library::feeditem::FeedItem;
 use crate::core::library::feedlibrary::FeedLibrary;
 use std::path::Path;
 
@@ -171,6 +171,10 @@ fn command_delete(_cli: &Cli, ident: &str) -> color_eyre::Result<()> {
             }
         }
     }
+
+    Ok(())
+}
+
 fn command_dirs(_cli: &Cli) -> color_eyre::Result<()> {
     let config = Config::new();
     let library_path = config.datapath;
