@@ -54,7 +54,7 @@ fn command_list(_cli: &Cli) -> color_eyre::Result<()> {
     for category in library.feedcategories.iter() {
         println!("{}", category.title);
         for feed in category.feeds.iter().as_ref() {
-            println!("\t-> {}", feed.title);
+            println!("\t-> {}: {}", feed.title, feed.slug);
         }
         println!();
     }

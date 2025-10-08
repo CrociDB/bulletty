@@ -192,6 +192,7 @@ impl FeedLibrary {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::core::library::feedlibrary::FeedLibrary;
 
     #[test]
     fn test_add_and_delete_feed() {
@@ -217,5 +218,132 @@ mod tests {
                 .is_ok()
         );
         assert!(!library.data.feed_exists("my-test-feed", "testing"));
+    }
+
+    fn setup_test_library_for_matches() -> FeedLibrary {
+        let (mut library, _temp_dir) = FeedLibrary::new_for_test();
+
+        let feed1 = crate::core::library::feeditem::FeedItem {
+            title: "My Test Feed".to_string(),
+            slug: "my-test-feed".to_string(),
+            feed_url: "https://mytestfeed/rss".to_string(),
+            category: "testing".to_string(),
+            ..Default::default()
+        };
+
+        let feed2 = crate::core::library::feeditem::FeedItem {
+            title: "New sports feed".to_string(),
+            slug: "new-sports-feed".to_string(),
+            feed_url: "https://sportsfeed/rss".to_string(),
+            category: "sports".to_string(),
+            ..Default::default()
+        };
+
+        let feed3 = crate::core::library::feeditem::FeedItem {
+            title: "TechCrunch".to_string(),
+            slug: "techcrunch".to_string(),
+            feed_url: "https://techcrunch/feed".to_string(),
+            category: "tech".to_string(),
+            ..Default::default()
+        };
+
+        assert!(library.add_feed(feed1.clone()).is_ok());
+        assert!(library.add_feed(feed2.clone()).is_ok());
+        assert!(library.add_feed(feed3.clone()).is_ok());
+        assert!(library.data.feed_exists("techcrunch", "tech"));
+        assert!(library.data.feed_exists("new-sports-feed", "sports"));
+        assert!(library.data.feed_exists("my-test-feed", "testing"));
+
+        library.feedcategories = library.data.generate_categories_tree().unwrap();
+
+        library
+    }
+
+    #[test]
+    fn test_exact_slug_match() {
+        let library = setup_test_library_for_matches();
+        let ident = "my-test-feed";
+
+        let matches = library.get_matching_feeds(ident);
+        assert_eq!(
+            matches.len(),
+            1,
+            "Should find exactly one match for exact slug."
+        );
+        assert_eq!(matches[0].slug, ident);
+    }
+
+    #[test]
+    fn test_typo_in_title() {
+        let library = setup_test_library_for_matches();
+        let ident = "new spotfed";
+
+        let matches = library.get_matching_feeds(ident);
+        assert_ne!(matches.len(), 0, "Should not be empty for the typo title");
+        assert_eq!(matches[0].title, "New sports feed");
+    }
+
+    #[test]
+    fn test_url_match() {
+        let library = setup_test_library_for_matches();
+        let ident = "http:/techrunch.com/fed";
+
+        let matches = library.get_matching_feeds(ident);
+        assert_eq!(
+            matches.len(),
+            1,
+            "Should find exactly one match for the url"
+        );
+        assert_eq!(matches[0].feed_url, "https://techcrunch/feed");
+    }
+
+    #[test]
+    fn test_low_score_no_match() {
+        let library = setup_test_library_for_matches();
+        let ident = "mytest";
+
+        let matches = library.get_matching_feeds(ident);
+        assert_eq!(matches.len(), 0);
+    }
+
+    #[test]
+    fn test_multiple_matches() {
+        let (mut library, _temp_dir) = FeedLibrary::new_for_test();
+
+        let feed1 = crate::core::library::feeditem::FeedItem {
+            title: "TechCrunch".to_string(),
+            slug: "techcrunch".to_string(),
+            feed_url: "https://techcrunch/feed".to_string(),
+            category: "General".to_string(),
+            ..Default::default()
+        };
+
+        let feed2 = crate::core::library::feeditem::FeedItem {
+            title: "TechCrunch".to_string(),
+            slug: "techcrunch".to_string(),
+            feed_url: "https://techcrunch/feed".to_string(),
+            category: "tech".to_string(),
+            ..Default::default()
+        };
+
+        assert!(library.add_feed(feed1.clone()).is_ok());
+        assert!(library.add_feed(feed2.clone()).is_ok());
+        library.feedcategories = library.data.generate_categories_tree().unwrap();
+
+        let ident = "techcrunch";
+        let matches = library.get_matching_feeds(ident);
+
+        assert!(library.data.feed_exists("techcrunch", "tech"));
+        assert!(library.data.feed_exists("techcrunch", "General"));
+
+        assert_eq!(matches.len(), 2);
+        assert_eq!(
+            matches[0].title, matches[1].title,
+            "Titles should be equal since both are same feeds."
+        );
+        assert_ne!(
+            matches[0].category, matches[1].category,
+            "Category should be different for both the feeds."
+        );
     }
 }
