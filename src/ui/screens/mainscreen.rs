@@ -235,7 +235,7 @@ impl AppScreen for MainScreen {
                     self.inputstate = MainInputState::Menu;
                     Ok(AppScreenEvent::None)
                 }
-                (_, KeyCode::Right | KeyCode::Char('h')) => {
+                (_, KeyCode::Left | KeyCode::Char('h')) => {
                     self.inputstate = MainInputState::Menu;
                     Ok(AppScreenEvent::None)
                 }

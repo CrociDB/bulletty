@@ -4,7 +4,10 @@ use clap::{Error, Parser, Subcommand};
 use tracing::info;
 
 use crate::core::library::feeditem::FeedItem;
+use crate::core::defs;
+use crate::core::library::data::config::Config;
 use crate::core::library::feedlibrary::FeedLibrary;
+use std::path::Path;
 
 #[derive(Parser)]
 #[command(name = "bulletty")]
@@ -33,6 +36,8 @@ pub enum Commands {
         /// The feed identifier (can be url, title or slug)
         ident: String,
     },
+    /// Show important directories
+    Dirs,
 }
 
 pub fn run_main_cli(cli: Cli) -> color_eyre::Result<()> {
@@ -43,6 +48,7 @@ pub fn run_main_cli(cli: Cli) -> color_eyre::Result<()> {
         Some(Commands::Add { url, category }) => command_add(&cli, url, category),
         Some(Commands::Update) => command_update(&cli),
         Some(Commands::Delete { ident }) => command_delete(&cli, ident),
+        Some(Commands::Dirs) => command_dirs(&cli),
         None => Ok(()),
     }
 }
@@ -165,6 +171,15 @@ fn command_delete(_cli: &Cli, ident: &str) -> color_eyre::Result<()> {
             }
         }
     }
+fn command_dirs(_cli: &Cli) -> color_eyre::Result<()> {
+    let config = Config::new();
+    let library_path = config.datapath;
+
+    let logs_path = Path::new(&dirs::state_dir().unwrap()).join(defs::LOG_DIR);
+
+    println!("bulletty directories");
+    println!("\t-> Library: {}", library_path.to_string_lossy());
+    println!("\t-> Logs:    {}", logs_path.to_string_lossy());
 
     Ok(())
 }
