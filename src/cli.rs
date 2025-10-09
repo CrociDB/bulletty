@@ -74,10 +74,16 @@ fn command_list(_cli: &Cli) -> color_eyre::Result<()> {
 
 fn command_add(_cli: &Cli, url: &str, category: &Option<String>) -> color_eyre::Result<()> {
     let mut library = FeedLibrary::new();
-    let feed = library.add_feed_from_url(url, category)?;
-
-    info!("Feed added: {feed:?}");
-    println!("Feed added: {feed:?}");
+    match library.add_feed_from_url(url, category) {
+        Ok(feed) => {
+            info!("Feed added: {}", feed.title);
+            println!("Feed added: {}", feed.title);
+        }
+        Err(err) => {
+            error!("{}", err);
+            println!("{}", err);
+        }
+    }
 
     Ok(())
 }
@@ -121,8 +127,8 @@ fn command_import(_cli: &Cli, opml_file: &str) -> color_eyre::Result<()> {
                 println!("Feed added: {feed:?}");
             }
             Err(err) => {
-                error!("{:?}", err);
-                println!("{:?}", err);
+                error!("{}", err);
+                println!("{}", err);
             }
         }
     }
