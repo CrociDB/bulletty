@@ -80,7 +80,7 @@ impl FeedLibrary {
     pub fn add_feed(&mut self, feed: FeedItem) -> color_eyre::Result<FeedItem> {
         // check if feed already in library
         if self.data.feed_exists(&feed.slug, &feed.category) {
-            return Err(eyre!("Feed already exists"));
+            return Err(eyre!("Feed {:?} already exists", feed.title));
         }
 
         // then create
