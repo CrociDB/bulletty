@@ -9,7 +9,7 @@ jobs:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     env:
-      SHORT_SHA: ${{ substring(github.sha, 0, 7) }}
+      SHORT_SHA: ${{ github.sha }}
     strategy:
       matrix:
         include:
