@@ -32,6 +32,7 @@ tracing-appender = "0.2"
 tracing-error = "0.2"
 unicode-width = "0.2.0"
 open = "5.3.2"
+fuzzt = { version = "0.3.1", default-features = false, features = ["levenshtein"] }
 
 [dev-dependencies]
 tempfile = "3.23.0"
