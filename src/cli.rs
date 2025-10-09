@@ -123,8 +123,8 @@ fn command_import(_cli: &Cli, opml_file: &str) -> color_eyre::Result<()> {
     for feed in opml_feeds {
         match library.add_feed_from_url(&feed.url, &feed.category) {
             Ok(feed) => {
-                info!("Feed added: {feed:?}");
-                println!("Feed added: {feed:?}");
+                info!("Feed added: {}", feed.title);
+                println!("Feed added: {}", feed.title);
             }
             Err(err) => {
                 error!("{}", err);
