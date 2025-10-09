@@ -8,8 +8,6 @@ jobs:
   build:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    env:
-      SHORT_SHA: ${{ github.sha }}
     strategy:
       matrix:
         include:
@@ -49,17 +47,17 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/release
-          7z a ../../../${{ matrix.artifact_name }}-${{ env.SHORT_SHA }}.zip bulletty.exe
+          7z a ../../../${{ matrix.artifact_name }}-${{ github.sha }}.zip bulletty.exe
 
       - name: Archive binaries (Unix)
         if: matrix.os != 'windows-latest'
-        run: tar -czvf ${{ matrix.artifact_name }}-${{ env.SHORT_SHA }}.tar.gz -C target/${{ matrix.target }}/release bulletty 
+        run: tar -czvf ${{ matrix.artifact_name }}-${{ github.sha }}.tar.gz -C target/${{ matrix.target }}/release bulletty 
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}-${{ env.SHORT_SHA }}
-          path: ${{ matrix.artifact_name }}-${{ env.SHORT_SHA }}.*
+          name: ${{ matrix.artifact_name }}-${{ github.sha }}
+          path: ${{ matrix.artifact_name }}-${{ github.sha }}.*
 
   release:
     name: Create Nightly Release
