@@ -17,7 +17,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
             artifact_name: bulletty-linux-x86_64
             archive_format: tar.gz
-          - os: ubuntu-latest
+          - os: ubuntu-24.04-arm64
             target: aarch64-unknown-linux-gnu
             artifact_name: bulletty-linux-aarch64
             archive_format: tar.gz
