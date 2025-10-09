@@ -5,8 +5,8 @@ use tracing::{error, info};
 
 use crate::core::defs;
 use crate::core::library::data::config::Config;
-use crate::core::library::feeditem::FeedItem;
 use crate::core::library::data::opml;
+use crate::core::library::feeditem::FeedItem;
 use crate::core::library::feedlibrary::FeedLibrary;
 
 use std::path::Path;
