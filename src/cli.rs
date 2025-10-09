@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use tracing::info;
+use tracing::{error, info};
 
 use crate::core::defs;
 use crate::core::library::data::config::Config;
@@ -110,14 +110,21 @@ fn command_dirs(_cli: &Cli) -> color_eyre::Result<()> {
 }
 
 fn command_import(_cli: &Cli, opml_file: &str) -> color_eyre::Result<()> {
-    let library = FeedLibrary::new();
+    println!("Importing feeds");
+    let mut library = FeedLibrary::new();
+    let opml_feeds = opml::get_opml_feeds(opml_file)?;
 
-    for category in library.feedcategories.iter() {
-        println!("{}", category.title);
-        for feed in category.feeds.iter().as_ref() {
-            println!("\t-> {}", feed.title);
+    for feed in opml_feeds {
+        match library.add_feed_from_url(&feed.url, &feed.category) {
+            Ok(feed) => {
+                info!("Feed added: {feed:?}");
+                println!("Feed added: {feed:?}");
+            }
+            Err(err) => {
+                error!("{:?}", err);
+                println!("{:?}", err);
+            }
         }
-        println!();
     }
 
     Ok(())
