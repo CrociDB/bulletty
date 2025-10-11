@@ -15,7 +15,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
             artifact_name: bulletty-linux-x86_64
             archive_format: tar.gz
-          - os: ubuntu-24.04-arm64
+          - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             artifact_name: bulletty-linux-aarch64
             archive_format: tar.gz
@@ -40,8 +40,17 @@ jobs:
         with:
           target: ${{ matrix.target }}
 
+      - name: Install cross (for arm64 builds)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: cargo install cross
+
       - name: Build
-        run: cargo build --release --target ${{ matrix.target }}
+        run: |
+          if [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
+            cross build --release --target ${{ matrix.target }}
+          else
+            cargo build --release --target ${{ matrix.target }}
+          fi
 
       - name: Archive binaries (Windows)
         if: matrix.os == 'windows-latest'
