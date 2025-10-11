@@ -77,11 +77,10 @@ pub fn save_opml(categories: &[FeedCategory], filename: &str) -> Result<()> {
         <title>Generated from bulletty</title>
         <url>https://github.com/CrociDB/bulletty</url>
     </head>
-    <body>{}
+    <body>{text_categories}
     </body>
 </opml>
-"#,
-        text_categories
+"#
     );
 
     std::fs::write(filename, opml)?;

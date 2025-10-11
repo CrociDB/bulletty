@@ -191,7 +191,6 @@ impl FeedLibrary {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::core::library::feedlibrary::FeedLibrary;
 
     #[test]

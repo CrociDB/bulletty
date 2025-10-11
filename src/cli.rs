@@ -90,8 +90,8 @@ fn command_add(_cli: &Cli, url: &str, category: &Option<String>) -> color_eyre::
             println!("Feed added: {}", feed.title);
         }
         Err(err) => {
-            error!("{}", err);
-            println!("{}", err);
+            error!("{err}");
+            println!("{err}");
         }
     }
 
@@ -113,10 +113,7 @@ fn command_update(_cli: &Cli) -> color_eyre::Result<()> {
 }
 
 fn confirm_delete(title: &str) -> Result<bool, Error> {
-    print!(
-        "Are you sure you want to delete '{}'? That can't be reverted. [y/N] ",
-        title
-    );
+    print!("Are you sure you want to delete '{title}'? That can't be reverted. [y/N] ");
     io::stdout().flush()?;
 
     let mut choice = String::new();
@@ -180,13 +177,13 @@ fn command_delete(_cli: &Cli, ident: &str) -> color_eyre::Result<()> {
                             println!("Feed was not deleted: {}", &title);
                         }
                     } else {
-                        info!("Invalid input received: {}", ind);
-                        println!("Invalid input received: {}", ind);
+                        info!("Invalid input received: {ind}");
+                        println!("Invalid input received: {ind}");
                     }
                 }
                 Err(_) => {
-                    info!("Invalid input received: {}", normalized_input);
-                    println!("Invalid input received: {}", normalized_input);
+                    info!("Invalid input received: {normalized_input}");
+                    println!("Invalid input received: {normalized_input}");
                 }
             }
         }
@@ -220,8 +217,8 @@ fn command_import(_cli: &Cli, opml_file: &str) -> color_eyre::Result<()> {
                 println!("Feed added: {}", feed.title);
             }
             Err(err) => {
-                error!("{}", err);
-                println!("{}", err);
+                error!("{err}");
+                println!("{err}");
             }
         }
     }
