@@ -207,16 +207,16 @@ fn parse_date(date_str: &str) -> color_eyre::Result<DateTime<Utc>> {
 
     // Attempt to parse a NaiveDate (e.g., "2024-01-01") and set time to midnight UTC
     let format_naive_date = "%Y-%m-%d";
-    if let Ok(naive_date) = NaiveDate::parse_from_str(date_str, format_naive_date) {
-        if let Some(naive_datetime) = naive_date.and_hms_opt(0, 0, 0) {
-            return Ok(DateTime::<Utc>::from_naive_utc_and_offset(
-                naive_datetime,
-                Utc,
-            ));
-        }
+    if let Ok(naive_date) = NaiveDate::parse_from_str(date_str, format_naive_date)
+        && let Some(naive_datetime) = naive_date.and_hms_opt(0, 0, 0)
+    {
+        Ok(DateTime::<Utc>::from_naive_utc_and_offset(
+            naive_datetime,
+            Utc,
+        ))
+    } else {
+        Err(eyre!("Couldn't parse date: {:?}", date_str))
     }
-
-    Err(eyre!("Couldn't parse date: {:?}", date_str))
 }
 
 fn get_description_content(entry: &Node) -> (String, String) {

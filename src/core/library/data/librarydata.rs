@@ -98,15 +98,15 @@ impl LibraryData {
 
         for entry in fs::read_dir(catpath)? {
             let path = entry?.path();
-            if path.is_dir() {
-                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                    let cat = FeedCategory {
-                        title: String::from(name),
-                        feeds: self.load_feeds_from_category(name, path.as_path())?,
-                    };
+            if path.is_dir()
+                && let Some(name) = path.file_name().and_then(|n| n.to_str())
+            {
+                let cat = FeedCategory {
+                    title: String::from(name),
+                    feeds: self.load_feeds_from_category(name, path.as_path())?,
+                };
 
-                    categories.push(cat);
-                }
+                categories.push(cat);
             }
         }
 
