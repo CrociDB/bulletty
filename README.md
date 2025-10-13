@@ -23,6 +23,8 @@ It's in active development.
 
 ### 🚚 Through Cargo
 
+It requires **cargo 1.90+**:
+
 ```shell
 cargo install bulletty
 ```

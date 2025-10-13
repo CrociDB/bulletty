@@ -16,7 +16,7 @@ show_datetime: false
 
 ### Through _Cargo_
 
-Considering you have `cargo` installed in your system:
+Considering you have `cargo 1.90+` installed in your system:
 
 ```shell
 cargo install bulletty
