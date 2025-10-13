@@ -29,11 +29,11 @@ impl Config {
 
             if !config_file.exists() {
                 let config_path = Path::new(&config_dir).join(defs::CONFIG_PATH);
-                if !config_path.exists() {
-                    if let Err(e) = fs::create_dir_all(config_path) {
-                        error!("Failed to create directory: {}", e);
-                        std::process::exit(1);
-                    }
+                if !config_path.exists()
+                    && let Err(e) = fs::create_dir_all(config_path)
+                {
+                    error!("Failed to create directory: {}", e);
+                    std::process::exit(1);
                 }
 
                 match OpenOptions::new()

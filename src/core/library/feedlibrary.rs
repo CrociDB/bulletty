@@ -139,10 +139,10 @@ impl FeedLibrary {
     }
 
     pub fn update(&mut self) {
-        if let Some(updater) = self.updater.as_ref() {
-            if updater.finished.load(std::sync::atomic::Ordering::Relaxed) {
-                self.updater = None;
-            }
+        if let Some(updater) = self.updater.as_ref()
+            && updater.finished.load(std::sync::atomic::Ordering::Relaxed)
+        {
+            self.updater = None;
         }
     }
 
