@@ -81,6 +81,14 @@ jobs:
           path: ./artifacts
           merge-multiple: true
 
+      - name: Delete previous assets
+        uses: dawidd6/delete-release-assets@v3
+        with:
+          tag: nightly
+          assets: |
+            *.zip
+            *.tar.gz
+
       - name: Create Nightly Release
         id: create_release
         uses: softprops/action-gh-release@v2
