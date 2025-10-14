@@ -1911,9 +1911,9 @@ dependencies = [
 
 [[package]]
 name = "roxmltree"
-version = "0.21.0"
+version = "0.21.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "963e3e7a0795e975f0a57b8a3caf100a2d4ced3758a5d18e6bd6b9aea854f53f"
+checksum = "f1964b10c76125c36f8afe190065a4bf9a87bf324842c05701330bba9f1cacbb"
 dependencies = [
  "memchr",
 ]
