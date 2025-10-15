@@ -229,6 +229,21 @@ impl AppScreen for ReaderScreen {
                 self.previous_entry();
                 Ok(AppScreenEvent::None)
             }
+            (_, KeyCode::Char('L')) => {
+                let url = self.entries[self.current_index].url.clone();
+                if self.library.borrow().is_in_read_later(&url) {
+                    if let Err(e) = self.library.borrow().remove_from_read_later(&url) {
+                        error!("Failed to remove from read later: {:?}", e);
+                        Ok(AppScreenEvent::None)
+                    } else {
+                        Ok(AppScreenEvent::OpenDialog(Box::new(HelpDialog::new(
+                            String::from("Removed from Read Later"),
+                        ))))
+                    }
+                } else {
+                    Ok(AppScreenEvent::None)
+                }
+            }
             (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(HelpDialog::new(
                 self.get_full_instructions(),
             )))),
@@ -247,7 +262,13 @@ impl AppScreen for ReaderScreen {
     }
 
     fn get_instructions(&self) -> String {
-        String::from("?: Help | j/k/↓/↑: scroll | n/p: next/prev | o: open | Esc/q: leave")
+        let mut base = String::from("?: Help | j/k/↓/↑: scroll | n/p: next/prev | o: open");
+        let url = &self.entries[self.current_index].url;
+        if self.library.borrow().is_in_read_later(url) {
+            base.push_str(" | L: remove RL");
+        }
+        base.push_str(" | Esc/q: leave");
+        base
     }
 
     fn get_work_status(&self) -> AppWorkStatus {
@@ -255,9 +276,16 @@ impl AppScreen for ReaderScreen {
     }
 
     fn get_full_instructions(&self) -> String {
-        String::from(
-            "j/k/↓/↑: scroll\ng/G: go to beginning or end of file\n\n n/p: next/previous entry\no: open externally\n\nEsc/q: leave",
-        )
+        let url = &self.entries[self.current_index].url;
+        if self.library.borrow().is_in_read_later(url) {
+            String::from(
+                "j/k/↓/↑: scroll\ng/G: go to beginning or end of file\n\n n/p: next/previous entry\no: open externally\n\nL: remove from read later\n\nEsc/q: leave",
+            )
+        } else {
+            String::from(
+                "j/k/↓/↑: scroll\ng/G: go to beginning or end of file\n\n n/p: next/previous entry\no: open externally\n\nEsc/q: leave",
+            )
+        }
     }
 }
 
