@@ -10,6 +10,7 @@ use crate::{
         data::{config::Config, librarydata::LibraryData},
         feedcategory::FeedCategory,
         feeditem::FeedItem,
+        readlaterentry::ReadLaterEntry,
         updater::Updater,
     },
 };
@@ -178,11 +179,44 @@ impl FeedLibrary {
 
         matching_vec
     }
+
+    pub fn add_to_read_later(
+        &self,
+        entry: &FeedEntry,
+        source_feed: Option<String>,
+        source_category: Option<String>,
+    ) -> color_eyre::Result<()> {
+        let read_later_entry = ReadLaterEntry::from_feed_entry(entry, source_feed, source_category);
+        self.data.add_to_read_later(read_later_entry)
+    }
+
+    pub fn remove_from_read_later(&self, url: &str) -> color_eyre::Result<()> {
+        self.data.remove_from_read_later(url)
+    }
+
+    pub fn get_read_later_entries(&self) -> color_eyre::Result<Vec<ReadLaterEntry>> {
+        self.data.get_read_later_entries()
+    }
+
+    pub fn has_read_later_entries(&self) -> bool {
+        match self.get_read_later_entries() {
+            Ok(entries) => !entries.is_empty(),
+            Err(_) => false,
+        }
+    }
+
+    pub fn is_in_read_later(&self, url: &str) -> bool {
+        match self.get_read_later_entries() {
+            Ok(entries) => entries.iter().any(|e| e.url == url),
+            Err(_) => false,
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::core::library::feedlibrary::FeedLibrary;
+    use crate::core::library::readlaterentry::ReadLaterEntry;
 
     #[test]
     fn test_add_and_delete_feed() {
@@ -335,5 +369,23 @@ mod tests {
             matches[0].category, matches[1].category,
             "Category should be different for both the feeds."
         );
+    }
+
+    #[test]
+    fn test_is_in_read_later() {
+        let (library, _tmp) = FeedLibrary::new_for_test();
+        // Initially empty
+        assert!(!library.is_in_read_later("https://example.com/a"));
+
+        // Add an entry to read later via data API directly
+        let rl = ReadLaterEntry::new(
+            "Title".into(),
+            "Desc".into(),
+            "https://example.com/a".into(),
+        );
+        library.data.add_to_read_later(rl).unwrap();
+
+        assert!(library.is_in_read_later("https://example.com/a"));
+        assert!(!library.is_in_read_later("https://example.com/b"));
     }
 }
