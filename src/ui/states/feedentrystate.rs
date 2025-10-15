@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use ratatui::{
     style::{Color, Style, Stylize},
     text::{Line, Span, Text},
@@ -15,6 +17,7 @@ pub struct FeedEntryState {
     pub entries: Vec<FeedEntry>,
     pub listatate: ListState,
     pub previous_selected: String,
+    pub library: Option<Rc<RefCell<FeedLibrary>>>,
 }
 
 impl Default for FeedEntryState {
@@ -29,6 +32,7 @@ impl FeedEntryState {
             entries: vec![],
             listatate: ListState::default().with_selected(Some(0)),
             previous_selected: String::new(),
+            library: None,
         }
     }
 
@@ -56,7 +60,40 @@ impl FeedEntryState {
                     }
                 }
             }
-            None => vec![],
+            Some(FeedItemInfo::ReadLater) => {
+                self.previous_selected = "read_later".to_string();
+
+                match library.get_read_later_entries() {
+                    Ok(read_later_entries) => {
+                        let mut entries: Vec<FeedEntry> = Vec::new();
+                        for rl in read_later_entries.iter() {
+                            if let Some(rel_path) = &rl.file_path {
+                                let full_path = library
+                                    .data
+                                    .path
+                                    .join(crate::core::defs::DATA_CATEGORIES_DIR)
+                                    .join(rel_path);
+                                if let Ok(contents) = std::fs::read_to_string(&full_path) {
+                                    let parts: Vec<&str> = contents.split("---").collect();
+                                    if parts.len() >= 2 {
+                                        if let Ok(mut fe) = toml::from_str::<FeedEntry>(parts[1]) {
+                                            fe.filepath = full_path.clone();
+                                            fe.text = parts[2..].join("---");
+                                            entries.push(fe);
+                                            continue;
+                                        }
+                                    }
+                                }
+                            }
+                            // Fallback
+                            entries.push(rl.to_feed_entry());
+                        }
+                        entries
+                    }
+                    Err(_) => vec![],
+                }
+            }
+            _ => vec![],
         };
 
         if prev != self.previous_selected {
@@ -72,15 +109,21 @@ impl FeedEntryState {
 
                 item_content_lines.push(Line::from(""));
 
+                let read_later_icon = if self.is_in_read_later(&entry.url) {
+                    " \u{f02d}" // read later icon
+                } else {
+                    ""
+                };
+
                 // Title
                 if !entry.seen {
                     item_content_lines.push(Line::from(Span::styled(
-                        format!(" \u{f1ea} {} \u{e3e3}", entry.title),
+                        format!(" \u{f1ea} {}{} \u{e3e3}", entry.title, read_later_icon),
                         Style::default().bold().fg(Color::from_u32(0x81ae80)),
                     )));
                 } else {
                     item_content_lines.push(Line::from(Span::styled(
-                        format!(" \u{f1ea} {}", entry.title),
+                        format!(" \u{f1ea} {}{}", entry.title, read_later_icon),
                         Style::default().bold(),
                     )));
                 };
@@ -173,5 +216,13 @@ impl FeedEntryState {
 
     pub fn scroll(&self) -> usize {
         self.listatate.selected().unwrap_or(0)
+    }
+
+    fn is_in_read_later(&self, url: &str) -> bool {
+        if let Some(library) = &self.library {
+            library.borrow().is_in_read_later(url)
+        } else {
+            false
+        }
     }
 }
