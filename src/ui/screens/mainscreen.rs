@@ -58,10 +58,22 @@ impl MainScreen {
     fn set_all_read(&self) {
         let entries = match self.feedtreestate.get_selected() {
             Some(FeedItemInfo::Category(t)) => {
-                self.library.borrow().get_feed_entries_by_category(t)
+                match self.library.borrow().get_feed_entries_by_category(t) {
+                    Ok(entries) => entries,
+                    Err(e) => {
+                        error!("Error getting feed entries by category: {:?}", e);
+                        vec![]
+                    }
+                }
             }
             Some(FeedItemInfo::Item(_, _, s)) => {
-                self.library.borrow().get_feed_entries_by_item_slug(s)
+                match self.library.borrow().get_feed_entries_by_item_slug(s) {
+                    Ok(entries) => entries,
+                    Err(e) => {
+                        error!("Error getting feed entries by item slug: {:?}", e);
+                        vec![]
+                    }
+                }
             }
             None => vec![],
         };

@@ -92,46 +92,37 @@ impl FeedLibrary {
         self.data.delete_feed(slug, category)
     }
 
-    pub fn get_feed_entries_by_category(&self, categorytitle: &str) -> Vec<FeedEntry> {
+    pub fn get_feed_entries_by_category(
+        &self,
+        categorytitle: &str,
+    ) -> color_eyre::Result<Vec<FeedEntry>> {
         let mut entries = vec![];
 
         for category in self.feedcategories.iter() {
             if category.title == categorytitle {
                 for feed in category.feeds.iter() {
-                    entries.extend(match self.data.load_feed_entries(category, feed) {
-                        Ok(entries) => entries,
-                        Err(e) => {
-                            error!("{:?}", e);
-                            vec![]
-                        }
-                    });
+                    entries.extend(self.data.load_feed_entries(category, feed)?);
                 }
             }
         }
 
         entries.sort_by(|a, b| b.date.cmp(&a.date));
-        entries
+        Ok(entries)
     }
 
-    pub fn get_feed_entries_by_item_slug(&self, slug: &str) -> Vec<FeedEntry> {
+    pub fn get_feed_entries_by_item_slug(&self, slug: &str) -> color_eyre::Result<Vec<FeedEntry>> {
         for category in self.feedcategories.iter() {
             for feed in category.feeds.iter() {
                 if feed.slug == slug {
-                    let mut entries = match self.data.load_feed_entries(category, feed) {
-                        Ok(entries) => entries,
-                        Err(e) => {
-                            error!("{:?}", e);
-                            vec![]
-                        }
-                    };
+                    let mut entries = self.data.load_feed_entries(category, feed)?;
 
                     entries.sort_by(|a, b| b.date.cmp(&a.date));
-                    return entries;
+                    return Ok(entries);
                 }
             }
         }
 
-        vec![]
+        Ok(vec![])
     }
 
     pub fn start_updater(&mut self) {

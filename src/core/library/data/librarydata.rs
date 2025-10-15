@@ -267,16 +267,9 @@ impl LibraryData {
             let path = entry.path();
             if path.is_file() {
                 let contents = std::fs::read_to_string(&path)?;
-                let parts: Vec<&str> = contents.split("---").collect();
-                if parts.len() < 2 {
-                    continue;
+                if let Ok(entry) = self.parse_feed_entry(&contents, &path) {
+                    entries.push(entry);
                 }
-                let mut entry: FeedEntry = toml::from_str(parts[1])?;
-
-                entry.filepath = path.clone();
-
-                entry.text = parts[2..].join("---");
-                entries.push(entry);
             }
         }
 
@@ -299,18 +292,26 @@ impl LibraryData {
             let path = entry.path();
             if path.is_file() {
                 let contents = std::fs::read_to_string(&path)?;
-                let parts: Vec<&str> = contents.split("---").collect();
-                if parts.len() < 2 {
-                    continue;
-                }
-                let entry: FeedEntry = toml::from_str(parts[1])?;
-                if !entry.seen {
-                    unread += 1;
+                if let Ok(entry) = self.parse_feed_entry(&contents, &path) {
+                    if !entry.seen {
+                        unread += 1;
+                    }
                 }
             }
         }
 
         Ok(unread)
+    }
+
+    fn parse_feed_entry(&self, contents: &str, path: &Path) -> color_eyre::Result<FeedEntry> {
+        let parts: Vec<&str> = contents.split("---").collect();
+        if parts.len() < 3 {
+            return Err(eyre!("Invalid feed entry format"));
+        }
+        let mut entry: FeedEntry = toml::from_str(parts[1])?;
+        entry.filepath = path.to_path_buf();
+        entry.text = parts[2..].join("---");
+        Ok(entry)
     }
 
     pub fn set_entry_seen(&self, entry: &FeedEntry) {

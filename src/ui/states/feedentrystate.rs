@@ -1,3 +1,4 @@
+use tracing::error;
 use ratatui::{
     style::{Color, Style, Stylize},
     text::{Line, Span, Text},
@@ -37,11 +38,23 @@ impl FeedEntryState {
         self.entries = match treestate.get_selected() {
             Some(FeedItemInfo::Category(t)) => {
                 self.previous_selected = t.to_string();
-                library.get_feed_entries_by_category(t)
+                match library.get_feed_entries_by_category(t) {
+                    Ok(entries) => entries,
+                    Err(e) => {
+                        error!("Error getting feed entries by category: {:?}", e);
+                        vec![]
+                    }
+                }
             }
             Some(FeedItemInfo::Item(_, _, s)) => {
                 self.previous_selected = s.to_string();
-                library.get_feed_entries_by_item_slug(s)
+                match library.get_feed_entries_by_item_slug(s) {
+                    Ok(entries) => entries,
+                    Err(e) => {
+                        error!("Error getting feed entries by item slug: {:?}", e);
+                        vec![]
+                    }
+                }
             }
             None => vec![],
         };
