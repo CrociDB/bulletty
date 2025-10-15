@@ -1,9 +1,9 @@
-use tracing::error;
 use ratatui::{
     style::{Color, Style, Stylize},
     text::{Line, Span, Text},
     widgets::{ListItem, ListState},
 };
+use tracing::error;
 
 use crate::{
     core::feed::feedentry::FeedEntry,
