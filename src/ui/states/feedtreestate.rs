@@ -8,6 +8,10 @@ pub enum FeedItemInfo {
     Category(String),
     /// Represents an item in the feed tree with a title, categore, and slug
     Item(String, String, String),
+    /// Represents a separator in the menu
+    Separator,
+    /// Represents the Read Later category
+    ReadLater,
 }
 
 pub struct FeedTreeState {
@@ -43,6 +47,12 @@ impl FeedTreeState {
                 ));
             }
         }
+
+        // display Read Later section if it has entries
+        if library.has_read_later_entries() {
+            self.treeitems.push(FeedItemInfo::Separator);
+            self.treeitems.push(FeedItemInfo::ReadLater);
+        }
     }
 
     pub fn get_items(&self, library: &FeedLibrary) -> Vec<ListItem<'_>> {
@@ -61,6 +71,14 @@ impl FeedTreeState {
                         } else {
                             error!("Couldn't get unread feed entries for '{}'", t);
                             format!(" \u{f09e}  {t}")
+                        }
+                    }
+                    FeedItemInfo::Separator => "".to_string(),
+                    FeedItemInfo::ReadLater => {
+                        if let Ok(count) = library.get_read_later_entries() {
+                            format!("\u{f02d} Read Later ({})", count.len())
+                        } else {
+                            "\u{f02d} Read Later".to_string()
                         }
                     }
                 };
