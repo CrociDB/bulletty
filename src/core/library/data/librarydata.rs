@@ -12,8 +12,10 @@ use tracing::{error, info};
 use crate::core::feed::feedentry::FeedEntry;
 use crate::core::feed::feedparser;
 use crate::core::library::feedcategory::FeedCategory;
+use crate::core::library::readlaterdata::ReadLaterData;
+use crate::core::library::readlaterentry::ReadLaterEntry;
 use crate::{
-    core::defs::{self, DATA_CATEGORIES_DIR, DATA_FEED},
+    core::defs::{self, DATA_CATEGORIES_DIR, DATA_FEED, DATA_READ_LATER},
     core::library::feeditem::FeedItem,
 };
 
@@ -330,6 +332,96 @@ impl LibraryData {
         if let Err(e) = self.save_feed_entry(&entry) {
             error!("Couldn't toggle entry seen: {:?}", e);
         }
+    }
+
+    pub fn add_to_read_later(&self, entry: ReadLaterEntry) -> color_eyre::Result<()> {
+        let mut data = self.load_read_later()?;
+
+        // Check if entry already exists
+        if data.entries.iter().any(|e| e.url == entry.url) {
+            return Ok(()); // Already exists
+        }
+
+        data.entries.push(entry);
+        // Sort by date_added (newest first)
+        data.entries.sort_by(|a, b| b.date_added.cmp(&a.date_added));
+
+        self.save_read_later(&data)
+    }
+
+    pub fn remove_from_read_later(&self, url: &str) -> color_eyre::Result<()> {
+        let mut data = self.load_read_later()?;
+        data.entries.retain(|e| e.url != url);
+        self.save_read_later(&data)
+    }
+
+    pub fn get_read_later_entries(&self) -> color_eyre::Result<Vec<ReadLaterEntry>> {
+        let mut data = self.load_read_later()?;
+
+        // Remove entries where the file doesn't exist
+        let initial_count = data.entries.len();
+        data.entries.retain(|entry| {
+            if let Some(file_path) = &entry.file_path {
+                let full_path = self.path.join(DATA_CATEGORIES_DIR).join(file_path);
+                if !full_path.exists() {
+                    tracing::warn!("Removing read later entry with missing file: {}", file_path);
+                    false
+                } else {
+                    true
+                }
+            } else {
+                // Keep entries without file_path for backward compatibility
+                true
+            }
+        });
+
+        // Save the cleaned data
+        if data.entries.len() != initial_count {
+            self.save_read_later(&data)?;
+        }
+
+        Ok(data.entries)
+    }
+
+    fn load_read_later(&self) -> color_eyre::Result<ReadLaterData> {
+        let read_later_path = self.path.join(DATA_READ_LATER);
+
+        if !read_later_path.exists() {
+            return Ok(ReadLaterData::default());
+        }
+
+        let contents = std::fs::read_to_string(&read_later_path)?;
+        let data: ReadLaterData = toml::from_str(&contents)
+            .map_err(|e| eyre!("Failed to parse read later data: {}", e))?;
+
+        Ok(data)
+    }
+
+    fn save_read_later(&self, data: &ReadLaterData) -> color_eyre::Result<()> {
+        let read_later_path = self.path.join(DATA_READ_LATER);
+        let toml_str = toml::to_string(data)
+            .map_err(|e| eyre!("Failed to serialize read later data: {}", e))?;
+
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&read_later_path)
+            .map_err(|e| {
+                eyre!(
+                    "Couldn't open read later file {}: {}",
+                    read_later_path.display(),
+                    e
+                )
+            })?;
+
+        file.write_all(toml_str.as_bytes()).map_err(|e| {
+            eyre!(
+                "Failed to write read later file {}: {}",
+                read_later_path.display(),
+                e
+            )
+        })
     }
 }
 
