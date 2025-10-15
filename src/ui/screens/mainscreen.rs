@@ -75,7 +75,14 @@ impl MainScreen {
                     }
                 }
             }
-            None => vec![],
+            Some(FeedItemInfo::ReadLater) => match self.library.borrow().get_read_later_entries() {
+                Ok(read_later_entries) => read_later_entries
+                    .iter()
+                    .map(|e| e.to_feed_entry())
+                    .collect(),
+                Err(_) => vec![],
+            },
+            _ => vec![],
         };
 
         for entry in entries.iter() {
@@ -92,6 +99,41 @@ impl MainScreen {
                     url.to_string(),
                 ))))
             }
+        }
+    }
+
+    fn add_to_read_later(&self, entry: &crate::core::feed::feedentry::FeedEntry) {
+        let source_feed = if let Some(selected) = self.feedtreestate.get_selected() {
+            match selected {
+                crate::ui::states::feedtreestate::FeedItemInfo::Item(title, _, _) => {
+                    Some(title.clone())
+                }
+                _ => None,
+            }
+        } else {
+            None
+        };
+
+        let source_category = if let Some(selected) = self.feedtreestate.get_selected() {
+            match selected {
+                crate::ui::states::feedtreestate::FeedItemInfo::Item(_, category, _) => {
+                    Some(category.clone())
+                }
+                crate::ui::states::feedtreestate::FeedItemInfo::Category(category) => {
+                    Some(category.clone())
+                }
+                _ => None,
+            }
+        } else {
+            None
+        };
+
+        if let Err(e) = self
+            .library
+            .borrow()
+            .add_to_read_later(entry, source_feed, source_category)
+        {
+            tracing::error!("Failed to add entry to read later: {:?}", e);
         }
     }
 }
@@ -145,6 +187,7 @@ impl AppScreen for MainScreen {
         frame.render_stateful_widget(treelist, chunks[0], &mut treestate);
 
         // The feed entries
+        self.feedentrystate.library = Some(self.library.clone());
         self.feedentrystate
             .update(&self.library.borrow(), &self.feedtreestate);
 
@@ -283,6 +326,12 @@ impl AppScreen for MainScreen {
                         Ok(AppScreenEvent::None)
                     }
                 }
+                (_, KeyCode::Char('L')) => {
+                    if let Some(entry) = self.feedentrystate.get_selected() {
+                        self.add_to_read_later(&entry);
+                    }
+                    Ok(AppScreenEvent::None)
+                }
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
                     HelpDialog::new(self.get_full_instructions()),
                 ))),
@@ -299,7 +348,9 @@ impl AppScreen for MainScreen {
         if self.inputstate == MainInputState::Menu {
             String::from("?: Help | j/k/↓/↑: move | Enter: select | Esc: quit")
         } else {
-            String::from("?: Help | j/k/↓/↑: move | o: open | Enter: read | Esc: back")
+            String::from(
+                "?: Help | j/k/↓/↑: move | o: open | L: read later | Enter: read | Esc: back",
+            )
         }
     }
 
@@ -309,7 +360,7 @@ impl AppScreen for MainScreen {
 
     fn get_full_instructions(&self) -> String {
         String::from(
-            "j/k/↓/↑: move selection\ng/G/Home/End: beginning and end of the list\no: open link externally\nEnter: select category or read entry\n\nr: toggle item read state\nR: mark all of the items as read\n\nEsc/q: back from entries or quit",
+            "j/k/↓/↑: move selection\ng/G/Home/End: beginning and end of the list\no: open link externally\nL: add to read later\nEnter: select category or read entry\n\nr: toggle item read state\nR: mark all of the items as read\n\nEsc/q: back from entries or quit",
         )
     }
 }
