@@ -90,7 +90,9 @@ impl FeedTreeState {
 
     pub fn get_selected(&self) -> Option<&FeedItemInfo> {
         if !self.treeitems.is_empty() {
-            Some(&self.treeitems[self.listatate.selected().unwrap_or(0)])
+            let idx = self.listatate.selected().unwrap_or(0);
+            let clamped = idx.min(self.treeitems.len().saturating_sub(1));
+            Some(&self.treeitems[clamped])
         } else {
             None
         }
