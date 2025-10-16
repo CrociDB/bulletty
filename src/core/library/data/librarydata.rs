@@ -338,7 +338,7 @@ impl LibraryData {
         let mut data = self.load_read_later()?;
 
         // Check if entry already exists
-        if data.entries.iter().any(|e| e.url == entry.url) {
+        if data.entries.iter().any(|e| e.path == entry.path) {
             return Ok(()); // Already exists
         }
 
@@ -349,38 +349,43 @@ impl LibraryData {
         self.save_read_later(&data)
     }
 
-    pub fn remove_from_read_later(&self, url: &str) -> color_eyre::Result<()> {
+    pub fn remove_from_read_later(&self, file_path: &str) -> color_eyre::Result<()> {
+        let rel_path = self.absolute_path_to_relative_path(file_path);
+
         let mut data = self.load_read_later()?;
-        data.entries.retain(|e| e.url != url);
+        data.entries
+            .retain(|e| e.path.clone().unwrap_or_default() != rel_path);
         self.save_read_later(&data)
     }
 
-    pub fn get_read_later_entries(&self) -> color_eyre::Result<Vec<ReadLaterEntry>> {
-        let mut data = self.load_read_later()?;
+    pub fn get_read_later_feed_entries(&self) -> color_eyre::Result<Vec<FeedEntry>> {
+        let data = self.load_read_later()?;
+        let mut feed_entries: Vec<FeedEntry> = Vec::new();
 
-        // Remove entries where the file doesn't exist
-        let initial_count = data.entries.len();
-        data.entries.retain(|entry| {
-            if let Some(file_path) = &entry.file_path {
-                let full_path = self.path.join(DATA_CATEGORIES_DIR).join(file_path);
-                if !full_path.exists() {
-                    tracing::warn!("Removing read later entry with missing file: {}", file_path);
-                    false
-                } else {
-                    true
+        for entries in data.entries {
+            let full_path = self
+                .path
+                .join(DATA_CATEGORIES_DIR)
+                .join(entries.path.clone().unwrap_or_default());
+            if let Ok(contents) = std::fs::read_to_string(&full_path) {
+                if let Ok(fe) = self.parse_feed_entry(&contents, &full_path) {
+                    feed_entries.push(fe);
                 }
-            } else {
-                // Keep entries without file_path for backward compatibility
-                true
             }
-        });
-
-        // Save the cleaned data
-        if data.entries.len() != initial_count {
-            self.save_read_later(&data)?;
         }
+        Ok(feed_entries)
+    }
 
-        Ok(data.entries)
+    pub fn is_in_read_later(&self, file_path: &str) -> bool {
+        let rel_path = self.absolute_path_to_relative_path(file_path);
+
+        if let Ok(data) = self.load_read_later() {
+            data.entries
+                .iter()
+                .any(|p| p.path.clone().unwrap_or_default() == rel_path)
+        } else {
+            false
+        }
     }
 
     fn load_read_later(&self) -> color_eyre::Result<ReadLaterData> {
@@ -422,6 +427,25 @@ impl LibraryData {
                 e
             )
         })
+    }
+
+    fn absolute_path_to_relative_path(&self, file_path: &str) -> String {
+        let rel_path = if let Some(categories_pos) = file_path.find("categories/") {
+            let prefix_to_strip = &file_path[..categories_pos + "categories/".len()];
+
+            let path = Path::new(file_path);
+            let prefix = Path::new(prefix_to_strip);
+
+            if let Ok(relative_path) = path.strip_prefix(prefix) {
+                relative_path.to_str().unwrap_or_default()
+            } else {
+                ""
+            }
+        } else {
+            ""
+        };
+
+        rel_path.to_string()
     }
 }
 

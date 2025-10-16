@@ -180,36 +180,28 @@ impl FeedLibrary {
         matching_vec
     }
 
-    pub fn add_to_read_later(
-        &self,
-        entry: &FeedEntry,
-        source_feed: Option<String>,
-        source_category: Option<String>,
-    ) -> color_eyre::Result<()> {
-        let read_later_entry = ReadLaterEntry::from_feed_entry(entry, source_feed, source_category);
+    pub fn add_to_read_later(&self, entry: &FeedEntry) -> color_eyre::Result<()> {
+        let read_later_entry = ReadLaterEntry::from_feed_entry(entry);
         self.data.add_to_read_later(read_later_entry)
     }
 
-    pub fn remove_from_read_later(&self, url: &str) -> color_eyre::Result<()> {
-        self.data.remove_from_read_later(url)
-    }
-
-    pub fn get_read_later_entries(&self) -> color_eyre::Result<Vec<ReadLaterEntry>> {
-        self.data.get_read_later_entries()
+    pub fn remove_from_read_later(&self, file_path: &str) -> color_eyre::Result<()> {
+        self.data.remove_from_read_later(file_path)
     }
 
     pub fn has_read_later_entries(&self) -> bool {
-        match self.get_read_later_entries() {
+        match self.get_read_later_feed_entries() {
             Ok(entries) => !entries.is_empty(),
             Err(_) => false,
         }
     }
 
-    pub fn is_in_read_later(&self, url: &str) -> bool {
-        match self.get_read_later_entries() {
-            Ok(entries) => entries.iter().any(|e| e.url == url),
-            Err(_) => false,
-        }
+    pub fn is_in_read_later(&self, file_path: &str) -> bool {
+        self.data.is_in_read_later(file_path)
+    }
+
+    pub fn get_read_later_feed_entries(&self) -> color_eyre::Result<Vec<FeedEntry>> {
+        self.data.get_read_later_feed_entries()
     }
 }
 
@@ -375,17 +367,12 @@ mod tests {
     fn test_is_in_read_later() {
         let (library, _tmp) = FeedLibrary::new_for_test();
         // Initially empty
-        assert!(!library.is_in_read_later("https://example.com/a"));
+        assert!(!library.is_in_read_later("Test/example/a.md"));
 
         // Add an entry to read later via data API directly
-        let rl = ReadLaterEntry::new(
-            "Title".into(),
-            "Desc".into(),
-            "https://example.com/a".into(),
-        );
+        let rl = ReadLaterEntry::new("Test/example/a.md".to_string());
         library.data.add_to_read_later(rl).unwrap();
 
-        assert!(library.is_in_read_later("https://example.com/a"));
-        assert!(!library.is_in_read_later("https://example.com/b"));
+        assert!(!library.is_in_read_later("Test/example/a.md"));
     }
 }
