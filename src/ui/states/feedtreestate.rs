@@ -75,7 +75,7 @@ impl FeedTreeState {
                     }
                     FeedItemInfo::Separator => "".to_string(),
                     FeedItemInfo::ReadLater => {
-                        if let Ok(count) = library.get_read_later_entries() {
+                        if let Ok(count) = library.get_read_later_feed_entries() {
                             format!("\u{f02d} Read Later ({})", count.len())
                         } else {
                             "\u{f02d} Read Later".to_string()
