@@ -75,13 +75,12 @@ impl MainScreen {
                     }
                 }
             }
-            Some(FeedItemInfo::ReadLater) => match self.library.borrow().get_read_later_entries() {
-                Ok(read_later_entries) => read_later_entries
-                    .iter()
-                    .map(|e| e.to_feed_entry())
-                    .collect(),
-                Err(_) => vec![],
-            },
+            Some(FeedItemInfo::ReadLater) => {
+                match self.library.borrow().get_read_later_feed_entries() {
+                    Ok(read_later_entries) => read_later_entries,
+                    Err(_) => vec![],
+                }
+            }
             _ => vec![],
         };
 
@@ -103,36 +102,7 @@ impl MainScreen {
     }
 
     fn add_to_read_later(&self, entry: &crate::core::feed::feedentry::FeedEntry) {
-        let source_feed = if let Some(selected) = self.feedtreestate.get_selected() {
-            match selected {
-                crate::ui::states::feedtreestate::FeedItemInfo::Item(title, _, _) => {
-                    Some(title.clone())
-                }
-                _ => None,
-            }
-        } else {
-            None
-        };
-
-        let source_category = if let Some(selected) = self.feedtreestate.get_selected() {
-            match selected {
-                crate::ui::states::feedtreestate::FeedItemInfo::Item(_, category, _) => {
-                    Some(category.clone())
-                }
-                crate::ui::states::feedtreestate::FeedItemInfo::Category(category) => {
-                    Some(category.clone())
-                }
-                _ => None,
-            }
-        } else {
-            None
-        };
-
-        if let Err(e) = self
-            .library
-            .borrow()
-            .add_to_read_later(entry, source_feed, source_category)
-        {
+        if let Err(e) = self.library.borrow().add_to_read_later(entry) {
             tracing::error!("Failed to add entry to read later: {:?}", e);
         }
     }
@@ -328,7 +298,16 @@ impl AppScreen for MainScreen {
                 }
                 (_, KeyCode::Char('L')) => {
                     if let Some(entry) = self.feedentrystate.get_selected() {
-                        self.add_to_read_later(&entry);
+                        // Toggle: add/remove read later
+                        let file_path = entry.filepath.to_str().unwrap_or_default();
+                        if self.library.borrow().is_in_read_later(&file_path) {
+                            if let Err(e) = self.library.borrow().remove_from_read_later(&file_path)
+                            {
+                                error!("Failed to remove from read later: {:?}", e);
+                            }
+                        } else {
+                            self.add_to_read_later(&entry);
+                        }
                     }
                     Ok(AppScreenEvent::None)
                 }
@@ -349,7 +328,7 @@ impl AppScreen for MainScreen {
             String::from("?: Help | j/k/↓/↑: move | Enter: select | Esc: quit")
         } else {
             String::from(
-                "?: Help | j/k/↓/↑: move | o: open | L: read later | Enter: read | Esc: back",
+                "?: Help | j/k/↓/↑: move | o: open | L: add/remove read later | Enter: read | Esc: back",
             )
         }
     }
@@ -360,7 +339,7 @@ impl AppScreen for MainScreen {
 
     fn get_full_instructions(&self) -> String {
         String::from(
-            "j/k/↓/↑: move selection\ng/G/Home/End: beginning and end of the list\no: open link externally\nL: add to read later\nEnter: select category or read entry\n\nr: toggle item read state\nR: mark all of the items as read\n\nEsc/q: back from entries or quit",
+            "j/k/↓/↑: move selection\ng/G/Home/End: beginning and end of the list\no: open link externally\nL: add/remove read later\nEnter: select category or read entry\n\nr: toggle item read state\nR: mark all of the items as read\n\nEsc/q: back from entries or quit",
         )
     }
 }
