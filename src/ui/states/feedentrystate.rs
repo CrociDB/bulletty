@@ -62,34 +62,8 @@ impl FeedEntryState {
             }
             Some(FeedItemInfo::ReadLater) => {
                 self.previous_selected = "read_later".to_string();
-
-                match library.get_read_later_entries() {
-                    Ok(read_later_entries) => {
-                        let mut entries: Vec<FeedEntry> = Vec::new();
-                        for rl in read_later_entries.iter() {
-                            if let Some(rel_path) = &rl.file_path {
-                                let full_path = library
-                                    .data
-                                    .path
-                                    .join(crate::core::defs::DATA_CATEGORIES_DIR)
-                                    .join(rel_path);
-                                if let Ok(contents) = std::fs::read_to_string(&full_path) {
-                                    let parts: Vec<&str> = contents.split("---").collect();
-                                    if parts.len() >= 2 {
-                                        if let Ok(mut fe) = toml::from_str::<FeedEntry>(parts[1]) {
-                                            fe.filepath = full_path.clone();
-                                            fe.text = parts[2..].join("---");
-                                            entries.push(fe);
-                                            continue;
-                                        }
-                                    }
-                                }
-                            }
-                            // Fallback
-                            entries.push(rl.to_feed_entry());
-                        }
-                        entries
-                    }
+                match library.get_read_later_feed_entries() {
+                    Ok(entries) => entries,
                     Err(_) => vec![],
                 }
             }
@@ -109,11 +83,12 @@ impl FeedEntryState {
 
                 item_content_lines.push(Line::from(""));
 
-                let read_later_icon = if self.is_in_read_later(&entry.url) {
-                    " \u{f02d}" // read later icon
-                } else {
-                    ""
-                };
+                let read_later_icon =
+                    if self.is_in_read_later(entry.filepath.to_str().unwrap_or_default()) {
+                        " \u{f02d}" // read later icon
+                    } else {
+                        ""
+                    };
 
                 // Title
                 if !entry.seen {
@@ -218,9 +193,9 @@ impl FeedEntryState {
         self.listatate.selected().unwrap_or(0)
     }
 
-    fn is_in_read_later(&self, url: &str) -> bool {
+    fn is_in_read_later(&self, file_path: &str) -> bool {
         if let Some(library) = &self.library {
-            library.borrow().is_in_read_later(url)
+            library.borrow().is_in_read_later(file_path)
         } else {
             false
         }
