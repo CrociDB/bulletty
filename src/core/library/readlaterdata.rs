@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::core::library::readlaterentry::ReadLaterEntry;
-
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct ReadLaterData {
-    pub entries: Vec<ReadLaterEntry>,
+    pub read_later: Vec<String>,
 }
