@@ -36,7 +36,7 @@ impl FeedEntryState {
         }
     }
 
-    pub fn update(&mut self, library: &FeedLibrary, treestate: &FeedTreeState) {
+    pub fn update(&mut self, library: &mut FeedLibrary, treestate: &FeedTreeState) {
         let prev = self.previous_selected.to_string();
 
         self.entries = match treestate.get_selected() {
@@ -195,7 +195,7 @@ impl FeedEntryState {
 
     fn is_in_read_later(&self, file_path: &str) -> bool {
         if let Some(library) = &self.library {
-            library.borrow().is_in_read_later(file_path)
+            library.borrow_mut().is_in_read_later(file_path)
         } else {
             false
         }

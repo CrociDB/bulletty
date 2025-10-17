@@ -33,7 +33,7 @@ impl FeedTreeState {
         }
     }
 
-    pub fn update(&mut self, library: &FeedLibrary) {
+    pub fn update(&mut self, library: &mut FeedLibrary) {
         self.treeitems.clear();
 
         for category in library.feedcategories.iter() {
@@ -55,7 +55,7 @@ impl FeedTreeState {
         }
     }
 
-    pub fn get_items(&self, library: &FeedLibrary) -> Vec<ListItem<'_>> {
+    pub fn get_items(&self, library: &mut FeedLibrary) -> Vec<ListItem<'_>> {
         self.treeitems
             .iter()
             .map(|item| {

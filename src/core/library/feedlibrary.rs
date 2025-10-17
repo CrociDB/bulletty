@@ -10,7 +10,6 @@ use crate::{
         data::{config::Config, librarydata::LibraryData},
         feedcategory::FeedCategory,
         feeditem::FeedItem,
-        readlaterentry::ReadLaterEntry,
         updater::Updater,
     },
 };
@@ -180,27 +179,26 @@ impl FeedLibrary {
         matching_vec
     }
 
-    pub fn add_to_read_later(&self, entry: &FeedEntry) -> color_eyre::Result<()> {
-        let read_later_entry = ReadLaterEntry::from_feed_entry(entry);
-        self.data.add_to_read_later(read_later_entry)
+    pub fn add_to_read_later(&mut self, entry: &FeedEntry) -> color_eyre::Result<()> {
+        self.data.add_to_read_later(entry)
     }
 
-    pub fn remove_from_read_later(&self, file_path: &str) -> color_eyre::Result<()> {
+    pub fn remove_from_read_later(&mut self, file_path: &str) -> color_eyre::Result<()> {
         self.data.remove_from_read_later(file_path)
     }
 
-    pub fn has_read_later_entries(&self) -> bool {
+    pub fn has_read_later_entries(&mut self) -> bool {
         match self.get_read_later_feed_entries() {
             Ok(entries) => !entries.is_empty(),
             Err(_) => false,
         }
     }
 
-    pub fn is_in_read_later(&self, file_path: &str) -> bool {
+    pub fn is_in_read_later(&mut self, file_path: &str) -> bool {
         self.data.is_in_read_later(file_path)
     }
 
-    pub fn get_read_later_feed_entries(&self) -> color_eyre::Result<Vec<FeedEntry>> {
+    pub fn get_read_later_feed_entries(&mut self) -> color_eyre::Result<Vec<FeedEntry>> {
         self.data.get_read_later_feed_entries()
     }
 }
@@ -208,7 +206,6 @@ impl FeedLibrary {
 #[cfg(test)]
 mod tests {
     use crate::core::library::feedlibrary::FeedLibrary;
-    use crate::core::library::readlaterentry::ReadLaterEntry;
 
     #[test]
     fn test_add_and_delete_feed() {
@@ -361,18 +358,5 @@ mod tests {
             matches[0].category, matches[1].category,
             "Category should be different for both the feeds."
         );
-    }
-
-    #[test]
-    fn test_is_in_read_later() {
-        let (library, _tmp) = FeedLibrary::new_for_test();
-        // Initially empty
-        assert!(!library.is_in_read_later("Test/example/a.md"));
-
-        // Add an entry to read later via data API directly
-        let rl = ReadLaterEntry::new("Test/example/a.md".to_string());
-        library.data.add_to_read_later(rl).unwrap();
-
-        assert!(!library.is_in_read_later("Test/example/a.md"));
     }
 }

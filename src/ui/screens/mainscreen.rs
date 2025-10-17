@@ -76,7 +76,7 @@ impl MainScreen {
                 }
             }
             Some(FeedItemInfo::ReadLater) => {
-                match self.library.borrow().get_read_later_feed_entries() {
+                match self.library.borrow_mut().get_read_later_feed_entries() {
                     Ok(read_later_entries) => read_later_entries,
                     Err(_) => vec![],
                 }
@@ -102,7 +102,7 @@ impl MainScreen {
     }
 
     fn add_to_read_later(&self, entry: &crate::core::feed::feedentry::FeedEntry) {
-        if let Err(e) = self.library.borrow().add_to_read_later(entry) {
+        if let Err(e) = self.library.borrow_mut().add_to_read_later(entry) {
             tracing::error!("Failed to add entry to read later: {:?}", e);
         }
     }
@@ -130,7 +130,7 @@ impl AppScreen for MainScreen {
         .split(area);
 
         // Feed tree
-        self.feedtreestate.update(&self.library.borrow());
+        self.feedtreestate.update(&mut self.library.borrow_mut());
 
         let (treestyle, treeselectionstyle) = if self.inputstate == MainInputState::Menu {
             (
@@ -149,7 +149,7 @@ impl AppScreen for MainScreen {
             )
         };
 
-        let treelist = List::new(self.feedtreestate.get_items(&self.library.borrow()))
+        let treelist = List::new(self.feedtreestate.get_items(&mut self.library.borrow_mut()))
             .block(treestyle)
             .highlight_style(treeselectionstyle);
 
@@ -159,7 +159,7 @@ impl AppScreen for MainScreen {
         // The feed entries
         self.feedentrystate.library = Some(self.library.clone());
         self.feedentrystate
-            .update(&self.library.borrow(), &self.feedtreestate);
+            .update(&mut self.library.borrow_mut(), &self.feedtreestate);
 
         let mut entryliststate = self.feedentrystate.listatate.clone();
 
@@ -300,8 +300,9 @@ impl AppScreen for MainScreen {
                     if let Some(entry) = self.feedentrystate.get_selected() {
                         // Toggle: add/remove read later
                         let file_path = entry.filepath.to_str().unwrap_or_default();
-                        if self.library.borrow().is_in_read_later(&file_path) {
-                            if let Err(e) = self.library.borrow().remove_from_read_later(&file_path)
+                        if self.library.borrow_mut().is_in_read_later(&file_path) {
+                            if let Err(e) =
+                                self.library.borrow_mut().remove_from_read_later(&file_path)
                             {
                                 error!("Failed to remove from read later: {:?}", e);
                             }
