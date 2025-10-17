@@ -178,6 +178,29 @@ impl FeedLibrary {
 
         matching_vec
     }
+
+    pub fn add_to_read_later(&mut self, entry: &FeedEntry) -> color_eyre::Result<()> {
+        self.data.add_to_read_later(entry)
+    }
+
+    pub fn remove_from_read_later(&mut self, file_path: &str) -> color_eyre::Result<()> {
+        self.data.remove_from_read_later(file_path)
+    }
+
+    pub fn has_read_later_entries(&mut self) -> bool {
+        match self.get_read_later_feed_entries() {
+            Ok(entries) => !entries.is_empty(),
+            Err(_) => false,
+        }
+    }
+
+    pub fn is_in_read_later(&mut self, file_path: &str) -> bool {
+        self.data.is_in_read_later(file_path)
+    }
+
+    pub fn get_read_later_feed_entries(&mut self) -> color_eyre::Result<Vec<FeedEntry>> {
+        self.data.get_read_later_feed_entries()
+    }
 }
 
 #[cfg(test)]

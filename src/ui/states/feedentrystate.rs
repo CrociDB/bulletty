@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use ratatui::{
     style::{Color, Style, Stylize},
     text::{Line, Span, Text},
@@ -15,6 +17,7 @@ pub struct FeedEntryState {
     pub entries: Vec<FeedEntry>,
     pub listatate: ListState,
     pub previous_selected: String,
+    pub library: Option<Rc<RefCell<FeedLibrary>>>,
 }
 
 impl Default for FeedEntryState {
@@ -29,10 +32,11 @@ impl FeedEntryState {
             entries: vec![],
             listatate: ListState::default().with_selected(Some(0)),
             previous_selected: String::new(),
+            library: None,
         }
     }
 
-    pub fn update(&mut self, library: &FeedLibrary, treestate: &FeedTreeState) {
+    pub fn update(&mut self, library: &mut FeedLibrary, treestate: &FeedTreeState) {
         let prev = self.previous_selected.to_string();
 
         self.entries = match treestate.get_selected() {
@@ -56,7 +60,14 @@ impl FeedEntryState {
                     }
                 }
             }
-            None => vec![],
+            Some(FeedItemInfo::ReadLater) => {
+                self.previous_selected = "read_later".to_string();
+                match library.get_read_later_feed_entries() {
+                    Ok(entries) => entries,
+                    Err(_) => vec![],
+                }
+            }
+            _ => vec![],
         };
 
         if prev != self.previous_selected {
@@ -72,15 +83,22 @@ impl FeedEntryState {
 
                 item_content_lines.push(Line::from(""));
 
+                let read_later_icon =
+                    if self.is_in_read_later(entry.filepath.to_str().unwrap_or_default()) {
+                        " \u{f02d}" // read later icon
+                    } else {
+                        ""
+                    };
+
                 // Title
                 if !entry.seen {
                     item_content_lines.push(Line::from(Span::styled(
-                        format!(" \u{f1ea} {} \u{e3e3}", entry.title),
+                        format!(" \u{f1ea} {}{} \u{e3e3}", entry.title, read_later_icon),
                         Style::default().bold().fg(Color::from_u32(0x81ae80)),
                     )));
                 } else {
                     item_content_lines.push(Line::from(Span::styled(
-                        format!(" \u{f1ea} {}", entry.title),
+                        format!(" \u{f1ea} {}{}", entry.title, read_later_icon),
                         Style::default().bold(),
                     )));
                 };
@@ -173,5 +191,13 @@ impl FeedEntryState {
 
     pub fn scroll(&self) -> usize {
         self.listatate.selected().unwrap_or(0)
+    }
+
+    fn is_in_read_later(&self, file_path: &str) -> bool {
+        if let Some(library) = &self.library {
+            library.borrow_mut().is_in_read_later(file_path)
+        } else {
+            false
+        }
     }
 }
