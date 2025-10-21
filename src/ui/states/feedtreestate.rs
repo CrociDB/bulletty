@@ -8,6 +8,10 @@ pub enum FeedItemInfo {
     Category(String),
     /// Represents an item in the feed tree with a title, categore, and slug
     Item(String, String, String),
+    /// Represents a separator in the menu
+    Separator,
+    /// Represents the Read Later category
+    ReadLater,
 }
 
 pub struct FeedTreeState {
@@ -29,7 +33,7 @@ impl FeedTreeState {
         }
     }
 
-    pub fn update(&mut self, library: &FeedLibrary) {
+    pub fn update(&mut self, library: &mut FeedLibrary) {
         self.treeitems.clear();
 
         for category in library.feedcategories.iter() {
@@ -43,9 +47,15 @@ impl FeedTreeState {
                 ));
             }
         }
+
+        // display Read Later section if it has entries
+        if library.has_read_later_entries() {
+            self.treeitems.push(FeedItemInfo::Separator);
+            self.treeitems.push(FeedItemInfo::ReadLater);
+        }
     }
 
-    pub fn get_items(&self, library: &FeedLibrary) -> Vec<ListItem<'_>> {
+    pub fn get_items(&self, library: &mut FeedLibrary) -> Vec<ListItem<'_>> {
         self.treeitems
             .iter()
             .map(|item| {
@@ -63,6 +73,14 @@ impl FeedTreeState {
                             format!(" \u{f09e}  {t}")
                         }
                     }
+                    FeedItemInfo::Separator => "".to_string(),
+                    FeedItemInfo::ReadLater => {
+                        if let Ok(count) = library.get_read_later_feed_entries() {
+                            format!("\u{f02d} Read Later ({})", count.len())
+                        } else {
+                            "\u{f02d} Read Later".to_string()
+                        }
+                    }
                 };
 
                 ListItem::new(title.clone())
@@ -72,7 +90,9 @@ impl FeedTreeState {
 
     pub fn get_selected(&self) -> Option<&FeedItemInfo> {
         if !self.treeitems.is_empty() {
-            Some(&self.treeitems[self.listatate.selected().unwrap_or(0)])
+            let idx = self.listatate.selected().unwrap_or(0);
+            let clamped = idx.min(self.treeitems.len().saturating_sub(1));
+            Some(&self.treeitems[clamped])
         } else {
             None
         }

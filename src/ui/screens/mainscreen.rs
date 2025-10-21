@@ -75,7 +75,13 @@ impl MainScreen {
                     }
                 }
             }
-            None => vec![],
+            Some(FeedItemInfo::ReadLater) => {
+                match self.library.borrow_mut().get_read_later_feed_entries() {
+                    Ok(read_later_entries) => read_later_entries,
+                    Err(_) => vec![],
+                }
+            }
+            _ => vec![],
         };
 
         for entry in entries.iter() {
@@ -92,6 +98,12 @@ impl MainScreen {
                     url.to_string(),
                 ))))
             }
+        }
+    }
+
+    fn add_to_read_later(&self, entry: &crate::core::feed::feedentry::FeedEntry) {
+        if let Err(e) = self.library.borrow_mut().add_to_read_later(entry) {
+            tracing::error!("Failed to add entry to read later: {:?}", e);
         }
     }
 }
@@ -118,7 +130,7 @@ impl AppScreen for MainScreen {
         .split(area);
 
         // Feed tree
-        self.feedtreestate.update(&self.library.borrow());
+        self.feedtreestate.update(&mut self.library.borrow_mut());
 
         let (treestyle, treeselectionstyle) = if self.inputstate == MainInputState::Menu {
             (
@@ -137,7 +149,7 @@ impl AppScreen for MainScreen {
             )
         };
 
-        let treelist = List::new(self.feedtreestate.get_items(&self.library.borrow()))
+        let treelist = List::new(self.feedtreestate.get_items(&mut self.library.borrow_mut()))
             .block(treestyle)
             .highlight_style(treeselectionstyle);
 
@@ -145,8 +157,9 @@ impl AppScreen for MainScreen {
         frame.render_stateful_widget(treelist, chunks[0], &mut treestate);
 
         // The feed entries
+        self.feedentrystate.library = Some(self.library.clone());
         self.feedentrystate
-            .update(&self.library.borrow(), &self.feedtreestate);
+            .update(&mut self.library.borrow_mut(), &self.feedtreestate);
 
         let mut entryliststate = self.feedentrystate.listatate.clone();
 
@@ -283,6 +296,22 @@ impl AppScreen for MainScreen {
                         Ok(AppScreenEvent::None)
                     }
                 }
+                (_, KeyCode::Char('L')) => {
+                    if let Some(entry) = self.feedentrystate.get_selected() {
+                        // Toggle: add/remove read later
+                        let file_path = entry.filepath.to_str().unwrap_or_default();
+                        if self.library.borrow_mut().is_in_read_later(&file_path) {
+                            if let Err(e) =
+                                self.library.borrow_mut().remove_from_read_later(&file_path)
+                            {
+                                error!("Failed to remove from read later: {:?}", e);
+                            }
+                        } else {
+                            self.add_to_read_later(&entry);
+                        }
+                    }
+                    Ok(AppScreenEvent::None)
+                }
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
                     HelpDialog::new(self.get_full_instructions()),
                 ))),
@@ -299,7 +328,9 @@ impl AppScreen for MainScreen {
         if self.inputstate == MainInputState::Menu {
             String::from("?: Help | j/k/↓/↑: move | Enter: select | Esc: quit")
         } else {
-            String::from("?: Help | j/k/↓/↑: move | o: open | Enter: read | Esc: back")
+            String::from(
+                "?: Help | j/k/↓/↑: move | o: open | L: add/remove read later | Enter: read | Esc: back",
+            )
         }
     }
 
@@ -309,7 +340,7 @@ impl AppScreen for MainScreen {
 
     fn get_full_instructions(&self) -> String {
         String::from(
-            "j/k/↓/↑: move selection\ng/G/Home/End: beginning and end of the list\no: open link externally\nEnter: select category or read entry\n\nr: toggle item read state\nR: mark all of the items as read\n\nEsc/q: back from entries or quit",
+            "j/k/↓/↑: move selection\ng/G/Home/End: beginning and end of the list\no: open link externally\nL: add/remove read later\nEnter: select category or read entry\n\nr: toggle item read state\nR: mark all of the items as read\n\nEsc/q: back from entries or quit",
         )
     }
 }
