@@ -119,6 +119,13 @@ impl FeedTreeState {
         }
 
         let selected = self.listatate.selected().unwrap_or(0);
+        if selected >= self.treeitems.len() {
+            self.listatate
+                .select(Some(self.treeitems.len().saturating_sub(1)));
+        }
+
+        let selected = self.listatate.selected().unwrap_or(0);
+
         if selected > 0 {
             self.listatate.select_previous();
             if self.is_selected_separator() {
@@ -146,7 +153,7 @@ impl FeedTreeState {
 
     fn is_selected_separator(&self) -> bool {
         if let Some(index) = self.listatate.selected() {
-            matches!(self.treeitems[index], FeedItemInfo::Separator)
+            index < self.treeitems.len() && matches!(self.treeitems[index], FeedItemInfo::Separator)
         } else {
             false
         }
