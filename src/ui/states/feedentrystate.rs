@@ -64,7 +64,10 @@ impl FeedEntryState {
                 self.previous_selected = "read_later".to_string();
                 match library.get_read_later_feed_entries() {
                     Ok(entries) => entries,
-                    Err(_) => vec![],
+                    Err(e) => {
+                        error!("Error getting Read Later entries: {:?}", e);
+                        vec![]
+                    }
                 }
             }
             _ => vec![],

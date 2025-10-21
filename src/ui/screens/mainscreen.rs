@@ -12,6 +12,7 @@ use tracing::error;
 use crate::{
     app::AppWorkStatus,
     core::{
+        feed::feedentry::FeedEntry,
         library::feedlibrary::FeedLibrary,
         ui::appscreen::{AppScreen, AppScreenEvent},
     },
@@ -77,8 +78,11 @@ impl MainScreen {
             }
             Some(FeedItemInfo::ReadLater) => {
                 match self.library.borrow_mut().get_read_later_feed_entries() {
-                    Ok(read_later_entries) => read_later_entries,
-                    Err(_) => vec![],
+                    Ok(entries) => entries,
+                    Err(e) => {
+                        error!("Error getting Read Later entries: {:?}", e);
+                        vec![]
+                    }
                 }
             }
             _ => vec![],
@@ -101,9 +105,15 @@ impl MainScreen {
         }
     }
 
-    fn add_to_read_later(&self, entry: &crate::core::feed::feedentry::FeedEntry) {
-        if let Err(e) = self.library.borrow_mut().add_to_read_later(entry) {
-            tracing::error!("Failed to add entry to read later: {:?}", e);
+    fn toggle_read_later(&mut self, entry: &FeedEntry) {
+        let file_path = entry.filepath.to_str().unwrap_or_default();
+
+        if self.library.borrow_mut().is_in_read_later(file_path) {
+            if let Err(e) = self.library.borrow_mut().remove_from_read_later(file_path) {
+                error!("Failed to remove from read later: {:?}", e);
+            }
+        } else if let Err(e) = self.library.borrow_mut().add_to_read_later(entry) {
+            error!("Failed to add entry to read later: {:?}", e);
         }
     }
 }
@@ -298,18 +308,9 @@ impl AppScreen for MainScreen {
                 }
                 (_, KeyCode::Char('L')) => {
                     if let Some(entry) = self.feedentrystate.get_selected() {
-                        // Toggle: add/remove read later
-                        let file_path = entry.filepath.to_str().unwrap_or_default();
-                        if self.library.borrow_mut().is_in_read_later(&file_path) {
-                            if let Err(e) =
-                                self.library.borrow_mut().remove_from_read_later(&file_path)
-                            {
-                                error!("Failed to remove from read later: {:?}", e);
-                            }
-                        } else {
-                            self.add_to_read_later(&entry);
-                        }
+                        self.toggle_read_later(&entry);
                     }
+
                     Ok(AppScreenEvent::None)
                 }
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
