@@ -223,12 +223,12 @@ fn get_description_content(entry: &Node) -> (String, String) {
     let content = entry
         .descendants()
         .find(|t| t.tag_name().name() == "content" || t.tag_name().name() == "encoded")
-        .and_then(|t| t.text().map(|s| s.replace(['\n', '\r'], "")));
+        .and_then(|t| t.text());
 
     let description = entry
         .descendants()
         .find(|t| t.tag_name().name() == "description" || t.tag_name().name() == "summary")
-        .and_then(|t| t.text().map(|s| s.replace(['\n', '\r'], "")));
+        .and_then(|t| t.text());
 
     let content_text = match content.as_ref() {
         Some(text) => parse_html(text),
