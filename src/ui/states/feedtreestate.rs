@@ -103,8 +103,13 @@ impl FeedTreeState {
             return;
         }
 
-        if self.listatate.selected().unwrap_or(0) < self.treeitems.len().saturating_sub(1) {
+        let selected = self.listatate.selected().unwrap_or(0);
+        if selected < self.treeitems.len().saturating_sub(1) {
             self.listatate.select_next();
+
+            if self.is_selected_separator() {
+                self.select_next();
+            }
         }
     }
 
@@ -113,8 +118,12 @@ impl FeedTreeState {
             return;
         }
 
-        if self.listatate.selected().unwrap_or(0) > 0 {
+        let selected = self.listatate.selected().unwrap_or(0);
+        if selected > 0 {
             self.listatate.select_previous();
+            if self.is_selected_separator() {
+                self.select_previous();
+            }
         }
     }
 
@@ -133,5 +142,13 @@ impl FeedTreeState {
 
         self.listatate
             .select(Some(self.treeitems.len().saturating_sub(1)));
+    }
+
+    fn is_selected_separator(&self) -> bool {
+        if let Some(index) = self.listatate.selected() {
+            matches!(self.treeitems[index], FeedItemInfo::Separator)
+        } else {
+            false
+        }
     }
 }
