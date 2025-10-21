@@ -14,6 +14,7 @@ It's in active development.
  - Subscribe to RSS and ATOM feed types
  - All your feed sources and entries are stored in Markdown in one place: `$HOME/.local/share/bulletty/`
  - Download entries automatically
+ - Add articles to the Read Later category
  - Read the articles with the embedded Markdown reader
  - Import/export OPML feed list
 
@@ -91,7 +92,6 @@ All the needs to be done is to synchronize the `bulletty` directory to save your
 ## 📜 Feature Roadmap
 
  - Themes
- - Read later
  - Highlight
  - Notes
  - Web view
