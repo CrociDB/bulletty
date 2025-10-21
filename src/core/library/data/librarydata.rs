@@ -12,18 +12,25 @@ use tracing::{error, info};
 use crate::core::feed::feedentry::FeedEntry;
 use crate::core::feed::feedparser;
 use crate::core::library::feedcategory::FeedCategory;
-use crate::core::library::readlaterdata::ReadLaterData;
 use crate::{
     core::defs::{self, DATA_CATEGORIES_DIR, DATA_FEED, DATA_READ_LATER},
     core::library::feeditem::FeedItem,
 };
+use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
 use tempfile::TempDir;
 
+#[derive(Default, Debug, Serialize, Deserialize)]
+pub struct ReadLaterData {
+    pub read_later: Vec<String>,
+    #[serde(skip_serializing, skip_deserializing)]
+    pub loaded: bool,
+}
+
 pub struct LibraryData {
     pub path: PathBuf,
-    pub read_later_cache: Vec<String>,
+    pub read_later: ReadLaterData,
 }
 
 impl LibraryData {
@@ -31,7 +38,7 @@ impl LibraryData {
         load_or_create(datapath);
         LibraryData {
             path: PathBuf::from(datapath),
-            read_later_cache: vec![],
+            read_later: ReadLaterData::default(),
         }
     }
 
@@ -43,7 +50,7 @@ impl LibraryData {
         (
             LibraryData {
                 path,
-                read_later_cache: vec![],
+                read_later: ReadLaterData::default(),
             },
             temp_dir,
         )
@@ -301,10 +308,10 @@ impl LibraryData {
             let path = entry.path();
             if path.is_file() {
                 let contents = std::fs::read_to_string(&path)?;
-                if let Ok(entry) = self.parse_feed_entry(&contents, &path) {
-                    if !entry.seen {
-                        unread += 1;
-                    }
+                if let Ok(entry) = self.parse_feed_entry(&contents, &path)
+                    && !entry.seen
+                {
+                    unread += 1;
                 }
             }
         }
@@ -342,6 +349,8 @@ impl LibraryData {
     }
 
     pub fn add_to_read_later(&mut self, entry: &FeedEntry) -> color_eyre::Result<()> {
+        self.ensure_read_later()?;
+
         let rel_path =
             self.absolute_path_to_relative_path(entry.filepath.to_str().unwrap_or_default());
 
@@ -349,28 +358,25 @@ impl LibraryData {
             return Ok(());
         }
 
-        let mut read_later_list = self.load_read_later()?;
-
-        //check if entry already exits
-        if read_later_list.read_later.iter().any(|p| p == &rel_path) {
+        // check if entry already exits
+        if self.read_later.read_later.iter().any(|p| p == &rel_path) {
             return Ok(());
         }
 
-        read_later_list.read_later.push(rel_path);
-        self.save_read_later(&read_later_list)?;
+        self.read_later.read_later.push(rel_path);
+        self.save_read_later(&self.read_later)?;
 
-        self.read_later_cache = read_later_list.read_later; //caching
         Ok(())
     }
 
     pub fn remove_from_read_later(&mut self, file_path: &str) -> color_eyre::Result<()> {
+        self.ensure_read_later()?;
+
         let rel_path = self.absolute_path_to_relative_path(file_path);
 
-        let mut read_later_list = self.load_read_later()?;
-        read_later_list.read_later.retain(|p| p != &rel_path);
-        self.save_read_later(&read_later_list)?;
+        self.read_later.read_later.retain(|p| p != &rel_path);
+        self.save_read_later(&self.read_later)?;
 
-        self.read_later_cache = read_later_list.read_later; //caching
         Ok(())
     }
 
@@ -380,58 +386,54 @@ impl LibraryData {
 
         for rel in read_later_list.read_later {
             let full_path = self.path.join(DATA_CATEGORIES_DIR).join(rel);
-            if let Ok(contents) = std::fs::read_to_string(&full_path) {
-                if let Ok(fe) = self.parse_feed_entry(&contents, &full_path) {
-                    feed_entries.push(fe);
-                }
+            if let Ok(contents) = std::fs::read_to_string(&full_path)
+                && let Ok(fe) = self.parse_feed_entry(&contents, &full_path)
+            {
+                feed_entries.push(fe);
             }
         }
         Ok(feed_entries)
     }
 
-    pub fn is_in_read_later(&mut self, file_path: &str) -> bool {
-        let rel_path = self.absolute_path_to_relative_path(file_path);
+    pub fn is_in_read_later(&mut self, file_path: &str) -> color_eyre::Result<bool> {
+        self.ensure_read_later()?;
 
-        if let Ok(read_later_list) = self.load_read_later() {
-            read_later_list.read_later.iter().any(|p| p == &rel_path)
-        } else {
-            false
+        let rel_path = self.absolute_path_to_relative_path(file_path);
+        Ok(self.read_later.read_later.iter().any(|p| p == &rel_path))
+    }
+
+    fn ensure_read_later(&mut self) -> color_eyre::Result<()> {
+        if !self.read_later.loaded {
+            self.read_later = self.load_read_later()?;
         }
+
+        Ok(())
     }
 
     fn load_read_later(&mut self) -> color_eyre::Result<ReadLaterData> {
-        //load from cache
-        if !self.read_later_cache.is_empty() {
-            return Ok(ReadLaterData {
-                read_later: self.read_later_cache.clone(),
-            });
-        }
-
         let read_later_path = self.path.join(DATA_READ_LATER);
-
         if !read_later_path.exists() {
             return Ok(ReadLaterData::default());
         }
 
         let contents = std::fs::read_to_string(&read_later_path)?;
-        let mut read_later_list: ReadLaterData = toml::from_str(&contents)
+        let mut read_later: ReadLaterData = toml::from_str(&contents)
             .map_err(|e| eyre!("Failed to parse read later data: {}", e))?;
 
         // Cleanup: drop non-existent entries
-        let original_len = read_later_list.read_later.len();
-        read_later_list.read_later.retain(|rel| {
+        let original_len = read_later.read_later.len();
+        read_later.read_later.retain(|rel| {
             let full_path = self.path.join(DATA_CATEGORIES_DIR).join(rel);
             full_path.exists()
         });
-        if read_later_list.read_later.len() < original_len {
-            let _ = self.save_read_later(&read_later_list);
+
+        read_later.loaded = true;
+
+        if read_later.read_later.len() < original_len {
+            let _ = self.save_read_later(&read_later);
         }
 
-        self.read_later_cache = read_later_list.read_later.clone(); //caching
-
-        Ok(ReadLaterData {
-            read_later: self.read_later_cache.clone(),
-        })
+        Ok(read_later)
     }
 
     fn save_read_later(&self, read_later_list: &ReadLaterData) -> color_eyre::Result<()> {

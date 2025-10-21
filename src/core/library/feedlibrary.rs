@@ -195,7 +195,13 @@ impl FeedLibrary {
     }
 
     pub fn is_in_read_later(&mut self, file_path: &str) -> bool {
-        self.data.is_in_read_later(file_path)
+        self.data
+            .is_in_read_later(file_path)
+            .map_err(|e| {
+                error!("{e}");
+                false
+            })
+            .unwrap()
     }
 
     pub fn get_read_later_feed_entries(&mut self) -> color_eyre::Result<Vec<FeedEntry>> {
