@@ -4,13 +4,16 @@ use tracing::error;
 
 use crate::{
     app::AppWorkStatus,
-    core::defs,
-    core::feed::{self, feedentry::FeedEntry},
-    core::library::{
-        data::{config::Config, librarydata::LibraryData},
-        feedcategory::FeedCategory,
-        feeditem::FeedItem,
-        updater::Updater,
+    core::{
+        defs,
+        feed::{self, feedentry::FeedEntry},
+        library::{
+            data::{config::Config, librarydata::LibraryData},
+            feedcategory::FeedCategory,
+            feeditem::FeedItem,
+            settings::usersettings::UserSettings,
+            updater::Updater,
+        },
     },
 };
 
@@ -21,6 +24,7 @@ pub struct FeedLibrary {
     pub feedcategories: Vec<FeedCategory>,
     pub data: LibraryData,
     pub updater: Option<Updater>,
+    pub settings: UserSettings,
 }
 
 impl Default for FeedLibrary {
@@ -46,6 +50,7 @@ impl FeedLibrary {
             feedcategories: categories,
             data: data_obj,
             updater: None,
+            settings: UserSettings::new(config_obj.datapath.as_ref()),
         }
     }
 
@@ -58,6 +63,7 @@ impl FeedLibrary {
                 feedcategories: categories,
                 data: data_obj,
                 updater: None,
+                settings: UserSettings::new(temp_dir.path()),
             },
             temp_dir,
         )

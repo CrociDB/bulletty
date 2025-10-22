@@ -7,7 +7,7 @@ use ratatui::{
     style::{Color, Style, Stylize},
     widgets::{Block, List, Padding, Scrollbar, ScrollbarOrientation, ScrollbarState},
 };
-use tracing::error;
+use tracing::{error, info};
 
 use crate::{
     app::AppWorkStatus,
@@ -116,6 +116,26 @@ impl MainScreen {
             error!("Failed to add entry to read later: {:?}", e);
         }
     }
+
+    fn increase_tree_width(&mut self) -> color_eyre::Result<()> {
+        let mut l = self.library.borrow_mut();
+        let w = l.settings.appearance.data["main_screen_tree_width"]
+            .as_integer()
+            .unwrap_or(0);
+        l.settings.appearance.data["main_screen_tree_width"] =
+            toml::Value::Integer(w.saturating_add(2).min(100));
+        l.settings.appearance.save()
+    }
+
+    fn decrease_tree_width(&mut self) -> color_eyre::Result<()> {
+        let mut l = self.library.borrow_mut();
+        let w = l.settings.appearance.data["main_screen_tree_width"]
+            .as_integer()
+            .unwrap_or(0);
+        l.settings.appearance.data["main_screen_tree_width"] =
+            toml::Value::Integer(w.saturating_sub(2).min(100));
+        l.settings.appearance.save()
+    }
 }
 
 impl AppScreen for MainScreen {
@@ -132,8 +152,12 @@ impl AppScreen for MainScreen {
     fn render(&mut self, frame: &mut ratatui::Frame, area: Rect) {
         self.library.borrow_mut().update();
 
+        let treewidth = self.library.borrow().settings.appearance.data["main_screen_tree_width"]
+            .as_integer()
+            .unwrap_or(50) as u16;
+
         let chunks = Layout::horizontal([
-            Constraint::Min(30),
+            Constraint::Min(treewidth),
             Constraint::Percentage(85),
             Constraint::Length(1),
         ])
@@ -240,6 +264,14 @@ impl AppScreen for MainScreen {
                     self.set_all_read();
                     Ok(AppScreenEvent::None)
                 }
+                (_, KeyCode::Char('>')) => {
+                    self.increase_tree_width()?;
+                    Ok(AppScreenEvent::None)
+                }
+                (_, KeyCode::Char('<')) => {
+                    self.decrease_tree_width()?;
+                    Ok(AppScreenEvent::None)
+                }
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
                     HelpDialog::new(self.get_full_instructions()),
                 ))),
@@ -296,6 +328,14 @@ impl AppScreen for MainScreen {
                 }
                 (_, KeyCode::Char('R')) => {
                     self.set_all_read();
+                    Ok(AppScreenEvent::None)
+                }
+                (_, KeyCode::Char('>')) => {
+                    self.increase_tree_width()?;
+                    Ok(AppScreenEvent::None)
+                }
+                (_, KeyCode::Char('<')) => {
+                    self.decrease_tree_width()?;
                     Ok(AppScreenEvent::None)
                 }
                 (_, KeyCode::Char('o')) => {
