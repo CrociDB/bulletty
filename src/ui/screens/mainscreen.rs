@@ -119,21 +119,23 @@ impl MainScreen {
 
     fn increase_tree_width(&mut self) -> color_eyre::Result<()> {
         let mut l = self.library.borrow_mut();
-        let w = l.settings.appearance.data["main_screen_tree_width"]
-            .as_integer()
-            .unwrap_or(0);
-        l.settings.appearance.data["main_screen_tree_width"] =
-            toml::Value::Integer(w.saturating_add(2).min(100));
+        l.settings.appearance.main_screen_tree_width = l
+            .settings
+            .appearance
+            .main_screen_tree_width
+            .saturating_add(2)
+            .min(100);
         l.settings.appearance.save()
     }
 
     fn decrease_tree_width(&mut self) -> color_eyre::Result<()> {
         let mut l = self.library.borrow_mut();
-        let w = l.settings.appearance.data["main_screen_tree_width"]
-            .as_integer()
-            .unwrap_or(0);
-        l.settings.appearance.data["main_screen_tree_width"] =
-            toml::Value::Integer(w.saturating_sub(2).min(100));
+        l.settings.appearance.main_screen_tree_width = l
+            .settings
+            .appearance
+            .main_screen_tree_width
+            .saturating_sub(2)
+            .min(100);
         l.settings.appearance.save()
     }
 }
@@ -152,9 +154,12 @@ impl AppScreen for MainScreen {
     fn render(&mut self, frame: &mut ratatui::Frame, area: Rect) {
         self.library.borrow_mut().update();
 
-        let treewidth = self.library.borrow().settings.appearance.data["main_screen_tree_width"]
-            .as_integer()
-            .unwrap_or(50) as u16;
+        let treewidth = self
+            .library
+            .borrow()
+            .settings
+            .appearance
+            .main_screen_tree_width;
 
         let chunks = Layout::horizontal([
             Constraint::Min(treewidth),

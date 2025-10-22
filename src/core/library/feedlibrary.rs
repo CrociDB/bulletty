@@ -50,7 +50,7 @@ impl FeedLibrary {
             feedcategories: categories,
             data: data_obj,
             updater: None,
-            settings: UserSettings::new(config_obj.datapath.as_ref()),
+            settings: UserSettings::new(&config_obj.datapath).unwrap(),
         }
     }
 
@@ -63,7 +63,7 @@ impl FeedLibrary {
                 feedcategories: categories,
                 data: data_obj,
                 updater: None,
-                settings: UserSettings::new(temp_dir.path()),
+                settings: UserSettings::new(temp_dir.path()).unwrap(),
             },
             temp_dir,
         )

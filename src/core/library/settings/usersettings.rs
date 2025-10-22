@@ -7,9 +7,9 @@ pub struct UserSettings {
 }
 
 impl UserSettings {
-    pub fn new(datapath: &Path) -> Self {
-        Self {
-            appearance: Appearance::new(datapath),
-        }
+    pub fn new(datapath: &Path) -> color_eyre::Result<Self> {
+        Ok(Self {
+            appearance: Appearance::new(datapath)?,
+        })
     }
 }

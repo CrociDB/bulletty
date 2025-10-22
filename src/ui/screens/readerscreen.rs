@@ -89,21 +89,23 @@ impl ReaderScreen {
 
     fn increase_reader_width(&mut self) -> color_eyre::Result<()> {
         let mut l = self.library.borrow_mut();
-        let w = l.settings.appearance.data["reader_width"]
-            .as_integer()
-            .unwrap_or(0);
-        l.settings.appearance.data["reader_width"] =
-            toml::Value::Integer(w.saturating_add(2).min(100));
+        l.settings.appearance.reader_width = l
+            .settings
+            .appearance
+            .reader_width
+            .saturating_add(2)
+            .min(100);
         l.settings.appearance.save()
     }
 
     fn decrease_reader_width(&mut self) -> color_eyre::Result<()> {
         let mut l = self.library.borrow_mut();
-        let w = l.settings.appearance.data["reader_width"]
-            .as_integer()
-            .unwrap_or(0);
-        l.settings.appearance.data["reader_width"] =
-            toml::Value::Integer(w.saturating_sub(2).min(100));
+        l.settings.appearance.reader_width = l
+            .settings
+            .appearance
+            .reader_width
+            .saturating_sub(2)
+            .min(100);
         l.settings.appearance.save()
     }
 }
@@ -118,9 +120,7 @@ impl AppScreen for ReaderScreen {
 
         frame.render_widget(block, area);
 
-        let width = self.library.borrow().settings.appearance.data["reader_width"]
-            .as_integer()
-            .unwrap_or(60) as u16;
+        let width = self.library.borrow().settings.appearance.reader_width;
 
         let sizelayout = Layout::horizontal([
             Constraint::Min(1),
