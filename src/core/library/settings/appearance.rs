@@ -7,7 +7,7 @@ use tracing::error;
 
 const APPEARANCE_PATH: &str = ".appearance.toml";
 const DEFAULT_CONFIG: &str = r#"main_screen_tree_width = 30
-reader_width = 50
+reader_width = 60
 "#;
 
 pub struct Appearance {

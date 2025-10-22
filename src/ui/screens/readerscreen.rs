@@ -86,6 +86,26 @@ impl ReaderScreen {
             }
         }
     }
+
+    fn increase_reader_width(&mut self) -> color_eyre::Result<()> {
+        let mut l = self.library.borrow_mut();
+        let w = l.settings.appearance.data["reader_width"]
+            .as_integer()
+            .unwrap_or(0);
+        l.settings.appearance.data["reader_width"] =
+            toml::Value::Integer(w.saturating_add(2).min(100));
+        l.settings.appearance.save()
+    }
+
+    fn decrease_reader_width(&mut self) -> color_eyre::Result<()> {
+        let mut l = self.library.borrow_mut();
+        let w = l.settings.appearance.data["reader_width"]
+            .as_integer()
+            .unwrap_or(0);
+        l.settings.appearance.data["reader_width"] =
+            toml::Value::Integer(w.saturating_sub(2).min(100));
+        l.settings.appearance.save()
+    }
 }
 
 impl AppScreen for ReaderScreen {
@@ -98,9 +118,13 @@ impl AppScreen for ReaderScreen {
 
         frame.render_widget(block, area);
 
+        let width = self.library.borrow().settings.appearance.data["reader_width"]
+            .as_integer()
+            .unwrap_or(60) as u16;
+
         let sizelayout = Layout::horizontal([
             Constraint::Min(1),
-            Constraint::Percentage(60),
+            Constraint::Percentage(width),
             Constraint::Max(3),
             Constraint::Fill(1),
         ])
@@ -227,6 +251,14 @@ impl AppScreen for ReaderScreen {
             }
             (_, KeyCode::Char('p')) => {
                 self.previous_entry();
+                Ok(AppScreenEvent::None)
+            }
+            (_, KeyCode::Char('>')) => {
+                self.increase_reader_width()?;
+                Ok(AppScreenEvent::None)
+            }
+            (_, KeyCode::Char('<')) => {
+                self.decrease_reader_width()?;
                 Ok(AppScreenEvent::None)
             }
             (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(HelpDialog::new(
