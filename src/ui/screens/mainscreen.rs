@@ -7,7 +7,7 @@ use ratatui::{
     style::{Color, Style, Stylize},
     widgets::{Block, List, Padding, Scrollbar, ScrollbarOrientation, ScrollbarState},
 };
-use tracing::{error, info};
+use tracing::error;
 
 use crate::{
     app::AppWorkStatus,
@@ -381,7 +381,7 @@ impl AppScreen for MainScreen {
 
     fn get_full_instructions(&self) -> String {
         String::from(
-            "j/k/↓/↑: move selection\ng/G/Home/End: beginning and end of the list\no: open link externally\nL: add/remove read later\nEnter: select category or read entry\n\nr: toggle item read state\nR: mark all of the items as read\n\nEsc/q: back from entries or quit",
+            "j/k/↓/↑: move selection\ng/G/Home/End: beginning and end of the list\n</>: change reader width\n\no: open link externally\nL: add/remove read later\nEnter: select category or read entry\n\nr: toggle item read state\nR: mark all of the items as read\n\nEsc/q: back from entries or quit",
         )
     }
 }
