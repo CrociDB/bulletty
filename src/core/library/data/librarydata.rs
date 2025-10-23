@@ -160,7 +160,7 @@ impl LibraryData {
 
     pub fn update_feed_entries(
         &self,
-        category: &FeedCategory,
+        category: &str,
         feed: &FeedItem,
         feedxml: Option<String>,
     ) -> color_eyre::Result<()> {
@@ -179,7 +179,7 @@ impl LibraryData {
             let entrypath = self
                 .path
                 .join(defs::DATA_CATEGORIES_DIR)
-                .join(&category.title)
+                .join(category)
                 .join(&feed.slug);
 
             let item_slug = {

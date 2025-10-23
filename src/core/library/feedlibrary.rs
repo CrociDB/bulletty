@@ -68,16 +68,20 @@ impl FeedLibrary {
         url: &str,
         category: &Option<String>,
     ) -> color_eyre::Result<FeedItem> {
-        let mut feed = feed::feedparser::get_feed(url)?;
+        let (mut feed, text) = feed::feedparser::get_feed_with_data(url)?;
 
         feed.category = category
             .clone()
             .unwrap_or_else(|| String::from(defs::DATA_CATEGORY_DEFAULT));
 
-        self.add_feed(feed)
+        self.add_feed(feed, Some(text))
     }
 
-    pub fn add_feed(&mut self, feed: FeedItem) -> color_eyre::Result<FeedItem> {
+    pub fn add_feed(
+        &mut self,
+        feed: FeedItem,
+        text: Option<String>,
+    ) -> color_eyre::Result<FeedItem> {
         // check if feed already in library
         if self.data.feed_exists(&feed.slug, &feed.category) {
             return Err(eyre!("Feed {:?} already exists", feed.title));
@@ -85,6 +89,10 @@ impl FeedLibrary {
 
         // then create
         self.data.feed_create(&feed)?;
+
+        // then update
+        self.data.update_feed_entries(&feed.category, &feed, text)?;
+
         Ok(feed)
     }
 
@@ -227,7 +235,7 @@ mod tests {
         };
 
         // 3. Add the feed to the library and verify
-        assert!(library.add_feed(feed_to_add.clone()).is_ok());
+        assert!(library.add_feed(feed_to_add.clone(), None).is_ok());
         assert!(library.data.feed_exists("my-test-feed", "testing"));
 
         // 4. Delete the feed and verify
@@ -266,9 +274,9 @@ mod tests {
             ..Default::default()
         };
 
-        assert!(library.add_feed(feed1.clone()).is_ok());
-        assert!(library.add_feed(feed2.clone()).is_ok());
-        assert!(library.add_feed(feed3.clone()).is_ok());
+        assert!(library.add_feed(feed1.clone(), None).is_ok());
+        assert!(library.add_feed(feed2.clone(), None).is_ok());
+        assert!(library.add_feed(feed3.clone(), None).is_ok());
         assert!(library.data.feed_exists("techcrunch", "tech"));
         assert!(library.data.feed_exists("new-sports-feed", "sports"));
         assert!(library.data.feed_exists("my-test-feed", "testing"));
@@ -345,8 +353,8 @@ mod tests {
             ..Default::default()
         };
 
-        assert!(library.add_feed(feed1.clone()).is_ok());
-        assert!(library.add_feed(feed2.clone()).is_ok());
+        assert!(library.add_feed(feed1.clone(), None).is_ok());
+        assert!(library.add_feed(feed2.clone(), None).is_ok());
         library.feedcategories = library.data.generate_categories_tree().unwrap();
 
         let ident = "techcrunch";

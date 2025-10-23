@@ -34,7 +34,10 @@ impl Updater {
 
             for category in feedcategories.iter() {
                 for feed in category.feeds.iter() {
-                    if let Err(e) = library.data.update_feed_entries(category, feed, None) {
+                    if let Err(e) = library
+                        .data
+                        .update_feed_entries(&category.title, feed, None)
+                    {
                         error!("Something happened when updating {}: {:?}", &feed.title, e);
                         break;
                     }

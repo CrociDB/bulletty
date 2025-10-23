@@ -105,7 +105,9 @@ fn command_update(_cli: &Cli) -> color_eyre::Result<()> {
         for feed in category.feeds.iter() {
             info!("Updating {}", feed.title);
             println!("Updating {}", feed.title);
-            library.data.update_feed_entries(category, feed, None)?;
+            library
+                .data
+                .update_feed_entries(&category.title, feed, None)?;
         }
     }
 
