@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use color_eyre::eyre::eyre;
 use slug::slugify;
 use tracing::{error, info};
@@ -164,6 +164,11 @@ impl LibraryData {
         feed: &FeedItem,
         feedxml: Option<String>,
     ) -> color_eyre::Result<()> {
+        // TODO: hard coding 5 minutes for now
+        if Utc::now().signed_duration_since(feed.lastupdated) < Duration::minutes(5) {
+            return Ok(());
+        }
+
         let mut feedentries = if let Some(txt) = feedxml {
             feedparser::get_feed_entries_doc(&txt, &feed.author)
         } else {
