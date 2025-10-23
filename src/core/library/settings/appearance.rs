@@ -13,6 +13,8 @@ pub struct Appearance {
     pub main_screen_tree_width: u16,
     #[serde(default = "default_reader_width")]
     pub reader_width: u16,
+    #[serde(default = "default_theme")]
+    pub theme: String,
 
     #[serde(skip)]
     path: PathBuf,
@@ -25,6 +27,10 @@ fn default_tree_width() -> u16 {
 
 fn default_reader_width() -> u16 {
     60
+}
+
+fn default_theme() -> String {
+    "bulletty".to_string()
 }
 
 impl Appearance {
