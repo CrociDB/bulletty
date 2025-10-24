@@ -4,14 +4,20 @@ use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
 use color_eyre::eyre::eyre;
 use html2md::parse_html;
 use regex::Regex;
+use reqwest::blocking::Client;
 use roxmltree::Node;
 use slug::slugify;
 use tracing::error;
 
 use crate::core::{feed::feedentry::FeedEntry, library::feeditem::FeedItem};
 
-pub fn get_feed(url: &str) -> color_eyre::Result<FeedItem> {
-    let response = reqwest::blocking::get(url)?;
+pub fn get_feed_with_data(url: &str) -> color_eyre::Result<(FeedItem, String)> {
+    let client = Client::builder()
+        .user_agent(format!("bulletty/{}", env!("CARGO_PKG_VERSION")))
+        .build()?;
+
+    let response = client.get(url).send()?;
+
     if !response.status().is_success() {
         return Err(eyre!(
             "Request to \"{}\" returned status code {:?}",
@@ -21,7 +27,12 @@ pub fn get_feed(url: &str) -> color_eyre::Result<FeedItem> {
     }
 
     let body = response.text()?;
-    parse(&body, url)
+    Ok((parse(&body, url)?, body))
+}
+
+pub fn get_feed(url: &str) -> color_eyre::Result<FeedItem> {
+    let (feeditem, _) = get_feed_with_data(url)?;
+    Ok(feeditem)
 }
 
 fn parse(doc: &str, feed_url: &str) -> color_eyre::Result<FeedItem> {
@@ -80,13 +91,16 @@ fn parse(doc: &str, feed_url: &str) -> color_eyre::Result<FeedItem> {
 
     feed.slug = slugify(&feed.title);
 
-    feed.lastupdated = Utc::now();
-
     Ok(feed)
 }
 
 pub fn get_feed_entries(feed: &FeedItem) -> color_eyre::Result<Vec<FeedEntry>> {
-    let response = reqwest::blocking::get(&feed.feed_url)?;
+    let client = Client::builder()
+        .user_agent(format!("bulletty/{}", env!("CARGO_PKG_VERSION")))
+        .build()?;
+
+    let response = client.get(&feed.feed_url).send()?;
+
     if !response.status().is_success() {
         return Err(eyre!(
             "Request to \"{}\" returned status code {:?}",
