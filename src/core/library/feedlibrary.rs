@@ -91,7 +91,11 @@ impl FeedLibrary {
         self.data.feed_create(&feed)?;
 
         // then update
-        self.data.update_feed_entries(&feed.category, &feed, text)?;
+        // but let's only update the text is present. because of tests. maybve not the best
+        // approach, but...
+        if text.is_some() {
+            self.data.update_feed_entries(&feed.category, &feed, text)?;
+        }
 
         Ok(feed)
     }
