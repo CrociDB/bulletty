@@ -17,7 +17,7 @@ use crate::{
         ui::appscreen::{AppScreen, AppScreenEvent},
     },
     ui::{
-        screens::{readerscreen::ReaderScreen, urldialog::UrlDialog},
+        screens::{readerscreen::ReaderScreen, themedialog::ThemeDialog, urldialog::UrlDialog},
         states::{
             feedentrystate::FeedEntryState,
             feedtreestate::{FeedItemInfo, FeedTreeState},
@@ -97,6 +97,12 @@ impl MainScreen {
                 ))))
             }
         }
+    }
+
+    fn open_theme_selector(&self) -> Result<AppScreenEvent> {
+        Ok(AppScreenEvent::OpenDialog(Box::new(ThemeDialog::new(
+            self.library.clone(),
+        ))))
     }
 
     fn toggle_read_later(&mut self, entry: &FeedEntry) {
@@ -283,6 +289,7 @@ impl AppScreen for MainScreen {
                     self.decrease_tree_width()?;
                     Ok(AppScreenEvent::None)
                 }
+                (_, KeyCode::Char('t')) => self.open_theme_selector(),
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
                     HelpDialog::new(self.get_full_instructions()),
                 ))),
@@ -364,6 +371,7 @@ impl AppScreen for MainScreen {
 
                     Ok(AppScreenEvent::None)
                 }
+                (_, KeyCode::Char('t')) => self.open_theme_selector(),
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
                     HelpDialog::new(self.get_full_instructions()),
                 ))),

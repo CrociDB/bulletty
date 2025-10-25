@@ -26,4 +26,8 @@ impl UserSettings {
             None
         }
     }
+
+    pub fn get_theme_list(&self) -> Vec<String> {
+        self.themes.keys().map(|t| t.to_string()).collect()
+    }
 }
