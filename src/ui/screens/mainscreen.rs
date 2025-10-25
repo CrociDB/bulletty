@@ -148,6 +148,11 @@ impl AppScreen for MainScreen {
     fn render(&mut self, frame: &mut ratatui::Frame, area: Rect) {
         self.library.borrow_mut().update();
 
+        let theme = {
+            let library = self.library.borrow();
+            library.settings.get_theme().unwrap().clone()
+        };
+
         let treewidth = self
             .library
             .borrow()
@@ -168,17 +173,22 @@ impl AppScreen for MainScreen {
         let (treestyle, treeselectionstyle) = if self.inputstate == MainInputState::Menu {
             (
                 Block::default()
-                    .style(Style::default().bg(Color::from_u32(0x262626)))
+                    .style(Style::default().fg(Color::from_u32(theme.base[5])))
+                    .bg(Color::from_u32(theme.base[1]))
                     .padding(Padding::new(2, 2, 2, 2)),
-                Style::default().bg(Color::from_u32(0x514537)),
+                Style::default()
+                    .fg(Color::from_u32(theme.base[0xf]))
+                    .bg(Color::from_u32(theme.base[0x8])),
             )
         } else {
             (
                 Block::default()
-                    .style(Style::default().bg(Color::from_u32(0x262626)))
-                    .dim()
+                    .style(Style::default().fg(Color::from_u32(theme.base[3])))
+                    .bg(Color::from_u32(theme.base[1]))
                     .padding(Padding::new(2, 2, 2, 2)),
-                Style::default().bg(Color::DarkGray),
+                Style::default()
+                    .fg(Color::from_u32(theme.base[5]))
+                    .bg(Color::from_u32(theme.base[2])),
             )
         };
 
@@ -197,15 +207,17 @@ impl AppScreen for MainScreen {
         let mut entryliststate = self.feedentrystate.listatate.clone();
 
         let entryselectionstyle = if self.inputstate == MainInputState::Content {
-            Style::default().bg(Color::from_u32(0x514537))
+            Style::default()
+                .fg(Color::from_u32(theme.base[0xf]))
+                .bg(Color::from_u32(theme.base[0x8]))
         } else {
-            Style::default().bg(Color::from_u32(0x575653))
+            Style::default().bg(Color::from_u32(theme.base[2]))
         };
 
         let list_widget = List::new(self.feedentrystate.get_items())
             .block(
                 Block::default()
-                    .style(Style::default().bg(Color::from_u32(0x3a3a3a)))
+                    .style(Style::default().bg(Color::from_u32(theme.base[0])))
                     .padding(Padding::new(2, 2, 1, 1)),
             )
             .highlight_style(entryselectionstyle);
@@ -217,8 +229,8 @@ impl AppScreen for MainScreen {
             .position(self.feedentrystate.scroll());
         let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight).style(
             Style::new()
-                .fg(Color::from_u32(0x555555))
-                .bg(Color::from_u32(0x3a3a3a)),
+                .fg(Color::from_u32(theme.base[3]))
+                .bg(Color::from_u32(theme.base[1])),
         );
         frame.render_stateful_widget(scrollbar, chunks[2], &mut scrollbarstate);
     }

@@ -114,8 +114,13 @@ impl AppScreen for ReaderScreen {
     fn start(&mut self) {}
 
     fn render(&mut self, frame: &mut ratatui::Frame, area: ratatui::prelude::Rect) {
+        let theme = {
+            let library = self.library.borrow();
+            library.settings.get_theme().unwrap().clone()
+        };
+
         let block = Block::default()
-            .style(Style::default().bg(Color::from_u32(0x262626)))
+            .style(Style::default().bg(Color::from_u32(theme.base[0])))
             .padding(Padding::new(3, 3, 3, 3));
 
         frame.render_widget(block, area);
@@ -143,7 +148,7 @@ impl AppScreen for ReaderScreen {
 
         // Title
         let title = Paragraph::new(current_entry.title.as_str())
-            .style(Style::new().fg(Color::LightRed))
+            .style(Style::new().fg(Color::from_u32(theme.base[0x8])))
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
 
@@ -158,7 +163,7 @@ impl AppScreen for ReaderScreen {
                 .format("%Y-%m-%d"),
             current_entry.author
         ))
-        .style(Style::new().fg(Color::from_u32(0x777777)))
+        .style(Style::new().fg(Color::from_u32(theme.base[3])))
         .alignment(Alignment::Center)
         .wrap(Wrap { trim: true });
 
@@ -166,7 +171,7 @@ impl AppScreen for ReaderScreen {
 
         // URL
         let date = Paragraph::new(current_entry.url.to_string())
-            .style(Style::new().fg(Color::from_u32(0x597e9e)))
+            .style(Style::new().fg(Color::from_u32(theme.base[0xd])))
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
 
@@ -203,8 +208,11 @@ impl AppScreen for ReaderScreen {
 
         // Scrollbar
         let mut scrollbarstate = ScrollbarState::new(self.scrollmax).position(self.scroll);
-        let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
-            .style(Style::new().fg(Color::from_u32(0x444444)));
+        let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight).style(
+            Style::new()
+                .fg(Color::from_u32(theme.base[3]))
+                .bg(Color::from_u32(theme.base[1])),
+        );
         frame.render_stateful_widget(scrollbar, sizelayout[2], &mut scrollbarstate);
     }
 

@@ -5,6 +5,60 @@ use std::collections::HashMap;
 pub fn get_themes() -> HashMap<String, Theme> {
     let mut m = HashMap::new();
     m.insert(
+        "OneDark".to_string(),
+        Theme {
+            scheme: "OneDark".to_string(),
+            author: "Lalit Magant (http://github.com/tilal6991)".to_string(),
+            base00: "282c34".to_string(),
+            base01: "353b45".to_string(),
+            base02: "3e4451".to_string(),
+            base03: "545862".to_string(),
+            base04: "565c64".to_string(),
+            base05: "abb2bf".to_string(),
+            base06: "b6bdca".to_string(),
+            base07: "c8ccd4".to_string(),
+            base08: "e06c75".to_string(),
+            base09: "d19a66".to_string(),
+            base0A: "e5c07b".to_string(),
+            base0B: "98c379".to_string(),
+            base0C: "56b6c2".to_string(),
+            base0D: "61afef".to_string(),
+            base0E: "c678dd".to_string(),
+            base0F: "be5046".to_string(),
+            base: [
+                2632756, 3488581, 4080721, 5527650, 5659748, 11252415, 11976138, 13159636,
+                14707829, 13736550, 15057019, 10011513, 5682882, 6402031, 13007069, 12472390,
+            ],
+        },
+    );
+    m.insert(
+        "Rosé Pine".to_string(),
+        Theme {
+            scheme: "Rosé Pine".to_string(),
+            author: "Emilia Dunfelt <edun@dunfelt.se>".to_string(),
+            base00: "191724".to_string(),
+            base01: "1f1d2e".to_string(),
+            base02: "26233a".to_string(),
+            base03: "6e6a86".to_string(),
+            base04: "908caa".to_string(),
+            base05: "e0def4".to_string(),
+            base06: "e0def4".to_string(),
+            base07: "524f67".to_string(),
+            base08: "eb6f92".to_string(),
+            base09: "f6c177".to_string(),
+            base0A: "ebbcba".to_string(),
+            base0B: "31748f".to_string(),
+            base0C: "9ccfd8".to_string(),
+            base0D: "c4a7e7".to_string(),
+            base0E: "f6c177".to_string(),
+            base0F: "524f67".to_string(),
+            base: [
+                1644324, 2039086, 2499386, 7236230, 9473194, 14737140, 14737140, 5394279, 15429522,
+                16171383, 15449274, 3241103, 10276824, 12888039, 16171383, 5394279,
+            ],
+        },
+    );
+    m.insert(
         "Decaf".to_string(),
         Theme {
             scheme: "Decaf".to_string(),
@@ -110,6 +164,60 @@ pub fn get_themes() -> HashMap<String, Theme> {
             base: [
                 2829099, 3289650, 3289650, 6316902, 10789795, 11122630, 16762477, 16777215,
                 5156325, 6854487, 12301609, 6981465, 6461269, 9991850, 13400114, 8421504,
+            ],
+        },
+    );
+    m.insert(
+        "pinky".to_string(),
+        Theme {
+            scheme: "pinky".to_string(),
+            author: "Benjamin (https://github.com/b3nj5m1n)".to_string(),
+            base00: "171517".to_string(),
+            base01: "1b181b".to_string(),
+            base02: "1d1b1d".to_string(),
+            base03: "383338".to_string(),
+            base04: "e7dbdb".to_string(),
+            base05: "f5f5f5".to_string(),
+            base06: "ffffff".to_string(),
+            base07: "f7f3f7".to_string(),
+            base08: "ffa600".to_string(),
+            base09: "00ff66".to_string(),
+            base0A: "20df6c".to_string(),
+            base0B: "ff0066".to_string(),
+            base0C: "6600ff".to_string(),
+            base0D: "00ffff".to_string(),
+            base0E: "007fff".to_string(),
+            base0F: "df206c".to_string(),
+            base: [
+                1512727, 1775643, 1907485, 3683128, 15195099, 16119285, 16777215, 16249847,
+                16754176, 65382, 2154348, 16711782, 6684927, 65535, 32767, 14622828,
+            ],
+        },
+    );
+    m.insert(
+        "Nord".to_string(),
+        Theme {
+            scheme: "Nord".to_string(),
+            author: "arcticicestudio".to_string(),
+            base00: "2E3440".to_string(),
+            base01: "3B4252".to_string(),
+            base02: "434C5E".to_string(),
+            base03: "4C566A".to_string(),
+            base04: "D8DEE9".to_string(),
+            base05: "E5E9F0".to_string(),
+            base06: "ECEFF4".to_string(),
+            base07: "8FBCBB".to_string(),
+            base08: "88C0D0".to_string(),
+            base09: "81A1C1".to_string(),
+            base0A: "5E81AC".to_string(),
+            base0B: "BF616A".to_string(),
+            base0C: "D08770".to_string(),
+            base0D: "EBCB8B".to_string(),
+            base0E: "A3BE8C".to_string(),
+            base0F: "B48EAD".to_string(),
+            base: [
+                3028032, 3883602, 4410462, 5002858, 14212841, 15067632, 15527924, 9419963, 8962256,
+                8495553, 6193580, 12542314, 13666160, 15453067, 10731148, 11833005,
             ],
         },
     );

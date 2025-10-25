@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
-use color_eyre::{Result, eyre};
+use color_eyre::{Result, eyre, owo_colors::OwoColorize};
 use ratatui::{
     DefaultTerminal,
     layout::{Constraint, Flex, Layout, Margin, Rect},
@@ -10,7 +10,7 @@ use ratatui::{
 
 use crate::{
     core::{
-        library::feedlibrary::FeedLibrary,
+        library::{feedlibrary::FeedLibrary, settings::theme::Theme},
         ui::{
             appscreen::{AppScreen, AppScreenEvent},
             dialog::Dialog,
@@ -67,6 +67,11 @@ impl App {
 
     pub fn run(&mut self, mut terminal: DefaultTerminal) -> Result<()> {
         while self.running {
+            let theme = {
+                let library = self.library.borrow();
+                library.settings.get_theme().unwrap().clone()
+            };
+
             let work_status = self.get_work_status();
             if let Some(state) = self.current_state.as_mut() {
                 terminal.draw(|frame| {
@@ -87,7 +92,7 @@ impl App {
                     .split(mainlayout[1]);
 
                     let background =
-                        Block::default().style(Style::default().bg(Color::from_u32(0x1d1c1c)));
+                        Block::default().style(Style::default().bg(Color::from_u32(theme.base[0])));
                     frame.render_widget(background, mainlayout[1]);
 
                     let title = if let Some(dialog) = self.dialog_queue.front() {
@@ -96,7 +101,8 @@ impl App {
                         state.get_title()
                     };
 
-                    let status_text = Paragraph::new(format!("\u{f0fb1} bulletty | {title}"));
+                    let status_text = Paragraph::new(format!("\u{f0fb1} bulletty | {title}"))
+                        .style(Style::default().fg(Color::from_u32(theme.base[0xc])));
 
                     frame.render_widget(status_text, statusline[0]);
 
@@ -107,8 +113,9 @@ impl App {
                     };
 
                     let instructions_text = Paragraph::new(instructions.to_string())
-                        .style(Style::default().dim())
+                        .style(Style::default().fg(Color::from_u32(theme.base[3])))
                         .alignment(ratatui::layout::Alignment::Right);
+
                     frame.render_widget(instructions_text, statusline[2]);
 
                     // work status
@@ -116,8 +123,8 @@ impl App {
                         let gauge = Gauge::default()
                             .gauge_style(
                                 Style::default()
-                                    .fg(Color::from_u32(0x81ae80))
-                                    .bg(Color::Black),
+                                    .fg(Color::from_u32(theme.base[5]))
+                                    .bg(Color::from_u32(theme.base[1])),
                             )
                             .percent((percentage * 100.0).round() as u16)
                             .label(&description);
@@ -128,13 +135,15 @@ impl App {
                     if let Some(dialog) = self.dialog_queue.get_mut(0) {
                         let overlay = Block::default().style(
                             Style::default()
-                                .bg(Color::from_u32(0x575653))
-                                .fg(Color::Reset),
+                                .bg(Color::from_u32(theme.base[2]))
+                                .fg(Color::from_u32(theme.base[5])),
                         );
                         frame.render_widget(overlay, mainlayout[0]);
 
-                        let border = Block::new().style(Style::new().bg(Color::from_u32(0x262626)));
-                        let block = Block::new().style(Style::new().bg(Color::from_u32(0x3a3a3a)));
+                        let border =
+                            Block::new().style(Style::new().bg(Color::from_u32(theme.base[1])));
+                        let block =
+                            Block::new().style(Style::new().bg(Color::from_u32(theme.base[0])));
 
                         let area = popup_area(mainlayout[0], dialog.get_size());
                         let inner_area = area.inner(Margin::new(2, 1));

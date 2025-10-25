@@ -8,8 +8,10 @@ use ratatui::{
 use tracing::error;
 
 use crate::{
-    core::feed::feedentry::FeedEntry,
-    core::library::feedlibrary::FeedLibrary,
+    core::{
+        feed::feedentry::FeedEntry,
+        library::{feedlibrary::FeedLibrary, settings::theme::Theme},
+    },
     ui::states::feedtreestate::{FeedItemInfo, FeedTreeState},
 };
 
@@ -18,6 +20,7 @@ pub struct FeedEntryState {
     pub listatate: ListState,
     pub previous_selected: String,
     pub library: Option<Rc<RefCell<FeedLibrary>>>,
+    theme: Theme,
 }
 
 impl Default for FeedEntryState {
@@ -33,11 +36,13 @@ impl FeedEntryState {
             listatate: ListState::default().with_selected(Some(0)),
             previous_selected: String::new(),
             library: None,
+            theme: Theme::default(),
         }
     }
 
     pub fn update(&mut self, library: &mut FeedLibrary, treestate: &FeedTreeState) {
         let prev = self.previous_selected.to_string();
+        self.theme = library.settings.get_theme().unwrap().clone();
 
         self.entries = match treestate.get_selected() {
             Some(FeedItemInfo::Category(t)) => {
@@ -97,12 +102,16 @@ impl FeedEntryState {
                 if !entry.seen {
                     item_content_lines.push(Line::from(Span::styled(
                         format!(" \u{f1ea} {}{} \u{e3e3}", entry.title, read_later_icon),
-                        Style::default().bold().fg(Color::from_u32(0x81ae80)),
+                        Style::default()
+                            .bold()
+                            .fg(Color::from_u32(self.theme.base[9])),
                     )));
                 } else {
                     item_content_lines.push(Line::from(Span::styled(
                         format!(" \u{f1ea} {}{}", entry.title, read_later_icon),
-                        Style::default().bold(),
+                        Style::default()
+                            .bold()
+                            .fg(Color::from_u32(self.theme.base[5])),
                     )));
                 };
 
@@ -113,13 +122,13 @@ impl FeedEntryState {
                         entry.date.with_timezone(&chrono::Local).format("%Y-%m-%d"),
                         entry.author
                     ),
-                    Style::default().fg(Color::from_u32(0x777777)),
+                    Style::default().fg(Color::from_u32(self.theme.base[5])),
                 )));
 
                 // Description
                 item_content_lines.push(Line::from(Span::styled(
                     format!(" {}...", entry.description),
-                    Style::default().fg(Color::from_u32(0xaaaaaa)),
+                    Style::default().fg(Color::from_u32(self.theme.base[3])),
                 )));
 
                 item_content_lines.push(Line::from(""));
