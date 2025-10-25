@@ -1,16 +1,16 @@
 use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
-use color_eyre::{Result, eyre, owo_colors::OwoColorize};
+use color_eyre::{Result, eyre};
 use ratatui::{
     DefaultTerminal,
     layout::{Constraint, Flex, Layout, Margin, Rect},
-    style::{Color, Style, Stylize},
+    style::{Color, Style},
     widgets::{Block, Clear, Gauge, Paragraph},
 };
 
 use crate::{
     core::{
-        library::{feedlibrary::FeedLibrary, settings::theme::Theme},
+        library::feedlibrary::FeedLibrary,
         ui::{
             appscreen::{AppScreen, AppScreenEvent},
             dialog::Dialog,
