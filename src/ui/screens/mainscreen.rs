@@ -40,16 +40,10 @@ pub struct MainScreen {
     inputstate: MainInputState,
 }
 
-impl Default for MainScreen {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl MainScreen {
-    pub fn new() -> Self {
+    pub fn new(library: Rc<RefCell<FeedLibrary>>) -> Self {
         Self {
-            library: Rc::new(RefCell::new(FeedLibrary::new())),
+            library,
             feedtreestate: FeedTreeState::new(),
             feedentrystate: FeedEntryState::new(),
             inputstate: MainInputState::Menu,

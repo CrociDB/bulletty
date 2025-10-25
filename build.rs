@@ -28,11 +28,7 @@ fn embed_themes() {
         writeln!(out, "// This is a generated file. Check `build.rs`").unwrap();
         writeln!(out, "use crate::core::library::settings::theme::Theme;\n").unwrap();
         writeln!(out, "use std::collections::HashMap;").unwrap();
-        writeln!(
-            out,
-            "pub fn get_themes() -> HashMap<String, Theme> {{"
-        )
-        .unwrap();
+        writeln!(out, "pub fn get_themes() -> HashMap<String, Theme> {{").unwrap();
         writeln!(out, "    let mut m = HashMap::new();").unwrap();
 
         for theme in themes.iter_mut() {

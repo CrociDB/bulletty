@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
 use color_eyre::{Result, eyre};
 use ratatui::{
@@ -8,9 +8,15 @@ use ratatui::{
     widgets::{Block, Clear, Gauge, Paragraph},
 };
 
-use crate::core::ui::{
-    appscreen::{AppScreen, AppScreenEvent},
-    dialog::Dialog,
+use crate::{
+    core::{
+        library::feedlibrary::FeedLibrary,
+        ui::{
+            appscreen::{AppScreen, AppScreenEvent},
+            dialog::Dialog,
+        },
+    },
+    ui::screens::mainscreen::MainScreen,
 };
 
 pub enum AppWorkStatus {
@@ -26,6 +32,7 @@ impl AppWorkStatus {
 
 pub struct App {
     running: bool,
+    library: Rc<RefCell<FeedLibrary>>,
     current_state: Option<Box<dyn AppScreen>>,
     states_queue: VecDeque<Box<dyn AppScreen>>,
     dialog_queue: VecDeque<Box<dyn Dialog>>,
@@ -40,6 +47,8 @@ impl Default for App {
 impl App {
     pub fn new() -> Self {
         Self {
+            library: Rc::new(RefCell::new(FeedLibrary::new())),
+
             running: true,
             current_state: None,
             states_queue: VecDeque::<Box<dyn AppScreen>>::new(),
@@ -50,6 +59,10 @@ impl App {
     pub fn init(&mut self, mut state: Box<dyn AppScreen>) {
         state.start();
         self.current_state = Some(state);
+    }
+
+    pub fn initmain(&mut self) {
+        self.init(Box::new(MainScreen::new(self.library.clone())));
     }
 
     pub fn run(&mut self, mut terminal: DefaultTerminal) -> Result<()> {
