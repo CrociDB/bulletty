@@ -30,7 +30,7 @@ fn embed_themes() {
         writeln!(out, "use std::collections::HashMap;").unwrap();
         writeln!(
             out,
-            "pub fn get_themes() -> HashMap<&'static str, Theme> {{"
+            "pub fn get_themes() -> HashMap<String, Theme> {{"
         )
         .unwrap();
         writeln!(out, "    let mut m = HashMap::new();").unwrap();
@@ -56,7 +56,7 @@ fn embed_themes() {
             writeln!(
                 out,
                 "    m.insert(
-        \"{}\", 
+        \"{}\".to_string(), 
         Theme {{ 
             scheme: \"{}\".to_string(), 
             author: \"{}\".to_string(), 

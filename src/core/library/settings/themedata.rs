@@ -2,10 +2,10 @@
 use crate::core::library::settings::theme::Theme;
 
 use std::collections::HashMap;
-pub fn get_themes() -> HashMap<&'static str, Theme> {
+pub fn get_themes() -> HashMap<String, Theme> {
     let mut m = HashMap::new();
     m.insert(
-        "Decaf",
+        "Decaf".to_string(),
         Theme {
             scheme: "Decaf".to_string(),
             author: "Alex Mirrington (https://github.com/alexmirrington)".to_string(),
@@ -32,7 +32,7 @@ pub fn get_themes() -> HashMap<&'static str, Theme> {
         },
     );
     m.insert(
-        "Espresso",
+        "Espresso".to_string(),
         Theme {
             scheme: "Espresso".to_string(),
             author: "Unknown. Maintained by Alex Mirrington (https://github.com/alexmirrington)"
@@ -60,7 +60,7 @@ pub fn get_themes() -> HashMap<&'static str, Theme> {
         },
     );
     m.insert(
-        "Github",
+        "Github".to_string(),
         Theme {
             scheme: "Github".to_string(),
             author: "Defman21".to_string(),
@@ -87,7 +87,7 @@ pub fn get_themes() -> HashMap<&'static str, Theme> {
         },
     );
     m.insert(
-        "Darcula",
+        "Darcula".to_string(),
         Theme {
             scheme: "Darcula".to_string(),
             author: "jetbrains".to_string(),

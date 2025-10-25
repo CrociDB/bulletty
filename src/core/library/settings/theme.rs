@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default)]
 #[allow(non_snake_case)]
 pub struct Theme {
     pub scheme: String,
