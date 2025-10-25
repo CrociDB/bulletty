@@ -61,7 +61,7 @@ impl AppScreen for ThemeDialog {
             .split(area.inner(Margin::new(2, 1)));
 
         let title = Paragraph::new(self.get_title())
-            .style(Style::new().fg(Color::LightRed))
+            .style(Style::new().fg(Color::from_u32(theme.base[0x8])))
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
 
@@ -73,14 +73,14 @@ impl AppScreen for ThemeDialog {
                 Block::default()
                     .style(
                         Style::default()
-                            .fg(Color::from_u32(theme.base[5]))
-                            .bg(Color::from_u32(theme.base[1])),
+                            .fg(Color::from_u32(theme.base[0x5]))
+                            .bg(Color::from_u32(theme.base[0x1])),
                     )
                     .padding(Padding::new(1, 1, 1, 1)),
             )
             .highlight_style(
                 Style::default()
-                    .fg(Color::from_u32(theme.base[0xd]))
+                    .fg(Color::from_u32(theme.base[0x2]))
                     .bg(Color::from_u32(theme.base[0x8])),
             );
 

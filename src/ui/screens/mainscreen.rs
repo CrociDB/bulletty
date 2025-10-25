@@ -183,13 +183,13 @@ impl AppScreen for MainScreen {
                     .bg(Color::from_u32(theme.base[1]))
                     .padding(Padding::new(2, 2, 2, 2)),
                 Style::default()
-                    .fg(Color::from_u32(theme.base[0xf]))
+                    .fg(Color::from_u32(theme.base[0x2]))
                     .bg(Color::from_u32(theme.base[0x8])),
             )
         } else {
             (
                 Block::default()
-                    .style(Style::default().fg(Color::from_u32(theme.base[3])))
+                    .style(Style::default().fg(Color::from_u32(theme.base[4])))
                     .bg(Color::from_u32(theme.base[1]))
                     .padding(Padding::new(2, 2, 2, 2)),
                 Style::default()
@@ -214,7 +214,7 @@ impl AppScreen for MainScreen {
 
         let entryselectionstyle = if self.inputstate == MainInputState::Content {
             Style::default()
-                .fg(Color::from_u32(theme.base[0xf]))
+                .fg(Color::from_u32(theme.base[0x2]))
                 .bg(Color::from_u32(theme.base[0x8]))
         } else {
             Style::default().bg(Color::from_u32(theme.base[2]))
@@ -223,7 +223,7 @@ impl AppScreen for MainScreen {
         let list_widget = List::new(self.feedentrystate.get_items())
             .block(
                 Block::default()
-                    .style(Style::default().bg(Color::from_u32(theme.base[0])))
+                    .style(Style::default().bg(Color::from_u32(theme.base[2])))
                     .padding(Padding::new(2, 2, 1, 1)),
             )
             .highlight_style(entryselectionstyle);
@@ -236,7 +236,7 @@ impl AppScreen for MainScreen {
         let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight).style(
             Style::new()
                 .fg(Color::from_u32(theme.base[3]))
-                .bg(Color::from_u32(theme.base[1])),
+                .bg(Color::from_u32(theme.base[2])),
         );
         frame.render_stateful_widget(scrollbar, chunks[2], &mut scrollbarstate);
     }

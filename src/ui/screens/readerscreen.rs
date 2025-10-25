@@ -120,7 +120,7 @@ impl AppScreen for ReaderScreen {
         };
 
         let block = Block::default()
-            .style(Style::default().bg(Color::from_u32(theme.base[0])))
+            .style(Style::default().bg(Color::from_u32(theme.base[1])))
             .padding(Padding::new(3, 3, 3, 3));
 
         frame.render_widget(block, area);

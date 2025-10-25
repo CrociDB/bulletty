@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
-use color_eyre::{Result, eyre};
+use color_eyre::{eyre, Result};
 use ratatui::{
     DefaultTerminal,
     layout::{Constraint, Flex, Layout, Margin, Rect},
@@ -102,7 +102,7 @@ impl App {
                     };
 
                     let status_text = Paragraph::new(format!("\u{f0fb1} bulletty | {title}"))
-                        .style(Style::default().fg(Color::from_u32(theme.base[0xc])));
+                        .style(Style::default().fg(Color::from_u32(theme.base[0x6])));
 
                     frame.render_widget(status_text, statusline[0]);
 
@@ -123,8 +123,8 @@ impl App {
                         let gauge = Gauge::default()
                             .gauge_style(
                                 Style::default()
-                                    .fg(Color::from_u32(theme.base[5]))
-                                    .bg(Color::from_u32(theme.base[1])),
+                                    .fg(Color::from_u32(theme.base[0xe]))
+                                    .bg(Color::from_u32(theme.base[0x2])),
                             )
                             .percent((percentage * 100.0).round() as u16)
                             .label(&description);
@@ -136,7 +136,7 @@ impl App {
                         let overlay = Block::default().style(
                             Style::default()
                                 .bg(Color::from_u32(theme.base[2]))
-                                .fg(Color::from_u32(theme.base[5])),
+                                .fg(Color::from_u32(theme.base[4])),
                         );
                         frame.render_widget(overlay, mainlayout[0]);
 

@@ -111,7 +111,7 @@ impl FeedEntryState {
                         format!(" \u{f1ea} {}{}", entry.title, read_later_icon),
                         Style::default()
                             .bold()
-                            .fg(Color::from_u32(self.theme.base[5])),
+                            .fg(Color::from_u32(self.theme.base[6])),
                     )));
                 };
 
@@ -128,7 +128,7 @@ impl FeedEntryState {
                 // Description
                 item_content_lines.push(Line::from(Span::styled(
                     format!(" {}...", entry.description),
-                    Style::default().fg(Color::from_u32(self.theme.base[3])),
+                    Style::default().fg(Color::from_u32(self.theme.base[4])),
                 )));
 
                 item_content_lines.push(Line::from(""));
