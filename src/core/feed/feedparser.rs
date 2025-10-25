@@ -253,7 +253,7 @@ fn get_description_content(entry: &Node) -> (String, String) {
     };
 
     let description_text = match description {
-        Some(text) => parse_html(&text)
+        Some(text) => parse_html(text)
             .replace("\n", "")
             .chars()
             .take(280)
