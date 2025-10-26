@@ -30,7 +30,7 @@ fn default_reader_width() -> u16 {
 }
 
 fn default_theme() -> String {
-    "Decaf".to_string()
+    "bulletty".to_string()
 }
 
 impl Appearance {

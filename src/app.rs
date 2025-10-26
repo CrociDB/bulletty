@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
-use color_eyre::{eyre, Result};
+use color_eyre::{Result, eyre};
 use ratatui::{
     DefaultTerminal,
     layout::{Constraint, Flex, Layout, Margin, Rect},
@@ -123,7 +123,7 @@ impl App {
                         let gauge = Gauge::default()
                             .gauge_style(
                                 Style::default()
-                                    .fg(Color::from_u32(theme.base[0xe]))
+                                    .fg(Color::from_u32(theme.base[0x9]))
                                     .bg(Color::from_u32(theme.base[0x2])),
                             )
                             .percent((percentage * 100.0).round() as u16)
