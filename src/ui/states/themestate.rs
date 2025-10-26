@@ -83,4 +83,12 @@ impl ThemeState {
 
         self.state.select(Some(self.themes.len().saturating_sub(1)));
     }
+
+    pub fn scroll_max(&self) -> usize {
+        self.themes.len().saturating_sub(1)
+    }
+
+    pub fn scroll(&self) -> usize {
+        self.state.selected().unwrap_or(0)
+    }
 }

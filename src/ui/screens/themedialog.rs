@@ -5,7 +5,9 @@ use color_eyre::eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::layout::{Alignment, Constraint, Layout, Margin, Rect};
 use ratatui::style::{Color, Style};
-use ratatui::widgets::{Block, List, Padding, Paragraph, Wrap};
+use ratatui::widgets::{
+    Block, List, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
+};
 
 use crate::app::AppWorkStatus;
 
@@ -66,6 +68,9 @@ impl AppScreen for ThemeDialog {
             .wrap(Wrap { trim: true });
 
         // List
+        let chunks = Layout::horizontal([Constraint::Fill(1), Constraint::Length(1)])
+            .split(contentlayout[1]);
+
         self.state.update(&self.library.borrow());
 
         let themelist = List::new(self.state.get_items())
@@ -85,7 +90,17 @@ impl AppScreen for ThemeDialog {
             );
 
         frame.render_widget(title, contentlayout[0]);
-        frame.render_stateful_widget(themelist, contentlayout[1], &mut self.state.state.clone());
+        frame.render_stateful_widget(themelist, chunks[0], &mut self.state.state.clone());
+
+        // Scrollbar
+        let mut scrollbarstate =
+            ScrollbarState::new(self.state.scroll_max()).position(self.state.scroll());
+        let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight).style(
+            Style::new()
+                .fg(Color::from_u32(theme.base[3]))
+                .bg(Color::from_u32(theme.base[2])),
+        );
+        frame.render_stateful_widget(scrollbar, chunks[1], &mut scrollbarstate);
     }
 
     fn handle_events(&mut self) -> Result<AppScreenEvent> {
