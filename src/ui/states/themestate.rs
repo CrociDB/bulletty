@@ -11,7 +11,7 @@ pub struct ThemeState {
 impl ThemeState {
     pub fn update(&mut self, library: &FeedLibrary) {
         self.themes = library.settings.get_theme_list();
-        self.themes.sort();
+        self.themes.sort_by_key(|a| a.to_lowercase());
 
         let selected = &library.settings.appearance.theme;
         if let Some(id) = self
