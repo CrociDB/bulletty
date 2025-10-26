@@ -17,7 +17,7 @@ use crate::{
         ui::appscreen::{AppScreen, AppScreenEvent},
     },
     ui::{
-        screens::{readerscreen::ReaderScreen, urldialog::UrlDialog},
+        screens::{readerscreen::ReaderScreen, themedialog::ThemeDialog, urldialog::UrlDialog},
         states::{
             feedentrystate::FeedEntryState,
             feedtreestate::{FeedItemInfo, FeedTreeState},
@@ -40,16 +40,10 @@ pub struct MainScreen {
     inputstate: MainInputState,
 }
 
-impl Default for MainScreen {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl MainScreen {
-    pub fn new() -> Self {
+    pub fn new(library: Rc<RefCell<FeedLibrary>>) -> Self {
         Self {
-            library: Rc::new(RefCell::new(FeedLibrary::new())),
+            library,
             feedtreestate: FeedTreeState::new(),
             feedentrystate: FeedEntryState::new(),
             inputstate: MainInputState::Menu,
@@ -105,6 +99,12 @@ impl MainScreen {
         }
     }
 
+    fn open_theme_selector(&self) -> Result<AppScreenEvent> {
+        Ok(AppScreenEvent::OpenDialog(Box::new(ThemeDialog::new(
+            self.library.clone(),
+        ))))
+    }
+
     fn toggle_read_later(&mut self, entry: &FeedEntry) {
         let file_path = entry.filepath.to_str().unwrap_or_default();
 
@@ -115,6 +115,28 @@ impl MainScreen {
         } else if let Err(e) = self.library.borrow_mut().add_to_read_later(entry) {
             error!("Failed to add entry to read later: {:?}", e);
         }
+    }
+
+    fn increase_tree_width(&mut self) -> color_eyre::Result<()> {
+        let mut l = self.library.borrow_mut();
+        l.settings.appearance.main_screen_tree_width = l
+            .settings
+            .appearance
+            .main_screen_tree_width
+            .saturating_add(2)
+            .min(100);
+        l.settings.appearance.save()
+    }
+
+    fn decrease_tree_width(&mut self) -> color_eyre::Result<()> {
+        let mut l = self.library.borrow_mut();
+        l.settings.appearance.main_screen_tree_width = l
+            .settings
+            .appearance
+            .main_screen_tree_width
+            .saturating_sub(2)
+            .min(100);
+        l.settings.appearance.save()
     }
 }
 
@@ -132,8 +154,20 @@ impl AppScreen for MainScreen {
     fn render(&mut self, frame: &mut ratatui::Frame, area: Rect) {
         self.library.borrow_mut().update();
 
+        let theme = {
+            let library = self.library.borrow();
+            library.settings.get_theme().unwrap().clone()
+        };
+
+        let treewidth = self
+            .library
+            .borrow()
+            .settings
+            .appearance
+            .main_screen_tree_width;
+
         let chunks = Layout::horizontal([
-            Constraint::Min(30),
+            Constraint::Min(treewidth),
             Constraint::Percentage(85),
             Constraint::Length(1),
         ])
@@ -145,17 +179,22 @@ impl AppScreen for MainScreen {
         let (treestyle, treeselectionstyle) = if self.inputstate == MainInputState::Menu {
             (
                 Block::default()
-                    .style(Style::default().bg(Color::from_u32(0x262626)))
+                    .style(Style::default().fg(Color::from_u32(theme.base[5])))
+                    .bg(Color::from_u32(theme.base[1]))
                     .padding(Padding::new(2, 2, 2, 2)),
-                Style::default().bg(Color::from_u32(0x514537)),
+                Style::default()
+                    .fg(Color::from_u32(theme.base[0x2]))
+                    .bg(Color::from_u32(theme.base[0x8])),
             )
         } else {
             (
                 Block::default()
-                    .style(Style::default().bg(Color::from_u32(0x262626)))
-                    .dim()
+                    .style(Style::default().fg(Color::from_u32(theme.base[4])))
+                    .bg(Color::from_u32(theme.base[1]))
                     .padding(Padding::new(2, 2, 2, 2)),
-                Style::default().bg(Color::DarkGray),
+                Style::default()
+                    .fg(Color::from_u32(theme.base[5]))
+                    .bg(Color::from_u32(theme.base[2])),
             )
         };
 
@@ -174,15 +213,17 @@ impl AppScreen for MainScreen {
         let mut entryliststate = self.feedentrystate.listatate.clone();
 
         let entryselectionstyle = if self.inputstate == MainInputState::Content {
-            Style::default().bg(Color::from_u32(0x514537))
+            Style::default()
+                .fg(Color::from_u32(theme.base[0x2]))
+                .bg(Color::from_u32(theme.base[0x8]))
         } else {
-            Style::default().bg(Color::from_u32(0x575653))
+            Style::default().bg(Color::from_u32(theme.base[2]))
         };
 
         let list_widget = List::new(self.feedentrystate.get_items())
             .block(
                 Block::default()
-                    .style(Style::default().bg(Color::from_u32(0x3a3a3a)))
+                    .style(Style::default().bg(Color::from_u32(theme.base[2])))
                     .padding(Padding::new(2, 2, 1, 1)),
             )
             .highlight_style(entryselectionstyle);
@@ -194,8 +235,8 @@ impl AppScreen for MainScreen {
             .position(self.feedentrystate.scroll());
         let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight).style(
             Style::new()
-                .fg(Color::from_u32(0x555555))
-                .bg(Color::from_u32(0x3a3a3a)),
+                .fg(Color::from_u32(theme.base[3]))
+                .bg(Color::from_u32(theme.base[2])),
         );
         frame.render_stateful_widget(scrollbar, chunks[2], &mut scrollbarstate);
     }
@@ -240,6 +281,15 @@ impl AppScreen for MainScreen {
                     self.set_all_read();
                     Ok(AppScreenEvent::None)
                 }
+                (_, KeyCode::Char('>')) => {
+                    self.increase_tree_width()?;
+                    Ok(AppScreenEvent::None)
+                }
+                (_, KeyCode::Char('<')) => {
+                    self.decrease_tree_width()?;
+                    Ok(AppScreenEvent::None)
+                }
+                (_, KeyCode::Char('t')) => self.open_theme_selector(),
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
                     HelpDialog::new(self.get_full_instructions()),
                 ))),
@@ -298,6 +348,14 @@ impl AppScreen for MainScreen {
                     self.set_all_read();
                     Ok(AppScreenEvent::None)
                 }
+                (_, KeyCode::Char('>')) => {
+                    self.increase_tree_width()?;
+                    Ok(AppScreenEvent::None)
+                }
+                (_, KeyCode::Char('<')) => {
+                    self.decrease_tree_width()?;
+                    Ok(AppScreenEvent::None)
+                }
                 (_, KeyCode::Char('o')) => {
                     if let Some(entry) = self.feedentrystate.get_selected() {
                         self.library.borrow_mut().data.set_entry_seen(&entry);
@@ -313,6 +371,7 @@ impl AppScreen for MainScreen {
 
                     Ok(AppScreenEvent::None)
                 }
+                (_, KeyCode::Char('t')) => self.open_theme_selector(),
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
                     HelpDialog::new(self.get_full_instructions()),
                 ))),
@@ -341,7 +400,7 @@ impl AppScreen for MainScreen {
 
     fn get_full_instructions(&self) -> String {
         String::from(
-            "j/k/↓/↑: move selection\ng/G/Home/End: beginning and end of the list\no: open link externally\nL: add/remove read later\nEnter: select category or read entry\n\nr: toggle item read state\nR: mark all of the items as read\n\nEsc/q: back from entries or quit",
+            "j/k/↓/↑: move selection\ng/G/Home/End: beginning and end of the list\n</>: change reader width\n\no: open link externally\nL: add/remove read later\nEnter: select category or read entry\n\nr: toggle item read state\nR: mark all of the items as read\n\nEsc/q: back from entries or quit",
         )
     }
 }
