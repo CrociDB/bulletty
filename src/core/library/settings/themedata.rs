@@ -71,7 +71,7 @@ pub fn get_themes() -> HashMap<String, Theme> {
             base05: "a0a0a0".to_string(),
             base06: "b9b9b9".to_string(),
             base07: "999999".to_string(),
-            base08: "ba676e".to_string(),
+            base08: "be5b5b".to_string(),
             base09: "86ad80".to_string(),
             base0A: "5f9341".to_string(),
             base0B: "479b5a".to_string(),
@@ -81,7 +81,7 @@ pub fn get_themes() -> HashMap<String, Theme> {
             base0F: "b16557".to_string(),
             base: [
                 1842204, 2500134, 3815994, 5066061, 7368816, 10526880, 12171705, 10066329,
-                12216174, 8826240, 6263617, 4692826, 4036989, 4874100, 5865654, 11625815,
+                12475227, 8826240, 6263617, 4692826, 4036989, 4874100, 5865654, 11625815,
             ],
         },
     );
