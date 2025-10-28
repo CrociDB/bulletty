@@ -17,6 +17,7 @@ use crate::core::{
     ui::appscreen::{AppScreen, AppScreenEvent},
 };
 use crate::ui::screens::urldialog::UrlDialog;
+use crate::ui::tools::tuimarkdown;
 
 use super::helpdialog::HelpDialog;
 
@@ -178,7 +179,7 @@ impl AppScreen for ReaderScreen {
         frame.render_widget(date, contentlayout[2]);
 
         // Content
-        let text = tui_markdown::from_str(&current_entry.text);
+        let text = tuimarkdown::from_str(&current_entry.text);
         let textheight = text.height() as usize;
 
         // This is a workaround to get more or less the amount of wrapped lines, to be used on the
