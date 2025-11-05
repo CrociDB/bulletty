@@ -20,6 +20,7 @@ It's in active development.
  - Add articles to the Read Later category
  - Read the articles with the embedded Markdown reader
  - Import/export OPML feed list
+ - Multiple themes
 
 ## 🚀 Install
 
@@ -94,7 +95,6 @@ All the needs to be done is to synchronize the `bulletty` directory to save your
 
 ## 📜 Feature Roadmap
 
- - Themes
  - Highlight
  - Notes
  - Web view
