@@ -7,7 +7,7 @@ cat ./docs/docs/bulletty.md >> ./docs/docs/reference.md
 
 # Generate index page using README.md
 cat ./docs/_index.md > ./docs/index.md
-tail -n +3 ../README.md >> ./docs/index.md
+cat ../README.md >> ./docs/index.md
 
 # Generate contributing page using CONTRIBUTING.md
 cat ./docs/_contributing.md > ./docs/contributing.md
