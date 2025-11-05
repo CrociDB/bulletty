@@ -1,4 +1,7 @@
-<h1 align="center">📰 bulletty</h1>
+<p align="center">
+  <img src="img/bulletty.png" alt="bulletty" />
+</p>
+<h1 align="center">bulletty</h1>
 <p align="center">The TUI RSS/ATOM feed reader that lets you decide where to store your data.</p>
 
 <p align="center">
