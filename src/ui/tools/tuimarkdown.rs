@@ -1,4 +1,6 @@
 //! A simple markdown renderer widget for Ratatui.
+//! Originally written by joshka
+//! https://github.com/joshka/tui-markdown
 
 use std::sync::LazyLock;
 use std::vec;
