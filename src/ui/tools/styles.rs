@@ -11,15 +11,32 @@ pub fn p(theme: Option<&Theme>) -> Style {
     Style::new().fg(Color::from_u32(text_color))
 }
 
+pub fn list_item(theme: Option<&Theme>) -> Style {
+    let text_color = if let Some(t) = theme {
+        t.base[0x06]
+    } else {
+        0xffffff
+    };
+
+    Style::new().fg(Color::from_u32(text_color))
+}
+
 pub fn h1(theme: Option<&Theme>) -> Style {
-    let title_color = if let Some(t) = theme {
+    let title_background = if let Some(t) = theme {
         t.base[0x08]
     } else {
         0xffffff
     };
 
+    let title_color = if let Some(t) = theme {
+        t.base[0x00]
+    } else {
+        0xffffff
+    };
+
     Style::new()
-        .bg(Color::from_u32(title_color))
+        .bg(Color::from_u32(title_background))
+        .fg(Color::from_u32(title_color))
         .add_modifier(Modifier::BOLD)
         .add_modifier(Modifier::UNDERLINED)
 }
@@ -72,7 +89,6 @@ pub fn h5(theme: Option<&Theme>) -> Style {
         .fg(Color::from_u32(title_color))
         .add_modifier(Modifier::ITALIC)
 }
-
 pub fn h6(theme: Option<&Theme>) -> Style {
     let title_color = if let Some(t) = theme {
         t.base[0x09]
@@ -97,13 +113,13 @@ pub fn blockquote(theme: Option<&Theme>) -> Style {
 
 pub fn code(theme: Option<&Theme>) -> Style {
     let code_color = if let Some(t) = theme {
-        t.base[0x0b]
+        t.base[0xc]
     } else {
         0xffffff
     };
 
     let code_background = if let Some(t) = theme {
-        t.base[0x02]
+        t.base[0x0]
     } else {
         0x0
     };
@@ -115,7 +131,7 @@ pub fn code(theme: Option<&Theme>) -> Style {
 
 pub fn link(theme: Option<&Theme>) -> Style {
     let link_color = if let Some(t) = theme {
-        t.base[0x08]
+        t.base[0xd]
     } else {
         0xffffff
     };

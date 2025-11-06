@@ -268,10 +268,13 @@ where
             self.push_line(Line::default());
         }
         self.list_indices.push(index);
+        self.inline_styles
+            .push(styles::list_item(self.theme.as_ref()));
     }
 
     fn end_list(&mut self) {
         self.list_indices.pop();
+        self.inline_styles.pop();
         self.needs_newline = true;
     }
 
@@ -280,13 +283,13 @@ where
         let width = self.list_indices.len() * 4 - 3;
         if let Some(last_index) = self.list_indices.last_mut() {
             let span = match last_index {
-                None => Span::from(" ".repeat(width - 1) + "- "),
+                None => Span::from(" ".repeat(width - 1) + "\u{00A0}\u{00A0}• "),
                 Some(index) => {
                     *index += 1;
-                    format!("{:width$}. ", *index - 1).light_blue()
+                    Span::from(format!("\u{00A0}\u{00A0}{:width$}. ", *index - 1))
                 }
             };
-            self.push_span(span);
+            self.push_span(span.style(styles::list_item(self.theme.as_ref())));
         }
         self.needs_newline = false;
     }
@@ -610,7 +613,10 @@ mod tests {
             "},
                 None
             ),
-            Text::from_iter([Line::from_iter(["- ", "List item 1"])])
+            Text::from(Line::from_iter([
+                Span::from("\u{a0}\u{a0}• ").style(styles::list_item(None)),
+                Span::from("List item 1").style(styles::list_item(None))
+            ]))
         );
     }
 
@@ -625,8 +631,14 @@ mod tests {
                 None
             ),
             Text::from_iter([
-                Line::from_iter(["- ", "List item 1"]),
-                Line::from_iter(["- ", "List item 2"]),
+                Line::from_iter([
+                    Span::from("\u{a0}\u{a0}• ").style(styles::list_item(None)),
+                    Span::from("List item 1").style(styles::list_item(None))
+                ]),
+                Line::from_iter([
+                    Span::from("\u{a0}\u{a0}• ").style(styles::list_item(None)),
+                    Span::from("List item 2").style(styles::list_item(None))
+                ]),
             ])
         );
     }
@@ -642,8 +654,14 @@ mod tests {
                 None
             ),
             Text::from_iter([
-                Line::from_iter(["1. ".light_blue(), "List item 1".into()]),
-                Line::from_iter(["2. ".light_blue(), "List item 2".into()]),
+                Line::from_iter([
+                    Span::from("\u{a0}\u{a0}1. ").style(styles::list_item(None)),
+                    Span::from("List item 1").style(styles::list_item(None))
+                ]),
+                Line::from_iter([
+                    Span::from("\u{a0}\u{a0}2. ").style(styles::list_item(None)),
+                    Span::from("List item 2").style(styles::list_item(None))
+                ]),
             ])
         );
     }
@@ -659,8 +677,14 @@ mod tests {
                 None
             ),
             Text::from_iter([
-                Line::from_iter(["- ", "List item 1"]),
-                Line::from_iter(["    - ", "Nested list item 1"]),
+                Line::from_iter([
+                    Span::from("\u{a0}\u{a0}• ").style(styles::list_item(None)),
+                    Span::from("List item 1").style(styles::list_item(None))
+                ]),
+                Line::from_iter([
+                    Span::from("    \u{a0}\u{a0}• ").style(styles::list_item(None)),
+                    Span::from("Nested list item 1").style(styles::list_item(None))
+                ]),
             ])
         );
     }

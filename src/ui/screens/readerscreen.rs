@@ -173,7 +173,9 @@ impl AppScreen for ReaderScreen {
 
         // URL
         let date = Paragraph::new(current_entry.url.to_string())
-            .style(Style::new().fg(Color::from_u32(theme.base[0xd])))
+            .style(
+                Style::new().fg(Color::from_u32(theme.base[0xd])), // .add_modifier(Modifier::UNDERLINED),
+            )
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
 
