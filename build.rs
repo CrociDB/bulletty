@@ -21,6 +21,8 @@ fn embed_themes() {
         }
     }
 
+    themes.sort_by_key(|t| t.scheme.to_lowercase());
+
     let out_path = Path::new("src/core/library/settings/themedata.rs");
     {
         let mut out = File::create(out_path).unwrap();
