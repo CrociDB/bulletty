@@ -57,6 +57,9 @@ struct TextWriter<'a, I> {
     /// A link which will be appended to the current line when the link tag is closed.
     link: Option<CowStr<'a>>,
 
+    /// The current image to be closed
+    image: Option<CowStr<'a>>,
+
     /// True when last element requires a new line
     needs_newline: bool,
 
@@ -82,6 +85,7 @@ where
             needs_newline: false,
             code_highlighter: None,
             link: None,
+            image: None,
             theme,
         }
     }
@@ -132,7 +136,12 @@ where
             Tag::Subscript => warn!("Subscript not yet supported"),
             Tag::Superscript => warn!("Superscript not yet supported"),
             Tag::Link { dest_url, .. } => self.push_link(dest_url),
-            Tag::Image { .. } => warn!("Image not yet supported"),
+            Tag::Image {
+                link_type,
+                dest_url,
+                title,
+                ..
+            } => self.push_image(link_type, dest_url, title),
             Tag::MetadataBlock(_) => warn!("Metadata block not yet supported"),
             Tag::DefinitionList => warn!("Definition list not yet supported"),
             Tag::DefinitionListTitle => warn!("Definition list title not yet supported"),
@@ -160,7 +169,7 @@ where
             TagEnd::Subscript => {}
             TagEnd::Superscript => {}
             TagEnd::Link => self.pop_link(),
-            TagEnd::Image => {}
+            TagEnd::Image => self.pop_image(),
             TagEnd::MetadataBlock(_) => {}
             TagEnd::DefinitionList => {}
             TagEnd::DefinitionListTitle => {}
@@ -396,6 +405,28 @@ where
             self.push_span(" (".into());
             self.push_span(Span::styled(link, styles::link(self.theme.as_ref())));
             self.push_span(")".into());
+        }
+    }
+
+    #[instrument(level = "trace", skip(self))]
+    fn push_image(
+        &mut self,
+        link_type: pulldown_cmark::LinkType,
+        dest_url: CowStr<'a>,
+        title: CowStr<'a>,
+    ) {
+        self.image = Some(dest_url);
+        let text = "[Image: ";
+        self.push_line(Line::styled(text, styles::p(self.theme.as_ref())));
+    }
+
+    /// Append the end of the image tag
+    #[instrument(level = "trace", skip(self))]
+    fn pop_image(&mut self) {
+        if let Some(image_link) = self.image.take() {
+            self.push_span("  -> ".into());
+            self.push_span(Span::styled(image_link, styles::link(self.theme.as_ref())));
+            self.push_span("]".into());
         }
     }
 }
@@ -739,6 +770,24 @@ mod tests {
                 ])
                 .style(styles::p(None))
             )
+        );
+    }
+
+    #[rstest]
+    fn image(_with_tracing: DefaultGuard) {
+        assert_eq!(
+            from_str("![TestImage](/test.html)", None),
+            Text::from_iter([
+                Line::default().style(styles::p(None)),
+                Line::from_iter([
+                    Span::from("[Image: "),
+                    Span::from("TestImage"),
+                    Span::from("  -> "),
+                    Span::from("/test.html").style(styles::p(None)).underlined(),
+                    Span::from("]"),
+                ])
+                .style(styles::p(None)),
+            ])
         );
     }
 }
