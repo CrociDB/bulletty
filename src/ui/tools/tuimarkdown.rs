@@ -18,11 +18,13 @@ use syntect::{
 };
 use tracing::{debug, instrument, warn};
 
-pub fn from_str(input: &str) -> Text {
+use crate::core::library::settings::theme::Theme;
+
+pub fn from_str(input: &str, theme: Option<Theme>) -> Text {
     let mut options = Options::empty();
     options.insert(Options::ENABLE_STRIKETHROUGH);
     let parser = Parser::new_ext(input, options);
-    let mut writer = TextWriter::new(parser);
+    let mut writer = TextWriter::new(parser, theme);
     writer.run();
     writer.text
 }
@@ -55,6 +57,9 @@ struct TextWriter<'a, I> {
     link: Option<CowStr<'a>>,
 
     needs_newline: bool,
+
+    /// bulletty Theme
+    theme: Option<Theme>,
 }
 
 static SYNTAX_SET: LazyLock<SyntaxSet> = LazyLock::new(SyntaxSet::load_defaults_newlines);
@@ -64,7 +69,7 @@ impl<'a, I> TextWriter<'a, I>
 where
     I: Iterator<Item = Event<'a>>,
 {
-    fn new(iter: I) -> Self {
+    fn new(iter: I, theme: Option<Theme>) -> Self {
         Self {
             iter,
             text: Text::default(),
@@ -75,6 +80,7 @@ where
             needs_newline: false,
             code_highlighter: None,
             link: None,
+            theme,
         }
     }
 
@@ -165,7 +171,7 @@ where
         if self.needs_newline {
             self.push_line(Line::default());
         }
-        self.push_line(Line::default());
+        self.push_line(Line::default().style(styles::p(self.theme.as_ref())));
         self.needs_newline = false;
     }
 
@@ -178,12 +184,12 @@ where
             self.push_line(Line::default());
         }
         let style = match level {
-            HeadingLevel::H1 => styles::H1,
-            HeadingLevel::H2 => styles::H2,
-            HeadingLevel::H3 => styles::H3,
-            HeadingLevel::H4 => styles::H4,
-            HeadingLevel::H5 => styles::H5,
-            HeadingLevel::H6 => styles::H6,
+            HeadingLevel::H1 => styles::h1(self.theme.as_ref()),
+            HeadingLevel::H2 => styles::h2(self.theme.as_ref()),
+            HeadingLevel::H3 => styles::h3(self.theme.as_ref()),
+            HeadingLevel::H4 => styles::h4(self.theme.as_ref()),
+            HeadingLevel::H5 => styles::h5(self.theme.as_ref()),
+            HeadingLevel::H6 => styles::h6(self.theme.as_ref()),
         };
         let content = format!("{} ", "#".repeat(level as usize));
         self.push_line(Line::styled(content, style));
@@ -200,7 +206,7 @@ where
             self.needs_newline = false;
         }
         self.line_prefixes.push(Span::from(">"));
-        self.line_styles.push(styles::BLOCKQUOTE);
+        self.line_styles.push(styles::blockquote(self.theme.as_ref()));
     }
 
     fn end_blockquote(&mut self) {
@@ -243,7 +249,7 @@ where
     }
 
     fn code(&mut self, code: CowStr<'a>) {
-        let span = Span::styled(code, styles::CODE);
+        let span = Span::styled(code, styles::code(self.theme.as_ref()));
         self.push_span(span);
     }
 
@@ -292,7 +298,7 @@ where
             CodeBlockKind::Indented => "",
         };
 
-        self.line_styles.push(styles::CODE);
+        self.line_styles.push(styles::code(self.theme.as_ref()));
 
         self.set_code_highlighter(lang);
 
@@ -379,38 +385,140 @@ where
     fn pop_link(&mut self) {
         if let Some(link) = self.link.take() {
             self.push_span(" (".into());
-            self.push_span(Span::styled(link, styles::LINK));
+            self.push_span(Span::styled(link, styles::link(self.theme.as_ref())));
             self.push_span(")".into());
         }
     }
 }
 
 mod styles {
+    use crate::core::library::settings::theme::Theme;
     use ratatui::style::{Color, Modifier, Style};
 
-    pub const H1: Style = Style::new()
-        .bg(Color::Cyan)
-        .add_modifier(Modifier::BOLD)
-        .add_modifier(Modifier::UNDERLINED);
-    pub const H2: Style = Style::new().fg(Color::Cyan).add_modifier(Modifier::BOLD);
-    pub const H3: Style = Style::new()
-        .fg(Color::Cyan)
-        .add_modifier(Modifier::BOLD)
-        .add_modifier(Modifier::ITALIC);
-    pub const H4: Style = Style::new()
-        .fg(Color::LightCyan)
-        .add_modifier(Modifier::ITALIC);
-    pub const H5: Style = Style::new()
-        .fg(Color::LightCyan)
-        .add_modifier(Modifier::ITALIC);
-    pub const H6: Style = Style::new()
-        .fg(Color::LightCyan)
-        .add_modifier(Modifier::ITALIC);
-    pub const BLOCKQUOTE: Style = Style::new().fg(Color::Green);
-    pub const CODE: Style = Style::new().fg(Color::White).bg(Color::Black);
-    pub const LINK: Style = Style::new()
-        .fg(Color::Blue)
-        .add_modifier(Modifier::UNDERLINED);
+    pub fn p(theme: Option<&Theme>) -> Style {
+        let text_color = if let Some(t) = theme {
+            t.base[0x05]
+        } else {
+            0xffffff
+        };
+
+        Style::new()
+            .fg(Color::from_u32(text_color))
+    }
+
+    pub fn h1(theme: Option<&Theme>) -> Style {
+        let title_color = if let Some(t) = theme {
+            t.base[0x08]
+        } else {
+            0xffffff
+        };
+
+        Style::new()
+            .bg(Color::from_u32(title_color))
+            .add_modifier(Modifier::BOLD)
+            .add_modifier(Modifier::UNDERLINED)
+    }
+
+    pub fn h2(theme: Option<&Theme>) -> Style {
+        let title_color = if let Some(t) = theme {
+            t.base[0x08]
+        } else {
+            0xffffff
+        };
+
+        Style::new()
+            .fg(Color::from_u32(title_color))
+            .add_modifier(Modifier::BOLD)
+    }
+
+    pub fn h3(theme: Option<&Theme>) -> Style {
+        let title_color = if let Some(t) = theme {
+            t.base[0x08]
+        } else {
+            0xffffff
+        };
+
+        Style::new()
+            .fg(Color::from_u32(title_color))
+            .add_modifier(Modifier::BOLD)
+            .add_modifier(Modifier::ITALIC)
+    }
+
+    pub fn h4(theme: Option<&Theme>) -> Style {
+        let title_color = if let Some(t) = theme {
+            t.base[0x09]
+        } else {
+            0xffffff
+        };
+
+        Style::new()
+            .fg(Color::from_u32(title_color))
+            .add_modifier(Modifier::ITALIC)
+    }
+
+    pub fn h5(theme: Option<&Theme>) -> Style {
+        let title_color = if let Some(t) = theme {
+            t.base[0x09]
+        } else {
+            0xffffff
+        };
+
+        Style::new()
+            .fg(Color::from_u32(title_color))
+            .add_modifier(Modifier::ITALIC)
+    }
+
+    pub fn h6(theme: Option<&Theme>) -> Style {
+        let title_color = if let Some(t) = theme {
+            t.base[0x09]
+        } else {
+            0xffffff
+        };
+
+        Style::new()
+            .fg(Color::from_u32(title_color))
+            .add_modifier(Modifier::ITALIC)
+    }
+
+    pub fn blockquote(theme: Option<&Theme>) -> Style {
+        let block_color = if let Some(t) = theme {
+            t.base[0x0a]
+        } else {
+            0xffffff
+        };
+
+        Style::new().fg(Color::from_u32(block_color))
+    }
+
+    pub fn code(theme: Option<&Theme>) -> Style {
+        let code_color = if let Some(t) = theme {
+            t.base[0x0b]
+        } else {
+            0xffffff
+        };
+
+        let code_background = if let Some(t) = theme {
+            t.base[0x02]
+        } else {
+            0x0
+        };
+
+        Style::new()
+            .fg(Color::from_u32(code_color))
+            .bg(Color::from_u32(code_background))
+    }
+
+    pub fn link(theme: Option<&Theme>) -> Style {
+        let link_color = if let Some(t) = theme {
+            t.base[0x08]
+        } else {
+            0xffffff
+        };
+
+        Style::new()
+            .fg(Color::from_u32(link_color))
+            .add_modifier(Modifier::UNDERLINED)
+    }
 }
 
 #[cfg(test)]
@@ -438,12 +546,12 @@ mod tests {
 
     #[rstest]
     fn empty(_with_tracing: DefaultGuard) {
-        assert_eq!(from_str(""), Text::default());
+        assert_eq!(from_str("", None), Text::default());
     }
 
     #[rstest]
     fn paragraph_single(_with_tracing: DefaultGuard) {
-        assert_eq!(from_str("Hello, world!"), Text::from("Hello, world!"));
+        assert_eq!(from_str("Hello, world!", None), Text::from("Hello, world!"));
     }
 
     #[rstest]
@@ -452,7 +560,7 @@ mod tests {
             from_str(indoc! {"
                 Hello
                 World
-            "}),
+            "}, None),
             Text::from_iter(["Hello", "World"])
         );
     }
@@ -464,7 +572,7 @@ mod tests {
                 Paragraph 1
                 
                 Paragraph 2
-            "}),
+            "}, None),
             Text::from_iter(["Paragraph 1", "", "Paragraph 2",])
         );
     }
@@ -479,19 +587,19 @@ mod tests {
                 #### Heading 4
                 ##### Heading 5
                 ###### Heading 6
-            "}),
+            "}, None),
             Text::from_iter([
-                Line::from_iter(["# ", "Heading 1"]).style(styles::H1),
+                Line::from_iter(["# ", "Heading 1"]).style(styles::h1(None)),
                 Line::default(),
-                Line::from_iter(["## ", "Heading 2"]).style(styles::H2),
+                Line::from_iter(["## ", "Heading 2"]).style(styles::h2(None)),
                 Line::default(),
-                Line::from_iter(["### ", "Heading 3"]).style(styles::H3),
+                Line::from_iter(["### ", "Heading 3"]).style(styles::h3(None)),
                 Line::default(),
-                Line::from_iter(["#### ", "Heading 4"]).style(styles::H4),
+                Line::from_iter(["#### ", "Heading 4"]).style(styles::h4(None)),
                 Line::default(),
-                Line::from_iter(["##### ", "Heading 5"]).style(styles::H5),
+                Line::from_iter(["##### ", "Heading 5"]).style(styles::h5(None)),
                 Line::default(),
-                Line::from_iter(["###### ", "Heading 6"]).style(styles::H6),
+                Line::from_iter(["###### ", "Heading 6"]).style(styles::h6(None)),
             ])
         );
     }
@@ -505,19 +613,19 @@ mod tests {
                 Hello, world!
 
                 > Blockquote
-            "}),
+            "}, None),
             Text::from_iter([
                 Line::from("Hello, world!"),
                 Line::default(),
-                Line::from_iter([">", " ", "Blockquote"]).style(styles::BLOCKQUOTE),
+                Line::from_iter([">", " ", "Blockquote"]).style(styles::blockquote(None)),
             ])
         );
     }
     #[rstest]
     fn blockquote_single(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str("> Blockquote"),
-            Text::from(Line::from_iter([">", " ", "Blockquote"]).style(styles::BLOCKQUOTE))
+            from_str("> Blockquote", None),
+            Text::from(Line::from_iter([">", " ", "Blockquote"]).style(styles::blockquote(None)))
         );
     }
 
@@ -527,10 +635,10 @@ mod tests {
             from_str(indoc! {"
                 > Blockquote 1
                 > Blockquote 2
-            "}),
+            "}, None),
             Text::from_iter([
-                Line::from_iter([">", " ", "Blockquote 1"]).style(styles::BLOCKQUOTE),
-                Line::from_iter([">", " ", "Blockquote 2"]).style(styles::BLOCKQUOTE),
+                Line::from_iter([">", " ", "Blockquote 1"]).style(styles::blockquote(None)),
+                Line::from_iter([">", " ", "Blockquote 2"]).style(styles::blockquote(None)),
             ])
         );
     }
@@ -542,11 +650,11 @@ mod tests {
                 > Blockquote 1
                 >
                 > Blockquote 2
-            "}),
+            "}, None),
             Text::from_iter([
-                Line::from_iter([">", " ", "Blockquote 1"]).style(styles::BLOCKQUOTE),
-                Line::from_iter([">", " "]).style(styles::BLOCKQUOTE),
-                Line::from_iter([">", " ", "Blockquote 2"]).style(styles::BLOCKQUOTE),
+                Line::from_iter([">", " ", "Blockquote 1"]).style(styles::blockquote(None)),
+                Line::from_iter([">", " "]).style(styles::blockquote(None)),
+                Line::from_iter([">", " ", "Blockquote 2"]).style(styles::blockquote(None)),
             ])
         );
     }
@@ -558,11 +666,11 @@ mod tests {
                 > Blockquote 1
 
                 > Blockquote 2
-            "}),
+            "}, None),
             Text::from_iter([
-                Line::from_iter([">", " ", "Blockquote 1"]).style(styles::BLOCKQUOTE),
+                Line::from_iter([">", " ", "Blockquote 1"]).style(styles::blockquote(None)),
                 Line::default(),
-                Line::from_iter([">", " ", "Blockquote 2"]).style(styles::BLOCKQUOTE),
+                Line::from_iter([">", " ", "Blockquote 2"]).style(styles::blockquote(None)),
             ])
         );
     }
@@ -573,11 +681,11 @@ mod tests {
             from_str(indoc! {"
                 > Blockquote 1
                 >> Nested Blockquote
-            "}),
+            "}, None),
             Text::from_iter([
-                Line::from_iter([">", " ", "Blockquote 1"]).style(styles::BLOCKQUOTE),
-                Line::from_iter([">", " "]).style(styles::BLOCKQUOTE),
-                Line::from_iter([">", ">", " ", "Nested Blockquote"]).style(styles::BLOCKQUOTE),
+                Line::from_iter([">", " ", "Blockquote 1"]).style(styles::blockquote(None)),
+                Line::from_iter([">", " "]).style(styles::blockquote(None)),
+                Line::from_iter([">", ">", " ", "Nested Blockquote"]).style(styles::blockquote(None)),
             ])
         );
     }
@@ -587,7 +695,7 @@ mod tests {
         assert_eq!(
             from_str(indoc! {"
                 - List item 1
-            "}),
+            "}, None),
             Text::from_iter([Line::from_iter(["- ", "List item 1"])])
         );
     }
@@ -598,7 +706,7 @@ mod tests {
             from_str(indoc! {"
                 - List item 1
                 - List item 2
-            "}),
+            "}, None),
             Text::from_iter([
                 Line::from_iter(["- ", "List item 1"]),
                 Line::from_iter(["- ", "List item 2"]),
@@ -612,7 +720,7 @@ mod tests {
             from_str(indoc! {"
                 1. List item 1
                 2. List item 2
-            "}),
+            "}, None),
             Text::from_iter([
                 Line::from_iter(["1. ".light_blue(), "List item 1".into()]),
                 Line::from_iter(["2. ".light_blue(), "List item 2".into()]),
@@ -626,7 +734,7 @@ mod tests {
             from_str(indoc! {"
                 - List item 1
                   - Nested list item 1
-            "}),
+            "}, None),
             Text::from_iter([
                 Line::from_iter(["- ", "List item 1"]),
                 Line::from_iter(["    - ", "Nested list item 1"]),
@@ -637,7 +745,7 @@ mod tests {
     #[rstest]
     fn strong(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str("**Strong**"),
+            from_str("**Strong**", None),
             Text::from(Line::from("Strong".bold()))
         );
     }
@@ -645,7 +753,7 @@ mod tests {
     #[rstest]
     fn emphasis(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str("*Emphasis*"),
+            from_str("*Emphasis*", None),
             Text::from(Line::from("Emphasis".italic()))
         );
     }
@@ -653,7 +761,7 @@ mod tests {
     #[rstest]
     fn strikethrough(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str("~~Strikethrough~~"),
+            from_str("~~Strikethrough~~", None),
             Text::from(Line::from("Strikethrough".crossed_out()))
         );
     }
@@ -661,7 +769,7 @@ mod tests {
     #[rstest]
     fn strong_emphasis(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str("**Strong *emphasis***"),
+            from_str("**Strong *emphasis***", None),
             Text::from(Line::from_iter([
                 "Strong ".bold(),
                 "emphasis".bold().italic()
@@ -672,7 +780,7 @@ mod tests {
     #[rstest]
     fn link(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str("[Link](https://example.com)"),
+            from_str("[Link](https://example.com)", None),
             Text::from(Line::from_iter([
                 Span::from("Link"),
                 Span::from(" ("),
