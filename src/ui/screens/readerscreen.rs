@@ -16,7 +16,9 @@ use crate::core::{
     library::feedlibrary::FeedLibrary,
     ui::appscreen::{AppScreen, AppScreenEvent},
 };
+use crate::ui::screens::themedialog::ThemeDialog;
 use crate::ui::screens::urldialog::UrlDialog;
+use crate::ui::tools::tuimarkdown;
 
 use super::helpdialog::HelpDialog;
 
@@ -171,14 +173,16 @@ impl AppScreen for ReaderScreen {
 
         // URL
         let date = Paragraph::new(current_entry.url.to_string())
-            .style(Style::new().fg(Color::from_u32(theme.base[0xd])))
+            .style(
+                Style::new().fg(Color::from_u32(theme.base[0xd])), // .add_modifier(Modifier::UNDERLINED),
+            )
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
 
         frame.render_widget(date, contentlayout[2]);
 
         // Content
-        let text = tui_markdown::from_str(&current_entry.text);
+        let text = tuimarkdown::from_str(&current_entry.text, Some(theme.clone()));
         let textheight = text.height() as usize;
 
         // This is a workaround to get more or less the amount of wrapped lines, to be used on the
@@ -269,6 +273,9 @@ impl AppScreen for ReaderScreen {
                 self.decrease_reader_width()?;
                 Ok(AppScreenEvent::None)
             }
+            (_, KeyCode::Char('t')) => Ok(AppScreenEvent::OpenDialog(Box::new(ThemeDialog::new(
+                self.library.clone(),
+            )))),
             (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(HelpDialog::new(
                 self.get_full_instructions(),
             )))),
