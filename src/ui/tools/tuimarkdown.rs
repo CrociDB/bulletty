@@ -19,6 +19,7 @@ use syntect::{
 use tracing::{debug, instrument, warn};
 
 use crate::core::library::settings::theme::Theme;
+use crate::ui::tools::styles;
 
 pub fn from_str(input: &str, theme: Option<Theme>) -> Text {
     let mut options = Options::empty();
@@ -56,6 +57,7 @@ struct TextWriter<'a, I> {
     /// A link which will be appended to the current line when the link tag is closed.
     link: Option<CowStr<'a>>,
 
+    /// True when last element requires a new line
     needs_newline: bool,
 
     /// bulletty Theme
@@ -171,6 +173,7 @@ where
         if self.needs_newline {
             self.push_line(Line::default());
         }
+
         self.push_line(Line::default().style(styles::p(self.theme.as_ref())));
         self.needs_newline = false;
     }
@@ -183,6 +186,7 @@ where
         if self.needs_newline {
             self.push_line(Line::default());
         }
+
         let style = match level {
             HeadingLevel::H1 => styles::h1(self.theme.as_ref()),
             HeadingLevel::H2 => styles::h2(self.theme.as_ref()),
@@ -191,6 +195,7 @@ where
             HeadingLevel::H5 => styles::h5(self.theme.as_ref()),
             HeadingLevel::H6 => styles::h6(self.theme.as_ref()),
         };
+
         let content = format!("{} ", "#".repeat(level as usize));
         self.push_line(Line::styled(content, style));
         self.needs_newline = false;
@@ -391,136 +396,6 @@ where
     }
 }
 
-mod styles {
-    use crate::core::library::settings::theme::Theme;
-    use ratatui::style::{Color, Modifier, Style};
-
-    pub fn p(theme: Option<&Theme>) -> Style {
-        let text_color = if let Some(t) = theme {
-            t.base[0x05]
-        } else {
-            0xffffff
-        };
-
-        Style::new()
-            .fg(Color::from_u32(text_color))
-    }
-
-    pub fn h1(theme: Option<&Theme>) -> Style {
-        let title_color = if let Some(t) = theme {
-            t.base[0x08]
-        } else {
-            0xffffff
-        };
-
-        Style::new()
-            .bg(Color::from_u32(title_color))
-            .add_modifier(Modifier::BOLD)
-            .add_modifier(Modifier::UNDERLINED)
-    }
-
-    pub fn h2(theme: Option<&Theme>) -> Style {
-        let title_color = if let Some(t) = theme {
-            t.base[0x08]
-        } else {
-            0xffffff
-        };
-
-        Style::new()
-            .fg(Color::from_u32(title_color))
-            .add_modifier(Modifier::BOLD)
-    }
-
-    pub fn h3(theme: Option<&Theme>) -> Style {
-        let title_color = if let Some(t) = theme {
-            t.base[0x08]
-        } else {
-            0xffffff
-        };
-
-        Style::new()
-            .fg(Color::from_u32(title_color))
-            .add_modifier(Modifier::BOLD)
-            .add_modifier(Modifier::ITALIC)
-    }
-
-    pub fn h4(theme: Option<&Theme>) -> Style {
-        let title_color = if let Some(t) = theme {
-            t.base[0x09]
-        } else {
-            0xffffff
-        };
-
-        Style::new()
-            .fg(Color::from_u32(title_color))
-            .add_modifier(Modifier::ITALIC)
-    }
-
-    pub fn h5(theme: Option<&Theme>) -> Style {
-        let title_color = if let Some(t) = theme {
-            t.base[0x09]
-        } else {
-            0xffffff
-        };
-
-        Style::new()
-            .fg(Color::from_u32(title_color))
-            .add_modifier(Modifier::ITALIC)
-    }
-
-    pub fn h6(theme: Option<&Theme>) -> Style {
-        let title_color = if let Some(t) = theme {
-            t.base[0x09]
-        } else {
-            0xffffff
-        };
-
-        Style::new()
-            .fg(Color::from_u32(title_color))
-            .add_modifier(Modifier::ITALIC)
-    }
-
-    pub fn blockquote(theme: Option<&Theme>) -> Style {
-        let block_color = if let Some(t) = theme {
-            t.base[0x0a]
-        } else {
-            0xffffff
-        };
-
-        Style::new().fg(Color::from_u32(block_color))
-    }
-
-    pub fn code(theme: Option<&Theme>) -> Style {
-        let code_color = if let Some(t) = theme {
-            t.base[0x0b]
-        } else {
-            0xffffff
-        };
-
-        let code_background = if let Some(t) = theme {
-            t.base[0x02]
-        } else {
-            0x0
-        };
-
-        Style::new()
-            .fg(Color::from_u32(code_color))
-            .bg(Color::from_u32(code_background))
-    }
-
-    pub fn link(theme: Option<&Theme>) -> Style {
-        let link_color = if let Some(t) = theme {
-            t.base[0x08]
-        } else {
-            0xffffff
-        };
-
-        Style::new()
-            .fg(Color::from_u32(link_color))
-            .add_modifier(Modifier::UNDERLINED)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use indoc::indoc;
@@ -551,7 +426,7 @@ mod tests {
 
     #[rstest]
     fn paragraph_single(_with_tracing: DefaultGuard) {
-        assert_eq!(from_str("Hello, world!", None), Text::from("Hello, world!"));
+        assert_eq!(from_str("Hello, world!", None), Text::from(Line::from("Hello, world!").style(styles::p(None))));
     }
 
     #[rstest]
@@ -561,7 +436,7 @@ mod tests {
                 Hello
                 World
             "}, None),
-            Text::from_iter(["Hello", "World"])
+            Text::from(Line::from_iter(["Hello", "World"]).style(styles::p(None)))
         );
     }
 
@@ -573,7 +448,7 @@ mod tests {
                 
                 Paragraph 2
             "}, None),
-            Text::from_iter(["Paragraph 1", "", "Paragraph 2",])
+            Text::from(Line::from_iter(["Paragraph 1", "", "Paragraph 2",]).style(styles::p(None)))
         );
     }
 
@@ -615,7 +490,7 @@ mod tests {
                 > Blockquote
             "}, None),
             Text::from_iter([
-                Line::from("Hello, world!"),
+                Line::from("Hello, world!").style(styles::blockquote(None)),
                 Line::default(),
                 Line::from_iter([">", " ", "Blockquote"]).style(styles::blockquote(None)),
             ])
@@ -746,7 +621,7 @@ mod tests {
     fn strong(_with_tracing: DefaultGuard) {
         assert_eq!(
             from_str("**Strong**", None),
-            Text::from(Line::from("Strong".bold()))
+            Text::from(Line::from("Strong".bold()).style(styles::p(None)))
         );
     }
 
@@ -754,7 +629,7 @@ mod tests {
     fn emphasis(_with_tracing: DefaultGuard) {
         assert_eq!(
             from_str("*Emphasis*", None),
-            Text::from(Line::from("Emphasis".italic()))
+            Text::from(Line::from("Emphasis".italic()).style(styles::p(None)))
         );
     }
 
@@ -762,7 +637,7 @@ mod tests {
     fn strikethrough(_with_tracing: DefaultGuard) {
         assert_eq!(
             from_str("~~Strikethrough~~", None),
-            Text::from(Line::from("Strikethrough".crossed_out()))
+            Text::from(Line::from("Strikethrough".crossed_out()).style(styles::p(None)))
         );
     }
 
@@ -773,7 +648,7 @@ mod tests {
             Text::from(Line::from_iter([
                 "Strong ".bold(),
                 "emphasis".bold().italic()
-            ]))
+            ]).style(styles::p(None)))
         );
     }
 
@@ -784,9 +659,9 @@ mod tests {
             Text::from(Line::from_iter([
                 Span::from("Link"),
                 Span::from(" ("),
-                Span::from("https://example.com").blue().underlined(),
+                Span::from("https://example.com").style(styles::p(None)).underlined(),
                 Span::from(")")
-            ]))
+            ]).style(styles::p(None)))
         );
     }
 }
