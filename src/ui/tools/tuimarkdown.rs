@@ -21,7 +21,7 @@ use tracing::{debug, instrument, warn};
 use crate::core::library::settings::theme::Theme;
 use crate::ui::tools::styles;
 
-pub fn from_str(input: &str, theme: Option<Theme>) -> Text {
+pub fn from_str(input: &str, theme: Option<Theme>) -> Text<'_> {
     let mut options = Options::empty();
     options.insert(Options::ENABLE_STRIKETHROUGH);
     let parser = Parser::new_ext(input, options);
