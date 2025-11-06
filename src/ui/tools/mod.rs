@@ -1,2 +1,2 @@
-pub mod tuimarkdown;
 pub mod styles;
+pub mod tuimarkdown;

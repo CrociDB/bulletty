@@ -211,7 +211,8 @@ where
             self.needs_newline = false;
         }
         self.line_prefixes.push(Span::from(">"));
-        self.line_styles.push(styles::blockquote(self.theme.as_ref()));
+        self.line_styles
+            .push(styles::blockquote(self.theme.as_ref()));
     }
 
     fn end_blockquote(&mut self) {
@@ -291,7 +292,7 @@ where
     }
 
     fn soft_break(&mut self) {
-        self.push_line(Line::default());
+        self.push_line(Line::default().style(styles::p(self.theme.as_ref())));
     }
 
     fn start_codeblock(&mut self, kind: CodeBlockKind<'_>) {
@@ -426,43 +427,62 @@ mod tests {
 
     #[rstest]
     fn paragraph_single(_with_tracing: DefaultGuard) {
-        assert_eq!(from_str("Hello, world!", None), Text::from(Line::from("Hello, world!").style(styles::p(None))));
+        assert_eq!(
+            from_str("Hello, world!", None),
+            Text::from(Line::from("Hello, world!").style(styles::p(None)))
+        );
     }
 
     #[rstest]
     fn paragraph_soft_break(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str(indoc! {"
+            from_str(
+                indoc! {"
                 Hello
                 World
-            "}, None),
-            Text::from(Line::from_iter(["Hello", "World"]).style(styles::p(None)))
+            "},
+                None
+            ),
+            Text::from_iter([
+                Line::from("Hello").style(styles::p(None)),
+                Line::from("World").style(styles::p(None)),
+            ])
         );
     }
 
     #[rstest]
     fn paragraph_multiple(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str(indoc! {"
+            from_str(
+                indoc! {"
                 Paragraph 1
                 
                 Paragraph 2
-            "}, None),
-            Text::from(Line::from_iter(["Paragraph 1", "", "Paragraph 2",]).style(styles::p(None)))
+            "},
+                None
+            ),
+            Text::from_iter([
+                Line::from("Paragraph 1").style(styles::p(None)),
+                Line::default(),
+                Line::from("Paragraph 2").style(styles::p(None))
+            ])
         );
     }
 
     #[rstest]
     fn headings(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str(indoc! {"
+            from_str(
+                indoc! {"
                 # Heading 1
                 ## Heading 2
                 ### Heading 3
                 #### Heading 4
                 ##### Heading 5
                 ###### Heading 6
-            "}, None),
+            "},
+                None
+            ),
             Text::from_iter([
                 Line::from_iter(["# ", "Heading 1"]).style(styles::h1(None)),
                 Line::default(),
@@ -484,11 +504,14 @@ mod tests {
     #[rstest]
     fn blockquote_after_paragraph(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str(indoc! {"
+            from_str(
+                indoc! {"
                 Hello, world!
 
                 > Blockquote
-            "}, None),
+            "},
+                None
+            ),
             Text::from_iter([
                 Line::from("Hello, world!").style(styles::blockquote(None)),
                 Line::default(),
@@ -507,10 +530,13 @@ mod tests {
     #[rstest]
     fn blockquote_soft_break(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str(indoc! {"
+            from_str(
+                indoc! {"
                 > Blockquote 1
                 > Blockquote 2
-            "}, None),
+            "},
+                None
+            ),
             Text::from_iter([
                 Line::from_iter([">", " ", "Blockquote 1"]).style(styles::blockquote(None)),
                 Line::from_iter([">", " ", "Blockquote 2"]).style(styles::blockquote(None)),
@@ -521,11 +547,14 @@ mod tests {
     #[rstest]
     fn blockquote_multiple(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str(indoc! {"
+            from_str(
+                indoc! {"
                 > Blockquote 1
                 >
                 > Blockquote 2
-            "}, None),
+            "},
+                None
+            ),
             Text::from_iter([
                 Line::from_iter([">", " ", "Blockquote 1"]).style(styles::blockquote(None)),
                 Line::from_iter([">", " "]).style(styles::blockquote(None)),
@@ -537,11 +566,14 @@ mod tests {
     #[rstest]
     fn blockquote_multiple_with_break(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str(indoc! {"
+            from_str(
+                indoc! {"
                 > Blockquote 1
 
                 > Blockquote 2
-            "}, None),
+            "},
+                None
+            ),
             Text::from_iter([
                 Line::from_iter([">", " ", "Blockquote 1"]).style(styles::blockquote(None)),
                 Line::default(),
@@ -553,14 +585,18 @@ mod tests {
     #[rstest]
     fn blockquote_nested(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str(indoc! {"
+            from_str(
+                indoc! {"
                 > Blockquote 1
                 >> Nested Blockquote
-            "}, None),
+            "},
+                None
+            ),
             Text::from_iter([
                 Line::from_iter([">", " ", "Blockquote 1"]).style(styles::blockquote(None)),
                 Line::from_iter([">", " "]).style(styles::blockquote(None)),
-                Line::from_iter([">", ">", " ", "Nested Blockquote"]).style(styles::blockquote(None)),
+                Line::from_iter([">", ">", " ", "Nested Blockquote"])
+                    .style(styles::blockquote(None)),
             ])
         );
     }
@@ -568,9 +604,12 @@ mod tests {
     #[rstest]
     fn list_single(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str(indoc! {"
+            from_str(
+                indoc! {"
                 - List item 1
-            "}, None),
+            "},
+                None
+            ),
             Text::from_iter([Line::from_iter(["- ", "List item 1"])])
         );
     }
@@ -578,10 +617,13 @@ mod tests {
     #[rstest]
     fn list_multiple(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str(indoc! {"
+            from_str(
+                indoc! {"
                 - List item 1
                 - List item 2
-            "}, None),
+            "},
+                None
+            ),
             Text::from_iter([
                 Line::from_iter(["- ", "List item 1"]),
                 Line::from_iter(["- ", "List item 2"]),
@@ -592,10 +634,13 @@ mod tests {
     #[rstest]
     fn list_ordered(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str(indoc! {"
+            from_str(
+                indoc! {"
                 1. List item 1
                 2. List item 2
-            "}, None),
+            "},
+                None
+            ),
             Text::from_iter([
                 Line::from_iter(["1. ".light_blue(), "List item 1".into()]),
                 Line::from_iter(["2. ".light_blue(), "List item 2".into()]),
@@ -606,10 +651,13 @@ mod tests {
     #[rstest]
     fn list_nested(_with_tracing: DefaultGuard) {
         assert_eq!(
-            from_str(indoc! {"
+            from_str(
+                indoc! {"
                 - List item 1
                   - Nested list item 1
-            "}, None),
+            "},
+                None
+            ),
             Text::from_iter([
                 Line::from_iter(["- ", "List item 1"]),
                 Line::from_iter(["    - ", "Nested list item 1"]),
@@ -645,10 +693,10 @@ mod tests {
     fn strong_emphasis(_with_tracing: DefaultGuard) {
         assert_eq!(
             from_str("**Strong *emphasis***", None),
-            Text::from(Line::from_iter([
-                "Strong ".bold(),
-                "emphasis".bold().italic()
-            ]).style(styles::p(None)))
+            Text::from(
+                Line::from_iter(["Strong ".bold(), "emphasis".bold().italic()])
+                    .style(styles::p(None))
+            )
         );
     }
 
@@ -656,12 +704,17 @@ mod tests {
     fn link(_with_tracing: DefaultGuard) {
         assert_eq!(
             from_str("[Link](https://example.com)", None),
-            Text::from(Line::from_iter([
-                Span::from("Link"),
-                Span::from(" ("),
-                Span::from("https://example.com").style(styles::p(None)).underlined(),
-                Span::from(")")
-            ]).style(styles::p(None)))
+            Text::from(
+                Line::from_iter([
+                    Span::from("Link"),
+                    Span::from(" ("),
+                    Span::from("https://example.com")
+                        .style(styles::p(None))
+                        .underlined(),
+                    Span::from(")")
+                ])
+                .style(styles::p(None))
+            )
         );
     }
 }
