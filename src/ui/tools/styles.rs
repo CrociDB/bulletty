@@ -103,7 +103,7 @@ pub fn h6(theme: Option<&Theme>) -> Style {
 
 pub fn blockquote(theme: Option<&Theme>) -> Style {
     let block_color = if let Some(t) = theme {
-        t.base[0x0a]
+        t.base[0xc]
     } else {
         0xffffff
     };
