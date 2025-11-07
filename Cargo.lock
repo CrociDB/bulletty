@@ -170,7 +170,7 @@ dependencies = [
  "dirs",
  "document-features",
  "fuzzt",
- "html2md",
+ "html2md-bulletty",
  "indoc",
  "itertools 0.14.0",
  "open",
@@ -821,9 +821,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
-name = "html2md"
+name = "html2md-bulletty"
 version = "0.2.15"
-source = "git+https://gitlab.com/CrociDB/html2md.git?branch=master#537dd6c34d7e0b441563bffa473d6591bd6784e1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "21f4ad474dee27d504da81545cc33b76bc37718fd1dc0741f8da853ad165f875"
 dependencies = [
  "html5ever",
  "jni",

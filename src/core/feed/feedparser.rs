@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
 use color_eyre::eyre::eyre;
-use html2md::parse_html;
+use html2md_bulletty::parse_html;
 use regex::Regex;
 use reqwest::blocking::Client;
 use roxmltree::Node;
