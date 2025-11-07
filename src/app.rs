@@ -77,7 +77,8 @@ impl App {
                 terminal.draw(|frame| {
                     let mainlayout =
                         Layout::vertical([Constraint::Percentage(99), Constraint::Min(3)])
-                            .margin(1)
+                            .horizontal_margin(2)
+                            .vertical_margin(1)
                             .split(frame.area());
 
                     state.render(frame, mainlayout[0]);
