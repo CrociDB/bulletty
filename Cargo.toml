@@ -34,7 +34,7 @@ unicode-width = "0.2.0"
 open = "5.3.2"
 fuzzt = { version = "0.3.1", default-features = false, features = ["levenshtein"] }
 ansi-to-tui = { version = "7.0.0" }
-document-features = { version = "0.2.11" }
+document-features = { version = "0.2.12" }
 itertools = "0.14.0"
 pretty_assertions = "1.4.1"
 pulldown-cmark = "0.13.0"
