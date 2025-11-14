@@ -13,7 +13,7 @@ cat ../README.md >> ./docs/index.md
 cat ./docs/_contributing.md > ./docs/contributing.md
 tail -n +3 ../CONTRIBUTING.md >> ./docs/contributing.md
 
-cp -R ../img ./docs/img
+cp -R ../img ./docs/
 uv venv --clear
 uv tool install mkdocs
 uv pip install mkdocs-material

@@ -1,6 +1,7 @@
 /target
 site/site
-site/docs/img
+site/docs/img/screenshot.gif
+site/docs/img/bulletty.png
 site/docs/index.md
 site/docs/docs/bulletty.md
 site/docs/docs/reference.md
