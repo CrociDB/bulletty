@@ -31,7 +31,7 @@ tracing-subscriber = { version = "0.3", features = [ "env-filter" ] }
 tracing-appender = "0.2"
 tracing-error = "0.2"
 unicode-width = "0.2.0"
-open = "5.3.2"
+open = "5.3.3"
 fuzzt = { version = "0.3.1", default-features = false, features = ["levenshtein"] }
 ansi-to-tui = { version = "7.0.0" }
 document-features = { version = "0.2.12" }
