@@ -30,4 +30,5 @@ nav:
     - Install: 'install.md'
     - Contributing: 'contributing.md'
   - Docs:
+    - CLI Reference: 'docs/cli_reference.md'
     - Reference: 'docs/reference.md'
