@@ -221,7 +221,7 @@ impl LibraryData {
                 entryclone.text = String::new();
 
                 let entrytext = format!(
-                    "---\n{}---\n{}",
+                    "+++\n{}+++\n\n{}",
                     toml::to_string(&entryclone).unwrap_or(String::new()),
                     &entry.text
                 );
@@ -260,7 +260,7 @@ impl LibraryData {
         entryclone.text = String::new();
 
         let entrytext = format!(
-            "---\n{}---\n{}",
+            "+++\n{}+++\n\n{}",
             toml::to_string(&entryclone).unwrap_or_default(),
             &entry.text,
         );
@@ -325,13 +325,20 @@ impl LibraryData {
     }
 
     fn parse_feed_entry(&self, contents: &str, path: &Path) -> color_eyre::Result<FeedEntry> {
-        let parts: Vec<&str> = contents.split("---").collect();
+        let delimiter = if contents.starts_with("---") {
+            "---"
+        } else {
+            "+++"
+        };
+
+        let parts: Vec<&str> = contents.split(delimiter).collect();
         if parts.len() < 3 {
             return Err(eyre!("Invalid feed entry format"));
         }
-        let mut entry: FeedEntry = toml::from_str(parts[1])?;
+
+        let mut entry: FeedEntry = toml::from_str(parts[1].trim())?;
         entry.filepath = path.to_path_buf();
-        entry.text = parts[2..].join("---");
+        entry.text = parts[2..].join(delimiter).trim().to_string();
         Ok(entry)
     }
 
@@ -486,4 +493,68 @@ pub fn load_or_create(path: &Path) {
     std::fs::create_dir_all(datapath).expect("Error: Failed to create datapath directory");
     std::fs::create_dir_all(datapath.join(defs::DATA_CATEGORIES_DIR))
         .expect("Error: Failed to create datapath directory");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_parse_feed_entry_plus_delimiter() {
+        let (ld, _temp) = LibraryData::new_for_test();
+        let content = r#"+++
+title = "Test Entry"
+description = "Description"
+url = "http://example.com"
+date = "2023-01-01T00:00:00Z"
+lastupdated = "2023-01-01T00:00:00Z"
+author = "John Doe"
+text = ""
+seen = false
++++
+
+This is the content."#;
+        let path = Path::new("test.md");
+
+        let result = ld.parse_feed_entry(content, path).unwrap();
+
+        assert_eq!(result.filepath, PathBuf::from("test.md"));
+        assert_eq!(result.text, "This is the content.");
+        assert_eq!(result.title, "Test Entry");
+    }
+
+    #[test]
+    fn test_parse_feed_entry_dash_delimiter() {
+        let (ld, _temp) = LibraryData::new_for_test();
+        let content = r#"---
+title = "Test Entry"
+description = "Description"
+url = "http://example.com"
+date = "2023-01-01T00:00:00Z"
+lastupdated = "2023-01-01T00:00:00Z"
+author = "John Doe"
+text = ""
+seen = false
+---
+
+This is the content."#;
+        let path = Path::new("test.md");
+
+        let result = ld.parse_feed_entry(content, path).unwrap();
+
+        assert_eq!(result.filepath, PathBuf::from("test.md"));
+        assert_eq!(result.text, "This is the content.");
+        assert_eq!(result.title, "Test Entry");
+    }
+
+    #[test]
+    fn test_parse_feed_entry_invalid_format() {
+        let (ld, _temp) = LibraryData::new_for_test();
+        let content = "Invalid content without delimiters";
+        let path = Path::new("test.md");
+
+        let result = ld.parse_feed_entry(content, path);
+        assert!(result.is_err());
+    }
 }
