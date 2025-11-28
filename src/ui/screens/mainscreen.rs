@@ -400,7 +400,19 @@ impl AppScreen for MainScreen {
 
     fn get_full_instructions(&self) -> String {
         String::from(
-            "j/k/↓/↑: move selection\ng/G/Home/End: beginning and end of the list\n</>: change feed column width\n\no: open link externally\nL: add/remove read later\nEnter: select category or read entry\n\nr: toggle item read state\nR: mark all of the items as read\n\nEsc/q: back from entries or quit",
+            r#"j/k/↓/↑: move selection
+               g/G/Home/End: beginning and end of the list
+               </>: change feed column width
+               
+               o: open link externally
+               L: add/remove read later
+               Enter: select category or read entry
+               
+               r: toggle item read state
+               R: mark all of the items as read
+               
+               t: open theme picker
+               Esc/q: back from entries or quit"#,
         )
     }
 }
