@@ -53,7 +53,7 @@ impl AppScreen for HelpDialog {
             .wrap(Wrap { trim: true });
 
         let content = Paragraph::new(self.help_string.to_string())
-            .alignment(Alignment::Center)
+            .alignment(Alignment::Left)
             .wrap(Wrap { trim: true });
 
         frame.render_widget(title, contentlayout[0]);
