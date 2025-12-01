@@ -67,7 +67,7 @@ In general, it supports `j/k/up/down` to select items, navigate and scroll, as w
 
 ## 🏫 Philosophy
 
-The whole idea is bringing back the descentralized internet. You subscribe to the sources you like the most and you get their content whenever it's available. When you get it, it's local, it's yours. **bulletty** will generate a Markdown file of each entry from each source. You can read through the embedded reader, straight from your terminal, or using any text editor.
+The whole idea is bringing back the decentralized internet. You subscribe to the sources you like the most and you get their content whenever it's available. When you get it, it's local, it's yours. **bulletty** will generate a Markdown file of each entry from each source. You can read through the embedded reader, straight from your terminal, or using any text editor.
 
 All your feed data will be at `$HOME/.local/share/bulletty/`, in this structure:
 
@@ -91,7 +91,7 @@ All your feed data will be at `$HOME/.local/share/bulletty/`, in this structure:
 
 ```
 
-All the needs to be done is to synchronize the `bulletty` directory to save your data, similarly to an Obsidian vault.
+All that needs to be done is to synchronize the `bulletty` directory to save your data, similar to an Obsidian vault.
 
 ## 📜 Feature Roadmap
 
