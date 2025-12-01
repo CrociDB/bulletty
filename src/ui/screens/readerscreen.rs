@@ -303,7 +303,15 @@ impl AppScreen for ReaderScreen {
 
     fn get_full_instructions(&self) -> String {
         String::from(
-            "j/k/↓/↑: scroll\ng/G: go to beginning or end of file\n</>: change reader width\n\n n/p: next/previous entry\no: open externally\n\nEsc/q: leave",
+            r#"j/k/↓/↑: scroll
+               g/G: go to beginning or end of file
+               </>: change reader width
+               
+               n/p: next/previous entry
+               o: open externally
+               
+               t: open theme picker
+               Esc/q: leave"#,
         )
     }
 }
