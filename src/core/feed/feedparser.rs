@@ -8,6 +8,7 @@ use reqwest::blocking::Client;
 use roxmltree::Node;
 use slug::slugify;
 use tracing::error;
+use url::Url;
 
 use crate::core::{feed::feedentry::FeedEntry, library::feeditem::FeedItem};
 
@@ -165,7 +166,17 @@ pub fn get_feed_entries_doc(
         // url extraction
         let entryurl = entry
             .descendants()
-            .find(|t| t.tag_name().name() == "id" || t.tag_name().name() == "link")
+            .find(|t| {
+                if t.tag_name().name() == "id"
+                    && let Some(text) = t.text()
+                    && let Ok(url) = Url::parse(text)
+                    && (url.scheme() == "http" || url.scheme() == "https")
+                {
+                    return true;
+                }
+
+                t.tag_name().name() == "link"
+            })
             .and_then(|t| {
                 if t.text().is_none() {
                     t.attribute("href")
@@ -636,5 +647,56 @@ mod tests {
         assert_eq!(b.title, "Item With DC Creator");
         assert_eq!(b.url, "https://example.com/with-dc-creator");
         assert_eq!(b.author, "Dave"); // entry-level <dc:creator> should override channel author
+    }
+
+    #[test]
+    fn get_feed_entries_youtube_style() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+ <link rel="self" href="http://www.youtube.com/feeds/videos.xml?channel_id=channelID"/>
+ <id>yt:channel:rqM0Ym_NbK1fqeQG2VIohg</id>
+ <yt:channelId>rqM0Ym_NbK1fqeQG2VIohg</yt:channelId>
+ <title>Some Youtube Channel</title>
+ <link rel="alternate" href="https://www.youtube.com/channel/SomeYoutubeChannel"/>
+ <author>
+  <name>Some Youtube Author</name>
+  <uri>https://www.youtube.com/channel/SomeYoutubeChannel</uri>
+ </author>
+ <published>2019-01-12T00:02:33+00:00</published>
+ <entry>
+  <id>yt:video:videoId</id>
+  <yt:videoId>videoId</yt:videoId>
+  <yt:channelId>channelId</yt:channelId>
+  <title>Video Title</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=VIDEOID"/>
+  <author>
+   <name>Some Youtube Author</name>
+   <uri>https://www.youtube.com/channel/SomeYoutubeChannel</uri>
+  </author>
+  <published>2025-12-05T13:34:36+00:00</published>
+  <updated>2025-12-05T17:01:19+00:00</updated>
+  <media:group>
+   <media:title>Video Title</media:title>
+   <media:content url="https://www.youtube.com/v/VIDEOID?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i2.ytimg.com/vi/VIDEOID/hqdefault.jpg" width="480" height="360"/>
+   <media:description>This is a description!</media:description>
+   <media:community>
+    <media:starRating count="1012" average="5.00" min="1" max="5"/>
+    <media:statistics views="30006"/>
+   </media:community>
+  </media:group>
+ </entry> 
+</feed>"#;
+
+        let entries = get_feed_entries_doc(xml, "Channel Author")
+            .expect("failed to parse RSS entries with entry-level authors");
+        assert_eq!(entries.len(), 1);
+
+        let entry = &entries[0];
+
+        assert_eq!(entry.title, "Video Title");
+        assert_eq!(entry.url, "https://www.youtube.com/watch?v=VIDEOID");
+        assert_eq!(entry.author, "Some Youtube Author");
+        assert_eq!(entry.description, "This is a description!");
     }
 }
