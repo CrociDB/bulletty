@@ -175,10 +175,22 @@ pub fn get_feed_entries_doc(
                     return true;
                 }
 
+                if t.tag_name().name() == "enclosure"
+                    && let Some(text) = t.attribute("url")
+                    && let Ok(url) = Url::parse(text)
+                    && (url.scheme() == "http" || url.scheme() == "https")
+                {
+                    return true;
+                }
+
                 t.tag_name().name() == "link"
             })
             .and_then(|t| {
                 if t.text().is_none() {
+                    if t.attribute("url").is_some() {
+                        return t.attribute("url");
+                    }
+
                     t.attribute("href")
                 } else {
                     t.text()
@@ -689,7 +701,7 @@ mod tests {
 </feed>"#;
 
         let entries = get_feed_entries_doc(xml, "Channel Author")
-            .expect("failed to parse RSS entries with entry-level authors");
+            .expect("failed to parse feed youtube style");
         assert_eq!(entries.len(), 1);
 
         let entry = &entries[0];
@@ -698,5 +710,43 @@ mod tests {
         assert_eq!(entry.url, "https://www.youtube.com/watch?v=VIDEOID");
         assert_eq!(entry.author, "Some Youtube Author");
         assert_eq!(entry.description, "This is a description!");
+    }
+
+    #[test]
+    fn get_feed_entries_podcast_style() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:googleplay="http://www.google.com/schemas/play-podcasts/1.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <atom:link href="https://podcast_link.com" rel="self" type="application/rss+xml"/>
+    <title>Podcast Title</title>
+    <link>https://podcast_link.com</link>
+    <item>
+      <title>Podcast Entry Title</title>
+      <description>Podcast Entry Description</description>
+      <pubDate>Fri, 05 Dec 2025 18:27:00 -0000</pubDate>
+      <itunes:episodeType>full</itunes:episodeType>
+      <itunes:author>Podcast Author</itunes:author>
+      <itunes:image href="https://podcast_link.com/thumbnail"/>
+      <itunes:subtitle></itunes:subtitle>
+      <itunes:summary>Podcast Entry Description #1</itunes:summary>
+      <content:encoded>Podcast Content Data</content:encoded>
+      <itunes:duration>4634</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <guid isPermaLink="false"><![CDATA[1bae995c-d208-11f0-8bf7-cb6936959f42]]></guid>
+      <enclosure url="https://podcast_link.com/audio" length="0" type="audio/mpeg"/>
+    </item>
+  </channel>
+</rss>"#;
+
+        let entries = get_feed_entries_doc(xml, "Channel Author")
+            .expect("failed to parse feed podcasty style");
+        assert_eq!(entries.len(), 1);
+
+        let entry = &entries[0];
+
+        assert_eq!(entry.title, "Podcast Entry Title");
+        assert_eq!(entry.url, "https://podcast_link.com/audio");
+        assert_eq!(entry.author, "Podcast Author");
+        assert_eq!(entry.description, "Podcast Entry Description");
     }
 }
