@@ -17,7 +17,10 @@ use crate::{
         ui::appscreen::{AppScreen, AppScreenEvent},
     },
     ui::{
-        screens::{readerscreen::ReaderScreen, themedialog::ThemeDialog, urldialog::UrlDialog},
+        screens::{
+            newfeeddialog::NewFeedDialog, readerscreen::ReaderScreen, themedialog::ThemeDialog,
+            urldialog::UrlDialog,
+        },
         states::{
             feedentrystate::FeedEntryState,
             feedtreestate::{FeedItemInfo, FeedTreeState},
@@ -101,6 +104,12 @@ impl MainScreen {
 
     fn open_theme_selector(&self) -> Result<AppScreenEvent> {
         Ok(AppScreenEvent::OpenDialog(Box::new(ThemeDialog::new(
+            self.library.clone(),
+        ))))
+    }
+
+    fn open_new_feed(&self) -> Result<AppScreenEvent> {
+        Ok(AppScreenEvent::OpenDialog(Box::new(NewFeedDialog::new(
             self.library.clone(),
         ))))
     }
@@ -290,6 +299,7 @@ impl AppScreen for MainScreen {
                     Ok(AppScreenEvent::None)
                 }
                 (_, KeyCode::Char('t')) => self.open_theme_selector(),
+                (_, KeyCode::Char('a')) => self.open_new_feed(),
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
                     HelpDialog::new(self.get_full_instructions()),
                 ))),
@@ -372,6 +382,7 @@ impl AppScreen for MainScreen {
                     Ok(AppScreenEvent::None)
                 }
                 (_, KeyCode::Char('t')) => self.open_theme_selector(),
+                (_, KeyCode::Char('a')) => self.open_new_feed(),
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
                     HelpDialog::new(self.get_full_instructions()),
                 ))),
@@ -404,6 +415,7 @@ impl AppScreen for MainScreen {
                g/G/Home/End: beginning and end of the list
                </>: change feed column width
                
+               a: add new feed source
                o: open link externally
                L: add/remove read later
                Enter: select category or read entry
