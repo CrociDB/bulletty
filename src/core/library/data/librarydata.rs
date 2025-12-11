@@ -404,7 +404,8 @@ impl LibraryData {
                 feed_entries.push(fe);
             }
         }
-        Ok(feed_entries)
+
+        Ok(feed_entries.into_iter().rev().collect())
     }
 
     pub fn is_in_read_later(&mut self, file_path: &str) -> color_eyre::Result<bool> {
