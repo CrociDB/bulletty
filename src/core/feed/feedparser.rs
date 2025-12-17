@@ -208,10 +208,10 @@ pub fn get_feed_entries_doc(
                 .unwrap_or("NOTITLE")
                 .to_string(),
             author: entryauthor,
-            url: entryurl,
+            url: entryurl.clone(),
             text: content,
             date: parse_date(&datestr)
-                .map_err(|err| error!("{:?}", err))
+                .map_err(|err| error!("{:?} from {entryurl}", err))
                 .unwrap_or_default(),
             description: desc,
             lastupdated: Utc::now(),
@@ -226,34 +226,88 @@ pub fn get_feed_entries_doc(
 }
 
 fn parse_date(date_str: &str) -> color_eyre::Result<DateTime<Utc>> {
+    let mut errors = Vec::new();
+
     // Attempt to parse as RFC3339 (e.g., "2024-01-01T12:00:00Z" or "2024-01-01T12:00:00+01:00")
-    if let Ok(dt) = DateTime::parse_from_rfc3339(date_str) {
-        return Ok(dt.with_timezone(&Utc));
+    match DateTime::parse_from_rfc3339(date_str) {
+        Ok(dt) => return Ok(dt.with_timezone(&Utc)),
+        Err(e) => {
+            if e.kind() != chrono::format::ParseErrorKind::Invalid {
+                errors.push(format!("RFC3339: {e}, {:?}", e.kind()));
+            }
+        }
     }
 
     // Attempt to parse as RFC2822 (e.g., "Mon, 01 Jan 2024 12:00:00 +0000")
-    if let Ok(dt) = DateTime::parse_from_rfc2822(date_str) {
-        return Ok(dt.with_timezone(&Utc));
+    match DateTime::parse_from_rfc2822(date_str) {
+        Ok(dt) => return Ok(dt.with_timezone(&Utc)),
+        Err(e) => {
+            if e.kind() != chrono::format::ParseErrorKind::Invalid {
+                errors.push(format!("RFC2822: {e}, {:?}", e.kind()));
+            }
+        }
     }
 
     // Attempt to parse a NaiveDateTime with no offset (e.g., "2024-01-01 12:00:00")
     let format_naive_datetime = "%Y-%m-%d %H:%M:%S";
-    if let Ok(naive) = NaiveDateTime::parse_from_str(date_str, format_naive_datetime) {
-        return Ok(DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc));
+    match NaiveDateTime::parse_from_str(date_str, format_naive_datetime) {
+        Ok(naive) => return Ok(DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc)),
+        Err(e) => {
+            if e.kind() != chrono::format::ParseErrorKind::Invalid {
+                errors.push(format!(
+                    "NaiveDateTime ('{format_naive_datetime}'): {e}, {:?}",
+                    e.kind()
+                ));
+            }
+        }
+    }
+
+    // Attempt to parse RFC2822-style without weekday and timezone
+    // e.g. "Sun, 31 August 2025 07:00:00 GMT" -> "31 August 2025 07:00:00"
+    let parts: Vec<&str> = date_str.split_whitespace().collect();
+    if parts.len() >= 5 {
+        let clean_date_str = parts[1..5].join(" ");
+        let format_clean = "%d %B %Y %H:%M:%S";
+        match NaiveDateTime::parse_from_str(&clean_date_str, format_clean) {
+            Ok(dt) => return Ok(DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc)),
+            Err(e) => {
+                if e.kind() != chrono::format::ParseErrorKind::Invalid {
+                    errors.push(format!(
+                        "Cleaned Date ('{clean_date_str}' with '{format_clean}'): {e}, {:?}",
+                        e.kind()
+                    ));
+                }
+            }
+        }
     }
 
     // Attempt to parse a NaiveDate (e.g., "2024-01-01") and set time to midnight UTC
     let format_naive_date = "%Y-%m-%d";
-    if let Ok(naive_date) = NaiveDate::parse_from_str(date_str, format_naive_date)
-        && let Some(naive_datetime) = naive_date.and_hms_opt(0, 0, 0)
-    {
-        Ok(DateTime::<Utc>::from_naive_utc_and_offset(
-            naive_datetime,
-            Utc,
-        ))
-    } else {
-        Err(eyre!("Couldn't parse date: {:?}", date_str))
+    match NaiveDate::parse_from_str(date_str, format_naive_date) {
+        Ok(naive_date) => {
+            if let Some(naive_datetime) = naive_date.and_hms_opt(0, 0, 0) {
+                return Ok(DateTime::<Utc>::from_naive_utc_and_offset(
+                    naive_datetime,
+                    Utc,
+                ));
+            }
+            errors.push(format!("NaiveDate ('{format_naive_date}'): invalid time"));
+        }
+        Err(e) => {
+            if e.kind() != chrono::format::ParseErrorKind::Invalid {
+                errors.push(format!(
+                    "NaiveDate ('{format_naive_date}'): {e}, {:?}",
+                    e.kind()
+                ));
+            }
+        }
     }
+
+    Err(eyre!(
+        "Couldn't parse date: {:?}. Possible errors: {:#?}",
+        date_str,
+        errors
+    ))
 }
 
 fn get_description_content(entry: &Node) -> (String, String) {
@@ -328,12 +382,14 @@ mod tests {
     #[test]
     fn test_parse_date_various_formats() {
         let datetime_strings = [
-            "2024-01-01T12:00:00Z",            // RFC3339 UTC
-            "2024-01-01T13:00:00+01:00",       // RFC3339 with offset
-            "2024-02-29 09:00:00",             // Naive datetime
-            "2023-11-20",                      // Naive date
-            "Mon, 01 Jan 2024 12:00:00 +0000", // RFC2822
-            "Invalid Date String",             // Invalid format
+            "2024-01-01T12:00:00Z",             // RFC3339 UTC
+            "2024-01-01T13:00:00+01:00",        // RFC3339 with offset
+            "2024-02-29 09:00:00",              // Naive datetime
+            "2023-11-20",                       // Naive date
+            "Mon, 01 Jan 2024 12:00:00 +0000",  // RFC2822
+            "Sun, 31 August 2025 07:00:00 GMT", // Full Month
+            "Wed, 02 May 2025 07:00:00 GMT",    // Impossible, as 2025-05-02 was a Friday
+            "Invalid Date String",              // Invalid format
         ];
 
         let expected = [
@@ -350,6 +406,8 @@ mod tests {
             Some(Utc.with_ymd_and_hms(2024, 2, 29, 9, 0, 0).unwrap()),
             Some(Utc.with_ymd_and_hms(2023, 11, 20, 0, 0, 0).unwrap()),
             Some(Utc.with_ymd_and_hms(2024, 1, 1, 12, 0, 0).unwrap()),
+            Some(Utc.with_ymd_and_hms(2025, 8, 31, 7, 0, 0).unwrap()),
+            Some(Utc.with_ymd_and_hms(2025, 5, 2, 7, 0, 0).unwrap()),
             None,
         ];
 
