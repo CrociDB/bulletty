@@ -61,12 +61,17 @@ pub fn save_opml(categories: &[FeedCategory], filename: &str) -> Result<()> {
     for category in categories.iter() {
         let mut text_feeds = String::new();
         for feed in category.feeds.iter() {
-            text_feeds.push_str(&format!("\n            <outline text={:?} title={:?} description={:?} xmlUrl={:?} type=\"rss\" />", feed.title, feed.title, feed.description, feed.feed_url));
+            let title = html_escape::encode_text(&feed.title);
+            let description = html_escape::encode_text(&feed.description);
+
+            text_feeds.push_str(&format!("\n            <outline text={:?} title={:?} description={:?} xmlUrl={:?} type=\"rss\" />", title, title, description, feed.feed_url));
         }
+
+        let title = html_escape::encode_text(&category.title);
 
         text_categories.push_str(&format!(
             "\n        <outline text={:?} title={:?}>{}\n        </outline>",
-            category.title, category.title, text_feeds
+            title, title, text_feeds
         ));
     }
 
