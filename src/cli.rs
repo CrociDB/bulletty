@@ -198,7 +198,7 @@ fn command_dirs(_cli: &Cli) -> color_eyre::Result<()> {
     let config = Config::new();
     let library_path = config.datapath;
 
-    let logs_path = Path::new(&dirs::state_dir().unwrap()).join(defs::LOG_DIR);
+    let logs_path = Path::new(&dirs::data_local_dir().unwrap()).join(defs::LOG_DIR);
 
     println!("bulletty directories");
     println!("\t-> Library: {}", library_path.to_string_lossy());
