@@ -3,13 +3,11 @@ use std::io::{self, Write};
 use clap::{Error, Parser, Subcommand};
 use tracing::{error, info};
 
-use crate::core::defs;
 use crate::core::library::data::config::Config;
 use crate::core::library::data::opml;
 use crate::core::library::feeditem::FeedItem;
 use crate::core::library::feedlibrary::FeedLibrary;
-
-use std::path::Path;
+use crate::logging;
 
 #[derive(Parser)]
 #[command(name = "bulletty")]
@@ -198,7 +196,7 @@ fn command_dirs(_cli: &Cli) -> color_eyre::Result<()> {
     let config = Config::new();
     let library_path = config.datapath;
 
-    let logs_path = Path::new(&dirs::data_local_dir().unwrap()).join(defs::LOG_DIR);
+    let logs_path = logging::logging_dir();
 
     println!("bulletty directories");
     println!("\t-> Library: {}", library_path.to_string_lossy());
