@@ -109,6 +109,16 @@ cd bulletty
 cargo build --release
 ```
 
+### Notes on building on Windows
+
+bulletty requires the `openssl` crate to build, but it's known to be a little complicated to build on Windows. If it fails on a regular build, it's probably because whatever `perl` version it's trying to use is not suitable to build it. In that case, try installing [Strawberry Perl](https://strawberryperl.com/) and make sure that `opensll` uses the one you just install to build:
+
+```powershell
+$env:OPENSSL_SRC_PERL = "C:\Strawberry\perl\bin\perl.exe"
+```
+
+Then `cargo build` should work normally.
+
 ## 👩‍💻 Contributing to bulletty
 
 I am very open for contributions to help make **bulletty** the best feed reader out there. For more information on how to contribute, refer to the **CONTRIBUTING.md**.
