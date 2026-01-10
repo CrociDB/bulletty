@@ -93,6 +93,13 @@ All your feed data will be at `$HOME/.local/share/bulletty/`, in this structure:
 
 All that needs to be done is to synchronize the `bulletty` directory to save your data, similar to an Obsidian vault.
 
+## Third Party Tools
+
+One of the beautiful things of having such an open data storing structure is that people can contribute with external tools that can interact with the bulletty feed library.
+
+ - [**convert_bulletty_to_pdf.py**](https://gist.github.com/thefranke/e7b80eca835275f355fd2f0dbe080e7b): a python script that exports bulletty's _Read Later_ articles into PDF, by @thefranke
+
+
 ## 📜 Feature Roadmap
 
  - Highlight
@@ -100,6 +107,8 @@ All that needs to be done is to synchronize the `bulletty` directory to save you
  - Web view
  - Mouse support
  - Image support
+ - PDF/Epub article export
+
 
 ## 💻 Build
 
