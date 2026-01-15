@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="console-application">
+  <id>dev.croci.bulletty</id>
+  <name>bulletty</name>
+  <summary>A pretty TUI feed reader for RSS and Atom feeds</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <developer id="crocidb">
+    <name>Bruno Croci</name>
+  </developer>
+
+  <description>
+    <p>
+      bulletty is a terminal-based feed reader that supports both RSS and Atom feeds.
+      It stores articles locally as Markdown files, allowing you to read them offline
+      and keep a permanent archive of your favorite content.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Beautiful TUI interface with customizable themes</li>
+      <li>Support for both RSS and Atom feeds</li>
+      <li>Articles stored locally as Markdown files</li>
+      <li>Organize feeds into categories</li>
+      <li>Read Later functionality</li>
+      <li>OPML import and export</li>
+      <li>Fuzzy search across feeds and articles</li>
+      <li>Syntax highlighting for code blocks</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">dev.croci.bulletty.desktop</launchable>
+
+  <url type="homepage">https://bulletty.croci.dev/</url>
+  <url type="bugtracker">https://github.com/CrociDB/bulletty/issues</url>
+  <url type="vcs-browser">https://github.com/CrociDB/bulletty</url>
+
+  <provides>
+    <binary>bulletty</binary>
+  </provides>
+
+  <categories>
+    <category>Network</category>
+    <category>News</category>
+    <category>ConsoleOnly</category>
+  </categories>
+
+  <keywords>
+    <keyword>RSS</keyword>
+    <keyword>Atom</keyword>
+    <keyword>Feed</keyword>
+    <keyword>Reader</keyword>
+    <keyword>News</keyword>
+    <keyword>TUI</keyword>
+    <keyword>Terminal</keyword>
+    <keyword>Markdown</keyword>
+  </keywords>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>bulletty main interface showing feed list and article preview</caption>
+      <image type="source">https://raw.githubusercontent.com/CrociDB/bulletty/main/img/screenshot.gif</image>
+    </screenshot>
+  </screenshots>
+
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release version="0.2.1" date="2026-01-15">
+      <description>
+        <p>This is the first official release of bulletty in 2026!</p>
+        <ul>
+          <li>feat: markdown toml metadata should be separated by +++ by @CrociDB in #100</li>
+          <li>fix: youtube channel url was not getting fetched correctly by @CrociDB in #108</li>
+          <li>readme: fix some typos by @tshepang in #101</li>
+          <li>Show theme picker in help by @mchernigin in #102</li>
+          <li>bug: podcast download link not available by @CrociDB in #109</li>
+          <li>fix: log being generated in Windows and Mac by @DeveloperPaul123 in #114</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+</component>

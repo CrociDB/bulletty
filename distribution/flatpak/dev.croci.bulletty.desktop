@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=bulletty
+Comment=A pretty TUI feed reader (RSS+ATOM) that stores articles locally as Markdown files
+Exec=bulletty
+Icon=dev.croci.bulletty
+Terminal=true
+Type=Application
+Categories=Network;News;ConsoleOnly;
+Keywords=RSS;Atom;Feed;Reader;News;TUI;
+StartupNotify=false
