@@ -2,25 +2,25 @@
   <img src="img/bulletty.png" alt="bulletty" />
 </p>
 <h1 align="center">bulletty</h1>
-<p align="center">The TUI RSS/ATOM feed reader that lets you decide where to store your data.</p>
+<p align="center">The TUI RSS/Atom feed reader that lets you decide where to store your data.</p>
 
 <p align="center">
   <img src="img/screenshot.gif" alt="bulletty" />
 </p>
 
-**bulletty** is a TUI feed reader (RSS and ATOM). Read your subscriptions within your terminal. It downloads the entries for offline reading so all the data is local and yours: your subscriptions, highlights, comments, etc. All in an universal format: Markdown. Backup and sync your `data` directory your own way. 
+**bulletty** is a TUI feed reader and aggregator (RSS and Atom). Read your subscriptions directly in your terminal. It downloads the entries for offline reading so all the data is local and yours: your subscriptions, highlights, comments, etc. All in a universal format: Markdown. Back up and sync your `data` directory your own way. 
 
 It's in active development.
 
 ## 🔨 Features
 
- - Subscribe to **RSS** and **ATOM** feed types
+ - Subscribe to **RSS** and **Atom** feed types
  - All your feed sources and entries are stored in Markdown in one place: `$HOME/.local/share/bulletty/`
- - Download entries automatically
+ - Automatically download new entries
  - Add articles to the **Read Later** category
- - Read the articles with the embedded Markdown reader
+ - Read articles with the embedded cozy Markdown reader
  - Import/export **OPML** feed list
- - Supports multiple beautiful colorful **Themes**
+ - Supports multiple beautiful colorful **themes**
 
 ## 🚀 Install
 
@@ -38,20 +38,20 @@ cargo install bulletty
 
 **bulletty** runs in most platforms, however there are some pre-requisites to have it run the best way possible:
 
-- Use a modern terminal emulator such as **Kitty**, **Ghostty**, **Alacritty**, **WezTerm**, **Windows Terminal**, etc. They provide modern features and true color support, on top of being really fast and usually hardware-redered
+- Use a modern terminal emulator such as **Kitty**, **Ghostty**, **Alacritty**, **WezTerm**, **Windows Terminal**, etc. They provide modern features and true color support, and are usually very fast and hardware-rendered
 - Use a [NerdFont](http://nerdfonts.com/). They are patched versions of common coding fonts with several icons
 
 ## 🚄 Usage
 
 ### 🗞️ Adding new feed sources
 
-For now, you can only add new feed sources through the CLI:
+For now, you can only add new feed sources via the CLI:
 
 ```shell
 bulletty add https://crocidb.com/index.xml [Category]
 ```
 
-If no category is passed, the feed source will be added to the `General` category. **bulletty** will syncronize all your sources when you open the TUI, by just invoking `bulletty`.
+If no category is passed, the feed source will be added to the `General` category. **bulletty** will synchronize all your sources when you open the TUI, by just invoking `bulletty`.
 
 More on the CLI commands with:
 
@@ -63,11 +63,20 @@ bulletty help
 
 On any screen, you can press question mark `?` and it will show you the available commands for that screen. Also, on the bottom right, it shows the most important commands for that context.
 
-In general, it supports `j/k/up/down` to select items, navigate and scroll, as well as `g/G/Home/End` to go to the begginning/end of a list or file and `Enter` and `q/Esc` to navigate into and out of Categories and Entries. In order to open an Entry externally, press `o`.
+In general, it supports `j/k/up/down` to select items, navigate and scroll, as well as `g/G/Home/End` to go to the beginning/end of a list or file and `Enter` and `q/Esc` to navigate into and out of Categories and Entries. In order to open an Entry externally, press `o`.
+
+## 💌 Don't know what to subscribe to?
+
+[HN Personal Websites](https://hnpwd.github.io/) is a good repository of blogs that constantly show up on [Hacker News](https://news.ycombinator.com/). Subscribing to all of them is simple:
+
+```shell
+wget https://hnpwd.github.io/pwd.opml
+bulletty import pwd.opml
+```
 
 ## 🏫 Philosophy
 
-The whole idea is bringing back the decentralized internet. You subscribe to the sources you like the most and you get their content whenever it's available. When you get it, it's local, it's yours. **bulletty** will generate a Markdown file of each entry from each source. You can read through the embedded reader, straight from your terminal, or using any text editor.
+The whole idea is to help bring back the decentralized internet. You subscribe to the sources you like the most and you get their content whenever it's available. When you get it, it's local, it's yours. **bulletty** will generate a Markdown file of each entry from each source. You can read through the embedded reader, directly in your terminal, or using any text editor.
 
 All your feed data will be at `$HOME/.local/share/bulletty/`, in this structure:
 
@@ -93,9 +102,9 @@ All your feed data will be at `$HOME/.local/share/bulletty/`, in this structure:
 
 All that needs to be done is to synchronize the `bulletty` directory to save your data, similar to an Obsidian vault.
 
-## Third Party Tools
+## ✂️ Third Party Tools
 
-One of the beautiful things of having such an open data storing structure is that people can contribute with external tools that can interact with the bulletty feed library.
+One of the nice things about this open data structure is that people can build external tools that interact with the bulletty feed library.
 
  - [**convert_bulletty_to_pdf.py**](https://gist.github.com/thefranke/e7b80eca835275f355fd2f0dbe080e7b): a python script that exports bulletty's _Read Later_ articles into PDF, by @thefranke
 
@@ -120,7 +129,7 @@ cargo build --release
 
 ### Notes on building on Windows
 
-bulletty requires the `openssl` crate to build, but it's known to be a little complicated to build on Windows. If it fails on a regular build, it's probably because whatever `perl` version it's trying to use is not suitable to build it. In that case, try installing [Strawberry Perl](https://strawberryperl.com/) and make sure that `opensll` uses the one you just install to build:
+bulletty requires the `openssl` crate to build, but it's known to be a little complicated to build on Windows. If it fails on a regular build, it's probably because whatever `perl` version it's trying to use is not suitable to build it. In that case, try installing [Strawberry Perl](https://strawberryperl.com/) and make sure that `openssl` uses the one you just install to build:
 
 ```powershell
 $env:OPENSSL_SRC_PERL = "C:\Strawberry\perl\bin\perl.exe"
@@ -130,7 +139,7 @@ Then `cargo build` should work normally.
 
 ## 👩‍💻 Contributing to bulletty
 
-I am very open for contributions to help make **bulletty** the best feed reader out there. For more information on how to contribute, refer to the **CONTRIBUTING.md**.
+I am very open to contributions to help make **bulletty** the best feed reader out there. For more information on how to contribute, refer to the **CONTRIBUTING.md**.
 
 ## 📃 License
 
