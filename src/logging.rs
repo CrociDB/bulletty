@@ -3,12 +3,14 @@ use std::path::{Path, PathBuf};
 use tracing_appender::{non_blocking::WorkerGuard, rolling};
 
 /// Get the logging directory for the app if it exists.
+#[cfg(target_os = "linux")]
 pub(crate) fn logging_dir() -> Option<PathBuf> {
-    if let Some(log_base_dir) = dirs::data_local_dir() {
-        Some(Path::new(&log_base_dir).join(defs::LOG_DIR))
-    } else {
-        None
-    }
+    dirs::state_dir().map(|log_base_dir| Path::new(&log_base_dir).join(defs::LOG_DIR))
+}
+
+#[cfg(not(target_os = "linux"))]
+pub(crate) fn logging_dir() -> Option<PathBuf> {
+    dirs::data_local_dir().map(|log_base_dir| Path::new(&log_base_dir).join(defs::LOG_DIR))
 }
 
 /// Initialize logging setup.

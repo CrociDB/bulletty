@@ -1,7 +1,6 @@
 use std::io::{self, Write};
 
 use clap::{Error, Parser, Subcommand};
-use color_eyre::eyre::eyre;
 use tracing::{error, info};
 
 use crate::core::library::data::config::Config;
@@ -197,15 +196,14 @@ fn command_dirs(_cli: &Cli) -> color_eyre::Result<()> {
     let config = Config::new();
     let library_path = config.datapath;
 
+    println!("bulletty directories");
+    println!("\t-> Library: {}", library_path.to_string_lossy());
+
     if let Some(logs_path) = logging::logging_dir() {
-        println!("bulletty directories");
-        println!("\t-> Library: {}", library_path.to_string_lossy());
         println!("\t-> Logs:    {}", logs_path.to_string_lossy());
-        Ok(())
-    } else {
-        // Propagate the error up
-        Err(eyre!("Logging directory is invalid."))
     }
+
+    Ok(())
 }
 
 fn command_import(_cli: &Cli, opml_file: &str) -> color_eyre::Result<()> {
