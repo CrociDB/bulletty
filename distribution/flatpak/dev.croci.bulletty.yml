@@ -1,6 +1,6 @@
 app-id: dev.croci.bulletty
 runtime: org.freedesktop.Platform
-runtime-version: '24.08'
+runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
@@ -14,7 +14,7 @@ finish-args:
   # Access to user data directory for storing feeds and articles
   - --filesystem=xdg-data/bulletty:create
   # Access to user state directory for logs
-  - --filesystem=xdg-state/bulletty_logs:create
+  - --filesystem=~/.local/state/bulletty_logs:create
 
 build-options:
   append-path: /usr/lib/sdk/rust-stable/bin
@@ -39,6 +39,4 @@ modules:
         path: dev.croci.bulletty.desktop
       - type: file
         path: dev.croci.bulletty.metainfo.xml
-      # Generated sources will be added here by flatpak-cargo-generator.py
-      # Run: python3 flatpak-cargo-generator.py ../../Cargo.lock -o cargo-sources.json
-      # Then add: - cargo-sources.json
+      - cargo-sources.json
