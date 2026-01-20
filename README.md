@@ -70,7 +70,7 @@ In general, it supports `j/k/up/down` to select items, navigate and scroll, as w
 [HN Personal Websites](https://hnpwd.github.io/) is a good repository of blogs that constantly show up on [Hacker News](https://news.ycombinator.com/). Subscribing to all of them is simple:
 
 ```shell
-wget https://hnpwd.github.io/pwd.opml
+wget https://hnpwd.github.io/hnpwd.opml
 bulletty import pwd.opml
 ```
 
