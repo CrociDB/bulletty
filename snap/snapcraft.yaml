@@ -1,0 +1,42 @@
+name: bulletty
+base: core24
+version: '0.2.1'
+summary: A pretty TUI feed reader (RSS+ATOM) that stores articles locally as Markdown
+description: |
+  bulletty is a terminal-based feed reader that supports both RSS and Atom feeds.
+  It stores articles locally as Markdown files, allowing you to read them offline
+  and keep a permanent archive of your favorite content.
+
+  Features:
+  - Beautiful TUI interface with customizable themes
+  - Support for both RSS and Atom feeds
+  - Articles stored locally as Markdown files
+  - Organize feeds into categories
+  - Read Later functionality
+  - OPML import and export
+
+grade: stable
+confinement: strict
+
+platforms:
+  amd64:
+  arm64:
+
+apps:
+  bulletty:
+    command: bin/bulletty
+    plugs:
+      - network
+      - home
+
+parts:
+  bulletty:
+    plugin: rust
+    source: .
+    source-type: git
+    build-packages:
+      - pkg-config
+      - libssl-dev
+      - perl
+      - make
+    rust-channel: stable
