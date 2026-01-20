@@ -140,3 +140,13 @@ pub fn link(theme: Option<&Theme>) -> Style {
         .fg(Color::from_u32(link_color))
         .add_modifier(Modifier::UNDERLINED)
 }
+
+pub fn metadata(theme: Option<&Theme>) -> Style {
+    let metadata_color = if let Some(t) = theme {
+        t.base[0x0a]
+    } else {
+        0xffffff
+    };
+
+    Style::new().fg(Color::from_u32(metadata_color))
+}

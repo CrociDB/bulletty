@@ -10,7 +10,7 @@ use itertools::{Itertools, Position};
 use pulldown_cmark::{
     BlockQuoteKind, CodeBlockKind, CowStr, Event, HeadingLevel, Options, Parser, Tag, TagEnd,
 };
-use ratatui::style::{Style, Stylize};
+use ratatui::style::Style;
 use ratatui::text::{Line, Span, Text};
 use syntect::{
     easy::HighlightLines,
@@ -26,10 +26,61 @@ use crate::ui::tools::styles;
 pub fn from_str(input: &str, theme: Option<Theme>) -> Text<'_> {
     let mut options = Options::empty();
     options.insert(Options::ENABLE_STRIKETHROUGH);
+    options.insert(Options::ENABLE_TASKLISTS);
+    options.insert(Options::ENABLE_HEADING_ATTRIBUTES);
+    options.insert(Options::ENABLE_YAML_STYLE_METADATA_BLOCKS);
+    options.insert(Options::ENABLE_SUPERSCRIPT);
+    options.insert(Options::ENABLE_SUBSCRIPT);
     let parser = Parser::new_ext(input, options);
     let mut writer = TextWriter::new(parser, theme);
     writer.run();
     writer.text
+}
+
+// Heading attributes collected from pulldown-cmark to render after the heading text.
+struct HeadingMeta<'a> {
+    id: Option<CowStr<'a>>,
+    classes: Vec<CowStr<'a>>,
+    attrs: Vec<(CowStr<'a>, Option<CowStr<'a>>)>,
+}
+
+impl<'a> HeadingMeta<'a> {
+    fn into_option(self) -> Option<Self> {
+        let has_id = self.id.is_some();
+        let has_classes = !self.classes.is_empty();
+        let has_attrs = !self.attrs.is_empty();
+        if has_id || has_classes || has_attrs {
+            Some(self)
+        } else {
+            None
+        }
+    }
+
+    // Format as a Markdown attribute block suffix, e.g. "{#id .class key=value}".
+    fn to_suffix(&self) -> Option<String> {
+        let mut parts = Vec::new();
+
+        if let Some(id) = &self.id {
+            parts.push(format!("#{}", id));
+        }
+
+        for class in &self.classes {
+            parts.push(format!(".{}", class));
+        }
+
+        for (key, value) in &self.attrs {
+            match value {
+                Some(value) => parts.push(format!("{}={}", key, value)),
+                None => parts.push(key.to_string()),
+            }
+        }
+
+        if parts.is_empty() {
+            None
+        } else {
+            Some(format!(" {{{}}}", parts.join(" ")))
+        }
+    }
 }
 
 struct TextWriter<'a, I> {
@@ -62,6 +113,12 @@ struct TextWriter<'a, I> {
     /// The current image to be closed
     image: Option<CowStr<'a>>,
 
+    /// Heading attributes to append after heading content.
+    heading_meta: Option<HeadingMeta<'a>>,
+
+    /// Whether we are inside a metadata block.
+    in_metadata_block: bool,
+
     /// True when last element requires a new line
     needs_newline: bool,
 
@@ -88,6 +145,8 @@ where
             code_highlighter: None,
             link: None,
             image: None,
+            heading_meta: None,
+            in_metadata_block: false,
             theme,
         }
     }
@@ -111,8 +170,8 @@ where
             Event::FootnoteReference(_) => warn!("Footnote reference not yet supported"),
             Event::SoftBreak => self.soft_break(),
             Event::HardBreak => self.hard_break(),
-            Event::Rule => warn!("Rule not yet supported"),
-            Event::TaskListMarker(_) => warn!("Task list marker not yet supported"),
+            Event::Rule => self.rule(),
+            Event::TaskListMarker(checked) => self.task_list_marker(checked),
             Event::InlineMath(_) => warn!("Inline math not yet supported"),
             Event::DisplayMath(_) => warn!("Display math not yet supported"),
         }
@@ -121,7 +180,12 @@ where
     fn start_tag(&mut self, tag: Tag<'a>) {
         match tag {
             Tag::Paragraph => self.start_paragraph(),
-            Tag::Heading { level, .. } => self.start_heading(level),
+            Tag::Heading {
+                level,
+                id,
+                classes,
+                attrs,
+            } => self.start_heading(level, HeadingMeta { id, classes, attrs }),
             Tag::BlockQuote(kind) => self.start_blockquote(kind),
             Tag::CodeBlock(kind) => self.start_codeblock(kind),
             Tag::HtmlBlock => warn!("Html block not yet supported"),
@@ -135,8 +199,8 @@ where
             Tag::Emphasis => self.push_inline_style(Style::new().italic()),
             Tag::Strong => self.push_inline_style(Style::new().bold()),
             Tag::Strikethrough => self.push_inline_style(Style::new().crossed_out()),
-            Tag::Subscript => warn!("Subscript not yet supported"),
-            Tag::Superscript => warn!("Superscript not yet supported"),
+            Tag::Subscript => self.push_inline_style(Style::new().dim().italic()),
+            Tag::Superscript => self.push_inline_style(Style::new().dim().italic()),
             Tag::Link { dest_url, .. } => self.push_link(dest_url),
             Tag::Image {
                 link_type,
@@ -144,7 +208,7 @@ where
                 title,
                 ..
             } => self.push_image(link_type, dest_url, title),
-            Tag::MetadataBlock(_) => warn!("Metadata block not yet supported"),
+            Tag::MetadataBlock(_) => self.start_metadata_block(),
             Tag::DefinitionList => warn!("Definition list not yet supported"),
             Tag::DefinitionListTitle => warn!("Definition list title not yet supported"),
             Tag::DefinitionListDefinition => warn!("Definition list definition not yet supported"),
@@ -168,11 +232,11 @@ where
             TagEnd::Emphasis => self.pop_inline_style(),
             TagEnd::Strong => self.pop_inline_style(),
             TagEnd::Strikethrough => self.pop_inline_style(),
-            TagEnd::Subscript => {}
-            TagEnd::Superscript => {}
+            TagEnd::Subscript => self.pop_inline_style(),
+            TagEnd::Superscript => self.pop_inline_style(),
             TagEnd::Link => self.pop_link(),
             TagEnd::Image => self.pop_image(),
-            TagEnd::MetadataBlock(_) => {}
+            TagEnd::MetadataBlock(_) => self.end_metadata_block(),
             TagEnd::DefinitionList => {}
             TagEnd::DefinitionListTitle => {}
             TagEnd::DefinitionListDefinition => {}
@@ -193,7 +257,7 @@ where
         self.needs_newline = true
     }
 
-    fn start_heading(&mut self, level: HeadingLevel) {
+    fn start_heading(&mut self, level: HeadingLevel, heading_meta: HeadingMeta<'a>) {
         if self.needs_newline {
             self.push_line(Line::default());
         }
@@ -209,10 +273,16 @@ where
 
         let content = format!("{} ", "#".repeat(level as usize));
         self.push_line(Line::styled(content, style));
+        self.heading_meta = heading_meta.into_option();
         self.needs_newline = false;
     }
 
     fn end_heading(&mut self) {
+        if let Some(meta) = self.heading_meta.take() {
+            if let Some(suffix) = meta.to_suffix() {
+                self.push_span(Span::styled(suffix, Style::new().dim()));
+            }
+        }
         self.needs_newline = true
     }
 
@@ -274,6 +344,33 @@ where
         self.push_line(Line::default());
     }
 
+    fn start_metadata_block(&mut self) {
+        if self.needs_newline {
+            self.push_line(Line::default());
+        }
+        self.line_styles.push(styles::metadata(self.theme.as_ref()));
+        self.push_line(Line::from("---"));
+        self.push_line(Line::default());
+        self.in_metadata_block = true;
+    }
+
+    fn end_metadata_block(&mut self) {
+        if self.in_metadata_block {
+            self.push_line(Line::from("---"));
+            self.line_styles.pop();
+            self.in_metadata_block = false;
+            self.needs_newline = true;
+        }
+    }
+
+    fn rule(&mut self) {
+        if self.needs_newline {
+            self.push_line(Line::default());
+        }
+        self.push_line(Line::from("---"));
+        self.needs_newline = true;
+    }
+
     fn start_list(&mut self, index: Option<u64>) {
         if self.list_indices.is_empty() && self.needs_newline {
             self.push_line(Line::default());
@@ -305,8 +402,43 @@ where
         self.needs_newline = false;
     }
 
+    fn task_list_marker(&mut self, checked: bool) {
+        let marker = if checked { 'x' } else { ' ' };
+        let marker_span = Span::from(format!("[{}] ", marker));
+        if let Some(line) = self.text.lines.last_mut() {
+            if let Some(first_span) = line.spans.first_mut() {
+                let content = first_span.content.to_mut();
+                if content.ends_with("• ") {
+                    let len = content.len();
+                    content.truncate(len - 4); // "• " is 4 bytes
+                    content.push_str("• [");
+                    content.push(marker);
+                    content.push_str("] ");
+                    return;
+                }
+
+                // Check for numbered list format
+                if content.ends_with(". ") {
+                    let len = content.len();
+                    content.truncate(len - 1);
+                    content.push_str(" [");
+                    content.push(marker);
+                    content.push_str("] ");
+                    return;
+                }
+            }
+            line.spans.insert(1, marker_span);
+        } else {
+            self.push_span(marker_span);
+        }
+    }
+
     fn soft_break(&mut self) {
-        self.push_line(Line::default().style(styles::p(self.theme.as_ref())));
+        if self.in_metadata_block {
+            self.hard_break();
+        } else {
+            self.push_line(Line::default().style(styles::p(self.theme.as_ref())));
+        }
     }
 
     fn start_codeblock(&mut self, kind: CodeBlockKind<'_>) {
@@ -413,9 +545,9 @@ where
     #[instrument(level = "trace", skip(self))]
     fn push_image(
         &mut self,
-        link_type: pulldown_cmark::LinkType,
+        _link_type: pulldown_cmark::LinkType,
         dest_url: CowStr<'a>,
-        title: CowStr<'a>,
+        _title: CowStr<'a>,
     ) {
         self.image = Some(dest_url);
         let text = "[Image: ";
@@ -437,6 +569,7 @@ where
 mod tests {
     use indoc::indoc;
     use pretty_assertions::assert_eq;
+    use ratatui::style::{Color, Stylize};
     use rstest::{fixture, rstest};
     use tracing::level_filters::LevelFilter;
     use tracing::subscriber::{self, DefaultGuard};
@@ -492,13 +625,36 @@ mod tests {
             from_str(
                 indoc! {"
                 Paragraph 1
-                
+
                 Paragraph 2
             "},
                 None
             ),
             Text::from_iter([
                 Line::from("Paragraph 1").style(styles::p(None)),
+                Line::default(),
+                Line::from("Paragraph 2").style(styles::p(None))
+            ])
+        );
+    }
+
+    #[rstest]
+    fn rule(_with_tracing: DefaultGuard) {
+        assert_eq!(
+            from_str(
+                indoc! {"
+                Paragraph 1
+
+                ---
+
+                Paragraph 2
+            "},
+                None
+            ),
+            Text::from_iter([
+                Line::from("Paragraph 1").style(styles::p(None)),
+                Line::default(),
+                Line::from("---"),
                 Line::default(),
                 Line::from("Paragraph 2").style(styles::p(None))
             ])
@@ -723,6 +879,19 @@ mod tests {
     }
 
     #[rstest]
+    fn list_task_items(_with_tracing: DefaultGuard) {
+        let result = from_str(
+            indoc! {"
+                - [ ] Incomplete
+                - [x] Complete
+            "},
+            None,
+        );
+        // Just verify it parses without error and has the right number of lines
+        assert_eq!(result.lines.len(), 2);
+    }
+
+    #[rstest]
     fn strong(_with_tracing: DefaultGuard) {
         assert_eq!(
             from_str("**Strong**", None),
@@ -754,6 +923,59 @@ mod tests {
                 Line::from_iter(["Strong ".bold(), "emphasis".bold().italic()])
                     .style(styles::p(None))
             )
+        );
+    }
+
+    #[rstest]
+    fn superscript(_with_tracing: DefaultGuard) {
+        assert_eq!(
+            from_str("H ^2^ O", None),
+            Text::from(
+                Line::from_iter([
+                    Span::from("H "),
+                    Span::styled("2", Style::new().dim().italic()),
+                    Span::from(" O"),
+                ])
+                .fg(Color::Rgb(255, 255, 255))
+            )
+        );
+    }
+
+    #[rstest]
+    fn subscript(_with_tracing: DefaultGuard) {
+        assert_eq!(
+            from_str("H ~2~ O", None),
+            Text::from(
+                Line::from_iter([
+                    Span::from("H "),
+                    Span::styled("2", Style::new().dim().italic()),
+                    Span::from(" O"),
+                ])
+                .fg(Color::Rgb(255, 255, 255))
+            )
+        );
+    }
+
+    #[rstest]
+    fn metadata_block(_with_tracing: DefaultGuard) {
+        assert_eq!(
+            from_str(
+                indoc! {"
+                ---
+                title: Demo
+                ---
+
+                Body
+            "},
+                None
+            ),
+            Text::from_iter([
+                Line::from("---").style(Style::new().fg(Color::Rgb(255, 255, 255))),
+                Line::from("title: Demo").style(Style::new().fg(Color::Rgb(255, 255, 255))),
+                Line::from("---").style(Style::new().fg(Color::Rgb(255, 255, 255))),
+                Line::default(),
+                Line::from("Body").fg(Color::Rgb(255, 255, 255)),
+            ])
         );
     }
 

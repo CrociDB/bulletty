@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use ratatui::{
-    style::{Color, Style, Stylize},
+    style::{Color, Style},
     text::{Line, Span, Text},
     widgets::{ListItem, ListState},
 };
