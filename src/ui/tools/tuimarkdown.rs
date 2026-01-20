@@ -278,10 +278,10 @@ where
     }
 
     fn end_heading(&mut self) {
-        if let Some(meta) = self.heading_meta.take() {
-            if let Some(suffix) = meta.to_suffix() {
-                self.push_span(Span::styled(suffix, Style::new().dim()));
-            }
+        if let Some(meta) = self.heading_meta.take()
+            && let Some(suffix) = meta.to_suffix()
+        {
+            self.push_span(Span::styled(suffix, Style::new().dim()));
         }
         self.needs_newline = true
     }

@@ -202,7 +202,7 @@ impl AppScreen for MainScreen {
             .block(treestyle)
             .highlight_style(treeselectionstyle);
 
-        let mut treestate = self.feedtreestate.listatate.clone();
+        let mut treestate = self.feedtreestate.listatate;
         frame.render_stateful_widget(treelist, chunks[0], &mut treestate);
 
         // The feed entries
@@ -210,7 +210,7 @@ impl AppScreen for MainScreen {
         self.feedentrystate
             .update(&mut self.library.borrow_mut(), &self.feedtreestate);
 
-        let mut entryliststate = self.feedentrystate.listatate.clone();
+        let mut entryliststate = self.feedentrystate.listatate;
 
         let entryselectionstyle = if self.inputstate == MainInputState::Content {
             Style::default()
