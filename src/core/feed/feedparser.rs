@@ -10,7 +10,10 @@ use slug::slugify;
 use tracing::error;
 use url::Url;
 
-use crate::core::{feed::feedentry::FeedEntry, library::feeditem::FeedItem};
+use crate::core::{
+    feed::{feedentry::FeedEntry, feedutils},
+    library::feeditem::FeedItem,
+};
 
 pub fn get_feed_with_data(url: &str) -> color_eyre::Result<(FeedItem, String)> {
     let client = Client::builder()
@@ -45,9 +48,9 @@ fn parse(doc: &str, feed_url: &str) -> color_eyre::Result<FeedItem> {
     feed.title = feed_tag
         .descendants()
         .find(|t| t.tag_name().name() == "title")
-        .and_then(|t| t.text().map(|s| s.trim()))
-        .unwrap_or("")
-        .to_string();
+        .and_then(|t| t.text())
+        .map(|s| feedutils::normalize_and_truncate(s, 256))
+        .unwrap_or_default();
 
     feed.description = feed_tag
         .descendants()
@@ -205,8 +208,8 @@ pub fn get_feed_entries_doc(
                 .descendants()
                 .find(|t| t.tag_name().name() == "title")
                 .and_then(|t| t.text())
-                .unwrap_or("NOTITLE")
-                .to_string(),
+                .map(|s| feedutils::normalize_and_truncate(s, 256))
+                .unwrap_or_default(),
             author: entryauthor,
             url: entryurl.clone(),
             text: content,
