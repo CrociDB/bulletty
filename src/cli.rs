@@ -1,4 +1,5 @@
 use std::io::{self, Write};
+use std::path::PathBuf;
 
 use clap::{Error, Parser, Subcommand};
 use tracing::{error, info};
@@ -37,7 +38,10 @@ pub enum Commands {
         ident: String,
     },
     /// Show important directories
-    Dirs,
+    Dirs {
+        #[command(subcommand)]
+        subcmd: Option<DirsCommands>,
+    },
     /// Import a list of feed sources through OPML
     Import {
         /// The filepath of the OPML file
@@ -50,6 +54,17 @@ pub enum Commands {
     },
 }
 
+#[derive(Subcommand)]
+pub enum DirsCommands {
+    /// Show or update the library path
+    Library {
+        /// New path for the library directory
+        path: Option<PathBuf>,
+    },
+    /// Show the logs directory
+    Logs,
+}
+
 pub fn run_main_cli(cli: Cli) -> color_eyre::Result<()> {
     info!("Initializing CLI");
 
@@ -58,7 +73,7 @@ pub fn run_main_cli(cli: Cli) -> color_eyre::Result<()> {
         Some(Commands::Add { url, category }) => command_add(&cli, url, category),
         Some(Commands::Update) => command_update(&cli),
         Some(Commands::Delete { ident }) => command_delete(&cli, ident),
-        Some(Commands::Dirs) => command_dirs(&cli),
+        Some(Commands::Dirs { subcmd }) => command_dirs(&cli, subcmd),
         Some(Commands::Import { opml_file }) => command_import(&cli, opml_file),
         Some(Commands::Export { opml_file }) => command_export(&cli, opml_file),
         None => Ok(()),
@@ -192,15 +207,78 @@ fn command_delete(_cli: &Cli, ident: &str) -> color_eyre::Result<()> {
     Ok(())
 }
 
-fn command_dirs(_cli: &Cli) -> color_eyre::Result<()> {
-    let config = Config::new();
-    let library_path = config.datapath;
+fn command_dirs(_cli: &Cli, subcmd: &Option<DirsCommands>) -> color_eyre::Result<()> {
+    match subcmd {
+        Some(DirsCommands::Library { path }) => command_dirs_library(path),
+        Some(DirsCommands::Logs) => command_dirs_logs(),
+        None => {
+            let config = Config::new();
+            let library_path = config.datapath;
 
-    println!("bulletty directories");
-    println!("\t-> Library: {}", library_path.to_string_lossy());
+            println!("bulletty directories");
+            println!("\t-> Library: {}", library_path.to_string_lossy());
 
-    if let Some(logs_path) = logging::logging_dir() {
-        println!("\t-> Logs:    {}", logs_path.to_string_lossy());
+            if let Some(logs_path) = logging::logging_dir() {
+                println!("\t-> Logs:    {}", logs_path.to_string_lossy());
+            }
+
+            Ok(())
+        }
+    }
+}
+
+fn command_dirs_library(path: &Option<PathBuf>) -> color_eyre::Result<()> {
+    let mut config = Config::new();
+
+    match path {
+        Some(new_path) => {
+            if !new_path.exists() {
+                println!(
+                    "Error: path '{}' does not exist",
+                    new_path.to_string_lossy()
+                );
+                std::process::exit(1);
+            }
+
+            if !new_path.is_dir() {
+                println!(
+                    "Error: path '{}' is not a directory",
+                    new_path.to_string_lossy()
+                );
+                std::process::exit(1);
+            }
+
+            let absolute_path = new_path.canonicalize().unwrap_or_else(|e| {
+                println!(
+                    "Error: failed to resolve path '{}': {}",
+                    new_path.to_string_lossy(),
+                    e
+                );
+                std::process::exit(1);
+            });
+
+            config.datapath = absolute_path.clone();
+            config.save();
+            println!(
+                "Library path updated to: {}",
+                absolute_path.to_string_lossy()
+            );
+        }
+        None => {
+            println!("{}", config.datapath.to_string_lossy());
+        }
+    }
+
+    Ok(())
+}
+
+fn command_dirs_logs() -> color_eyre::Result<()> {
+    match logging::logging_dir() {
+        Some(logs_path) => println!("{}", logs_path.to_string_lossy()),
+        None => {
+            println!("Error: logs directory not available");
+            std::process::exit(1);
+        }
     }
 
     Ok(())

@@ -21,6 +21,30 @@ impl Default for Config {
 }
 
 impl Config {
+    pub fn save(&self) {
+        if let Some(config_dir) = dirs::config_dir() {
+            let config_file = Path::new(&config_dir)
+                .join(defs::CONFIG_PATH)
+                .join(defs::CONFIG_FILE);
+
+            match toml::to_string(self) {
+                Ok(toml_string) => {
+                    if let Err(e) = fs::write(&config_file, toml_string) {
+                        error!("Failed to write config file: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+                Err(e) => {
+                    error!("Failed to serialize config: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        } else {
+            error!("No config dir");
+            std::process::exit(1);
+        }
+    }
+
     pub fn new() -> Self {
         if let Some(config_dir) = dirs::config_dir() {
             let config_file = Path::new(&config_dir)
