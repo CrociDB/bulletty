@@ -1,5 +1,4 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc, time::Duration};
 
 use color_eyre::eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
@@ -104,6 +103,10 @@ impl AppScreen for ThemeDialog {
     }
 
     fn handle_events(&mut self) -> Result<AppScreenEvent> {
+        if !event::poll(Duration::from_millis(100))? {
+            return Ok(AppScreenEvent::None);
+        }
+
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => self.handle_keypress(key),
             Event::Mouse(_) => Ok(AppScreenEvent::None),
