@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, str::FromStr};
 
 use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
 use color_eyre::eyre::eyre;
@@ -11,7 +11,7 @@ use tracing::error;
 use url::Url;
 
 use crate::core::{
-    feed::{feedentry::FeedEntry, feedutils},
+    feed::{feedentry::FeedEntry, feedutils, html},
     library::feeditem::FeedItem,
 };
 
@@ -31,6 +31,17 @@ pub fn get_feed_with_data(url: &str) -> color_eyre::Result<(FeedItem, String)> {
     }
 
     let body = response.text()?;
+
+    // If the response is HTML try to follow metadata feed links
+    if html::is_html(&body) {
+        let url = Url::from_str(url)?; // Fails with same error as the reqwest send() above
+        const MAXIMUM_FEEDS: usize = 3;
+        return html::extract_embedded_feed_urls(&body, &url, MAXIMUM_FEEDS)?
+            .into_iter()
+            .find_map(|feed_url| get_feed_with_data(&feed_url).ok())
+            .ok_or_else(|| eyre!("No embedded RSS/Atom feed links found at \"{url}\""));
+    }
+
     Ok((parse(&body, url)?, body))
 }
 
