@@ -31,10 +31,14 @@ pub fn get_opml_feeds(filename: &str) -> Result<Vec<OpmlFeed>> {
                 opml_feeds.push(feed);
             }
         } else {
-            let title = o.attribute("title").unwrap_or("");
+            let title = o
+                .attribute("title")
+                .or_else(|| o.attribute("text"))
+                .map(|s| s.to_string());
+
             let feeds: Vec<OpmlFeed> = o
                 .children()
-                .map(|c| get_opml_feed(&c, Some(title.to_string())))
+                .map(|c| get_opml_feed(&c, title.clone()))
                 .filter_map(Result::ok)
                 .collect();
 
