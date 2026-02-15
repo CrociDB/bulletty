@@ -71,7 +71,7 @@ In general, it supports `j/k/up/down` to select items, navigate and scroll, as w
 
 ```shell
 wget https://hnpwd.github.io/hnpwd.opml
-bulletty import pwd.opml
+bulletty import hnpwd.opml
 ```
 
 ## 🏫 Philosophy
