@@ -69,22 +69,22 @@ This reference is based on the GitHub Dark Dimmed theme:
 
 <details>
   <summary><b>👀 Preview</b></summary>
+  <div align="center">
     <figure>
+      <figcaption><i>Main Screen</i></figcaption>
       <img
         alt="Main Screen"
         src="https://github.com/user-attachments/assets/9e583491-9b6f-4000-8f05-3982e763f963"
       />
-      <br />
-      <figcaption><i>Main Screen</i></figcaption>
     </figure>
     <figure>
+      <figcaption><i>Reader Screen</i></figcaption>
       <img
         alt="Reader Screen"
         src="https://github.com/user-attachments/assets/12b2a895-6e13-46de-9a84-468a5b1e86f8"
       />
-      <br />
-      <figcaption><i>Reader Screen</i></figcaption>
     </figure>
+  </div>
 </details>
 
 ## 🔗 Base16 Compatibility
