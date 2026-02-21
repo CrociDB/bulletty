@@ -67,10 +67,8 @@ This reference is based on the GitHub Dark Dimmed theme:
 | `base0E` | `#00ff00` | Reserved                                      |
 | `base0F` | `#00ff00` | Reserved                                      |
 
-
 <details>
-  <summary>
-    <b>👀 Preview</b>
+  <summary><b>👀 Preview</b></summary>
     <figure>
       <img
         alt="Main Screen"
@@ -87,7 +85,6 @@ This reference is based on the GitHub Dark Dimmed theme:
       <br />
       <figcaption><i>Reader Screen</i></figcaption>
     </figure>
-  </summary>
 </details>
 
 ## 🔗 Base16 Compatibility
