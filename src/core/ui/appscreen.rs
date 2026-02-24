@@ -1,5 +1,5 @@
 use color_eyre::Result;
-use crossterm::event::KeyEvent;
+use crossterm::event::{Event, KeyEvent};
 use ratatui::{Frame, layout::Rect};
 
 use crate::app::AppWorkStatus;
@@ -26,7 +26,7 @@ pub trait AppScreen {
     fn unpause(&mut self);
 
     fn render(&mut self, frame: &mut Frame, area: Rect);
-    fn handle_events(&mut self) -> Result<AppScreenEvent>;
+    fn handle_event(&mut self, event: Event) -> Result<AppScreenEvent>;
     fn handle_keypress(&mut self, key: KeyEvent) -> Result<AppScreenEvent>;
 
     fn get_work_status(&self) -> AppWorkStatus;

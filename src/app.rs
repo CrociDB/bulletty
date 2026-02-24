@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::VecDeque, rc::Rc};
+use std::{cell::RefCell, collections::VecDeque, rc::Rc, time::Duration};
 
 use color_eyre::{Result, eyre};
 use ratatui::{
@@ -36,6 +36,7 @@ pub struct App {
     current_state: Option<Box<dyn AppScreen>>,
     states_queue: VecDeque<Box<dyn AppScreen>>,
     dialog_queue: VecDeque<Box<dyn Dialog>>,
+    event_poll_timeout: Duration,
 }
 
 impl Default for App {
@@ -53,6 +54,7 @@ impl App {
             current_state: None,
             states_queue: VecDeque::<Box<dyn AppScreen>>::new(),
             dialog_queue: VecDeque::<Box<dyn Dialog>>::new(),
+            event_poll_timeout: Duration::from_millis(100),
         }
     }
 
@@ -158,33 +160,39 @@ impl App {
                 })?;
 
                 // Checking the dialog or the state events
-                let event = if let Some(dialog) = self.dialog_queue.get_mut(0) {
-                    dialog.as_screen_mut().handle_events()?
-                } else {
-                    state.handle_events()?
+                let event_available =
+                    crossterm::event::poll(self.event_poll_timeout).unwrap_or(true);
+                if event_available {
+                    let terminal_event = crossterm::event::read()?;
+
+                    let screen = if let Some(dialog) = self.dialog_queue.get_mut(0) {
+                        dialog.as_screen_mut()
+                    } else {
+                        state.as_mut()
+                    };
+
+                    match screen.handle_event(terminal_event)? {
+                        AppScreenEvent::None => {}
+
+                        AppScreenEvent::ChangeState(app_state) => {
+                            self.change_state(app_state);
+                        }
+                        AppScreenEvent::ExitState => {
+                            self.exit_state();
+                        }
+
+                        AppScreenEvent::OpenDialog(app_state) => {
+                            self.open_dialog(app_state);
+                        }
+                        AppScreenEvent::CloseDialog => {
+                            self.close_current_dialog();
+                        }
+
+                        AppScreenEvent::ExitApp => {
+                            self.running = false;
+                        }
+                    }
                 };
-
-                match event {
-                    AppScreenEvent::None => {}
-
-                    AppScreenEvent::ChangeState(app_state) => {
-                        self.change_state(app_state);
-                    }
-                    AppScreenEvent::ExitState => {
-                        self.exit_state();
-                    }
-
-                    AppScreenEvent::OpenDialog(app_state) => {
-                        self.open_dialog(app_state);
-                    }
-                    AppScreenEvent::CloseDialog => {
-                        self.close_current_dialog();
-                    }
-
-                    AppScreenEvent::ExitApp => {
-                        self.running = false;
-                    }
-                }
             } else {
                 self.running = false;
                 return Err(eyre::eyre!("No current AppState"));
