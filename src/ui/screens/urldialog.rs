@@ -62,7 +62,7 @@ impl AppScreen for UrlDialog {
     }
 
     fn handle_events(&mut self) -> Result<AppScreenEvent> {
-        if !event::poll(Duration::from_millis(100))? {
+        if !event::poll(Duration::from_millis(100)).unwrap_or(true) {
             return Ok(AppScreenEvent::None);
         }
 
