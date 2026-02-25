@@ -14,7 +14,10 @@ use crate::{
     core::{
         feed::feedentry::FeedEntry,
         library::feedlibrary::FeedLibrary,
-        ui::appscreen::{AppScreen, AppScreenEvent},
+        ui::{
+            appscreen::{AppScreen, AppScreenEvent},
+            notification::{AppNotification, NotificationPriority},
+        },
     },
     ui::{
         screens::{readerscreen::ReaderScreen, themedialog::ThemeDialog, urldialog::UrlDialog},
@@ -105,15 +108,19 @@ impl MainScreen {
         ))))
     }
 
-    fn toggle_read_later(&mut self, entry: &FeedEntry) {
+    fn toggle_read_later(&mut self, entry: &FeedEntry) -> bool {
         let file_path = entry.filepath.to_str().unwrap_or_default();
 
         if self.library.borrow_mut().is_in_read_later(file_path) {
             if let Err(e) = self.library.borrow_mut().remove_from_read_later(file_path) {
                 error!("Failed to remove from read later: {:?}", e);
             }
-        } else if let Err(e) = self.library.borrow_mut().add_to_read_later(entry) {
-            error!("Failed to add entry to read later: {:?}", e);
+            false
+        } else {
+            if let Err(e) = self.library.borrow_mut().add_to_read_later(entry) {
+                error!("Failed to add entry to read later: {:?}", e);
+            }
+            true
         }
     }
 
@@ -279,7 +286,10 @@ impl AppScreen for MainScreen {
                 }
                 (_, KeyCode::Char('R')) => {
                     self.set_all_read();
-                    Ok(AppScreenEvent::None)
+                    Ok(AppScreenEvent::Notify(AppNotification::new(
+                        "All marked as Read",
+                        NotificationPriority::Low,
+                    )))
                 }
                 (_, KeyCode::Char('>')) => {
                     self.increase_tree_width()?;
@@ -340,13 +350,27 @@ impl AppScreen for MainScreen {
                 }
                 (_, KeyCode::Char('r')) => {
                     if let Some(entry) = self.feedentrystate.get_selected() {
+                        let was_seen = entry.seen;
                         self.library.borrow_mut().data.toggle_entry_seen(&entry);
+                        let message = if was_seen {
+                            "Marked as Unread"
+                        } else {
+                            "Marked as Read"
+                        };
+                        Ok(AppScreenEvent::Notify(AppNotification::new(
+                            message,
+                            NotificationPriority::Low,
+                        )))
+                    } else {
+                        Ok(AppScreenEvent::None)
                     }
-                    Ok(AppScreenEvent::None)
                 }
                 (_, KeyCode::Char('R')) => {
                     self.set_all_read();
-                    Ok(AppScreenEvent::None)
+                    Ok(AppScreenEvent::Notify(AppNotification::new(
+                        "All marked as Read",
+                        NotificationPriority::Low,
+                    )))
                 }
                 (_, KeyCode::Char('>')) => {
                     self.increase_tree_width()?;
@@ -366,10 +390,19 @@ impl AppScreen for MainScreen {
                 }
                 (_, KeyCode::Char('L')) => {
                     if let Some(entry) = self.feedentrystate.get_selected() {
-                        self.toggle_read_later(&entry);
+                        let added = self.toggle_read_later(&entry);
+                        let message = if added {
+                            "Added to Read Later"
+                        } else {
+                            "Removed from Read Later"
+                        };
+                        Ok(AppScreenEvent::Notify(AppNotification::new(
+                            message,
+                            NotificationPriority::Low,
+                        )))
+                    } else {
+                        Ok(AppScreenEvent::None)
                     }
-
-                    Ok(AppScreenEvent::None)
                 }
                 (_, KeyCode::Char('t')) => self.open_theme_selector(),
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(

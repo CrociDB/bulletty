@@ -4,6 +4,8 @@ use ratatui::{Frame, layout::Rect};
 
 use crate::app::AppWorkStatus;
 
+use super::notification::AppNotification;
+
 use super::dialog::Dialog;
 
 pub enum AppScreenEvent {
@@ -14,6 +16,8 @@ pub enum AppScreenEvent {
 
     OpenDialog(Box<dyn Dialog>),
     CloseDialog,
+
+    Notify(AppNotification),
 
     ExitApp,
 }

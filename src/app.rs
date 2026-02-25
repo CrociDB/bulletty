@@ -14,6 +14,7 @@ use crate::{
         ui::{
             appscreen::{AppScreen, AppScreenEvent},
             dialog::Dialog,
+            notification::{AppNotification, NotificationPriority},
         },
     },
     ui::screens::mainscreen::MainScreen,
@@ -30,12 +31,33 @@ impl AppWorkStatus {
     }
 }
 
+/// Linearly interpolates between two u32 colors (0x00RRGGBB format).
+/// `t` ranges from 0.0 (returns `bg`) to 1.0 (returns `fg`).
+fn interpolate_color(fg: u32, bg: u32, t: f32) -> Color {
+    let t = t.clamp(0.0, 1.0);
+
+    let fg_r = ((fg >> 16) & 0xFF) as f32;
+    let fg_g = ((fg >> 8) & 0xFF) as f32;
+    let fg_b = (fg & 0xFF) as f32;
+
+    let bg_r = ((bg >> 16) & 0xFF) as f32;
+    let bg_g = ((bg >> 8) & 0xFF) as f32;
+    let bg_b = (bg & 0xFF) as f32;
+
+    let r = (bg_r + (fg_r - bg_r) * t).round() as u8;
+    let g = (bg_g + (fg_g - bg_g) * t).round() as u8;
+    let b = (bg_b + (fg_b - bg_b) * t).round() as u8;
+
+    Color::Rgb(r, g, b)
+}
+
 pub struct App {
     running: bool,
     library: Rc<RefCell<FeedLibrary>>,
     current_state: Option<Box<dyn AppScreen>>,
     states_queue: VecDeque<Box<dyn AppScreen>>,
     dialog_queue: VecDeque<Box<dyn Dialog>>,
+    active_notification: Option<AppNotification>,
     event_poll_timeout: Duration,
 }
 
@@ -54,6 +76,7 @@ impl App {
             current_state: None,
             states_queue: VecDeque::<Box<dyn AppScreen>>::new(),
             dialog_queue: VecDeque::<Box<dyn Dialog>>::new(),
+            active_notification: None,
             event_poll_timeout: Duration::from_millis(100),
         }
     }
@@ -75,6 +98,14 @@ impl App {
             };
 
             let work_status = self.get_work_status();
+
+            // Expire notification if its duration has elapsed
+            if let Some(ref notif) = self.active_notification {
+                if notif.is_expired() {
+                    self.active_notification = None;
+                }
+            }
+
             if let Some(state) = self.current_state.as_mut() {
                 terminal.draw(|frame| {
                     let mainlayout =
@@ -121,8 +152,38 @@ impl App {
 
                     frame.render_widget(instructions_text, statusline[2]);
 
-                    // work status
-                    if let AppWorkStatus::Working(percentage, description) = work_status {
+                    // work status / notification display
+                    // Priority: High notification > Working > Low notification
+                    let is_working = matches!(work_status, AppWorkStatus::Working(_, _));
+                    let show_notification = match &self.active_notification {
+                        Some(notif) => match notif.priority {
+                            NotificationPriority::High => true,
+                            NotificationPriority::Low => !is_working,
+                        },
+                        None => false,
+                    };
+
+                    if show_notification {
+                        if let Some(ref notif) = self.active_notification {
+                            let (icon, fg_color) = match notif.priority {
+                                NotificationPriority::High => {
+                                    ("\u{f06a}", theme.base[0x8]) // exclamation circle
+                                }
+                                NotificationPriority::Low => {
+                                    ("\u{f0f3}", theme.base[0x9]) // bell
+                                }
+                            };
+
+                            let fade = notif.fade_ratio();
+                            let color = interpolate_color(fg_color, theme.base[0x0], fade);
+
+                            let notification_text =
+                                Paragraph::new(format!("{icon} {}", notif.message))
+                                    .style(Style::default().fg(color))
+                                    .alignment(ratatui::layout::Alignment::Center);
+                            frame.render_widget(notification_text, statusline[1]);
+                        }
+                    } else if let AppWorkStatus::Working(percentage, description) = work_status {
                         let gauge = Gauge::default()
                             .gauge_style(
                                 Style::default()
@@ -186,6 +247,10 @@ impl App {
                         }
                         AppScreenEvent::CloseDialog => {
                             self.close_current_dialog();
+                        }
+
+                        AppScreenEvent::Notify(notification) => {
+                            self.active_notification = Some(notification);
                         }
 
                         AppScreenEvent::ExitApp => {
