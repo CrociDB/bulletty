@@ -39,7 +39,7 @@ impl Updater {
                         .update_feed_entries(&category.title, feed, None)
                     {
                         error!("Something happened when updating {}: {:?}", &feed.title, e);
-                        break;
+                        continue;
                     }
 
                     info!("Updated {}", &feed.title);
