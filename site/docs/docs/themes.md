@@ -84,8 +84,6 @@ Code, Vim, Alacritty, etc.) to **bulletty**.
 
 To adapt an existing `base16` theme:
 
-> [!NOTE]
->
 > Most `base16` theme files are written in **YAML**. **bulletty** uses **TOML**.
 > YAML uses `:` to associate keys and values, while TOML uses `=`. That's a
 > conversion you'll need to perform when adapting a `base16` theme.
