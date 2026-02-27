@@ -1,3 +1,11 @@
+---
+title: Themes Reference
+summary:
+  Guide to creating and using TOML-based Base16 color themes for the bulletty
+  RSS reader
+show_datetime: false
+---
+
 **bulletty** RSS reader supports customizable color themes using the `base16`
 color scheme format. This document explains how themes work and how to create
 your own.
