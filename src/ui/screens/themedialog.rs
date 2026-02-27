@@ -1,8 +1,7 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use color_eyre::eyre::Result;
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::layout::{Alignment, Constraint, Layout, Margin, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{
@@ -103,8 +102,8 @@ impl AppScreen for ThemeDialog {
         frame.render_stateful_widget(scrollbar, chunks[1], &mut scrollbarstate);
     }
 
-    fn handle_events(&mut self) -> Result<AppScreenEvent> {
-        match event::read()? {
+    fn handle_event(&mut self, event: Event) -> Result<AppScreenEvent> {
+        match event {
             Event::Key(key) if key.kind == KeyEventKind::Press => self.handle_keypress(key),
             Event::Mouse(_) => Ok(AppScreenEvent::None),
             Event::Resize(_, _) => Ok(AppScreenEvent::None),

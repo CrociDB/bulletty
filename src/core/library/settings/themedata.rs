@@ -86,6 +86,33 @@ pub fn get_themes() -> HashMap<String, Theme> {
         },
     );
     m.insert(
+        "GitHub Dark Dimmed".to_string(),
+        Theme {
+            scheme: "GitHub Dark Dimmed".to_string(),
+            author: "Juan David Merchan Torres (NikolaM-Dev)".to_string(),
+            base00: "1e232a".to_string(),
+            base01: "1e232a".to_string(),
+            base02: "212830".to_string(),
+            base03: "545d68".to_string(),
+            base04: "768390".to_string(),
+            base05: "adbac7".to_string(),
+            base06: "adbac7".to_string(),
+            base07: "00ff00".to_string(),
+            base08: "539bf5".to_string(),
+            base09: "f69d50".to_string(),
+            base0A: "00ff00".to_string(),
+            base0B: "00ff00".to_string(),
+            base0C: "8ddb8c".to_string(),
+            base0D: "bc7cff".to_string(),
+            base0E: "00ff00".to_string(),
+            base0F: "00ff00".to_string(),
+            base: [
+                1975082, 1975082, 2172976, 5528936, 7766928, 11385543, 11385543, 65280, 5479413,
+                16162128, 65280, 65280, 9296780, 12352767, 65280, 65280,
+            ],
+        },
+    );
+    m.insert(
         "Nord".to_string(),
         Theme {
             scheme: "Nord".to_string(),
