@@ -31,4 +31,5 @@ nav:
     - Contributing: 'contributing.md'
   - Docs:
     - CLI Reference: 'docs/cli_reference.md'
+    - Themes: 'docs/themes.md'
     - Reference: 'docs/reference.md'
