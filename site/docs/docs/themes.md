@@ -1,16 +1,6 @@
-<h1 align="center">🎨 Themes</h1>
-
-<details><summary>👉 Table of Contents</summary>
-
-- [📝 Theme File Format](#-theme-file-format)
-- [🎯 Color Reference](#-color-reference)
-- [🔗 Base16 Compatibility](#-base16-compatibility)
-
-</details>
-
-Bulletty RSS reader supports customizable color themes using the Base16 color
-scheme format. This document explains how themes work and how to create your
-own.
+**bulletty** RSS reader supports customizable color themes using the `base16`
+color scheme format. This document explains how themes work and how to create
+your own.
 
 ## 📝 Theme File Format
 
@@ -67,34 +57,26 @@ This reference is based on the GitHub Dark Dimmed theme:
 | `base0E` | `#00ff00` | Reserved                                      |
 | `base0F` | `#00ff00` | Reserved                                      |
 
-<details>
-  <summary><b>👀 Preview</b></summary>
-  <div align="center">
-    <figure>
-      <figcaption><i>Main Screen</i></figcaption>
-      <img
-        alt="Main Screen"
-        src="https://github.com/user-attachments/assets/9e583491-9b6f-4000-8f05-3982e763f963"
-      />
-    </figure>
-    <figure>
-      <figcaption><i>Reader Screen</i></figcaption>
-      <img
-        alt="Reader Screen"
-        src="https://github.com/user-attachments/assets/12b2a895-6e13-46de-9a84-468a5b1e86f8"
-      />
-    </figure>
-  </div>
-</details>
+## 👀 Preview
+
+**Main Screen**
+
+![Main Screen](https://github.com/user-attachments/assets/9e583491-9b6f-4000-8f05-3982e763f963)
+
+**Reader Screen**
+
+![Reader Screen](https://github.com/user-attachments/assets/12b2a895-6e13-46de-9a84-468a5b1e86f8)
 
 ## 🔗 Base16 Compatibility
 
-Bulletty RSS Reader uses the [Base16](https://github.com/chriskempson/base16)
-color scheme standard. This means you can adapt colors from any
-`base16`-compatible editor theme (VS Code, Vim, Alacritty, etc.) to Bulletty.
+**bulletty** RSS Reader uses the
+[base16](https://github.com/chriskempson/base16) color scheme standard. This
+means you can adapt colors from any `base16`-compatible editor theme (Neovim, VS
+Code, Vim, Alacritty, etc.) to **bulletty**.
 
-To adapt an existing Base16 theme:
+To adapt an existing `base16` theme:
 
-1. Copy the hex colors from the theme
-2. Map them to the `bulletty` variables using the table above
-3. Adjust unused slots (base07, 0A, 0B, 0E, 0F) as needed
+1. Copy the hex colors from the theme.
+2. Map them to the `bulletty` variables using the table above.
+3. Adjust unused slots (base07, 0A, 0B, 0E, 0F) as needed.
+
