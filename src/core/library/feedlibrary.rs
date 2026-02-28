@@ -177,6 +177,14 @@ impl FeedLibrary {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.feedcategories.is_empty()
+            || self
+                .feedcategories
+                .iter()
+                .all(|cat| cat.feeds.is_empty())
+    }
+
     pub fn get_matching_feeds(&self, ident: &str) -> Vec<&FeedItem> {
         let mut matching_vec: Vec<&FeedItem> = Vec::new();
 

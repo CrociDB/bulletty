@@ -17,7 +17,7 @@ use crate::{
             notification::{AppNotification, NotificationPriority},
         },
     },
-    ui::screens::mainscreen::MainScreen,
+    ui::screens::{mainscreen::MainScreen, welcomedialog::WelcomeDialog},
 };
 
 pub enum AppWorkStatus {
@@ -88,6 +88,10 @@ impl App {
 
     pub fn initmain(&mut self) {
         self.init(Box::new(MainScreen::new(self.library.clone())));
+
+        if self.library.borrow().is_empty() {
+            self.open_dialog(Box::new(WelcomeDialog::new(self.library.clone())));
+        }
     }
 
     pub fn run(&mut self, mut terminal: DefaultTerminal) -> Result<()> {
