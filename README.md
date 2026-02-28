@@ -24,7 +24,43 @@ It's in active development.
 
 ## 🚀 Install
 
+<a href="https://repology.org/project/bulletty/versions">
+    <img src="https://repology.org/badge/vertical-allrepos/bulletty.svg" alt="Packaging status" align="right">
+</a>
+
 [Download bulletty pre-built binaries](https://github.com/CrociDB/bulletty/releases)
+
+### 🐧 Arch Linux (and derivatives like Manjaro, Parabola)
+
+```shell
+pacman -S bulletty
+```
+
+### 🍺 Homebrew (macOS / Linux)
+
+```shell
+brew install bulletty
+```
+
+### ❄️ Nix
+
+```shell
+nix profile install nixpkgs#bulletty
+```
+
+Or using the traditional command:
+
+```shell
+nix-env -iA nixpkgs.bulletty
+```
+
+### 📦 Snap
+
+[![bulletty](https://snapcraft.io/bulletty/badge.svg)](https://snapcraft.io/bulletty)
+
+```shell
+sudo snap install bulletty
+```
 
 ### 🚚 Through Cargo
 
