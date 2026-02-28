@@ -111,6 +111,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
 
 [[package]]
+name = "astral-tl"
+version = "0.7.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d90933ffb0f97e2fc2e0de21da9d3f20597b804012d199843a6fe7c2810d28f3"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "atomic"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -202,6 +211,7 @@ name = "bulletty"
 version = "0.2.1"
 dependencies = [
  "ansi-to-tui",
+ "astral-tl",
  "chrono",
  "clap",
  "color-eyre",
