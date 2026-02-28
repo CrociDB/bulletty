@@ -117,14 +117,6 @@ impl App {
                     state.render(frame, mainlayout[0]);
 
                     // Bottom status line
-                    let statusline = Layout::horizontal([
-                        Constraint::Max(25),
-                        Constraint::Fill(1),
-                        Constraint::Max(90),
-                    ])
-                    .margin(1)
-                    .split(mainlayout[1]);
-
                     let background =
                         Block::default().style(Style::default().bg(Color::from_u32(theme.base[0])));
                     frame.render_widget(background, mainlayout[1]);
@@ -135,16 +127,26 @@ impl App {
                         state.get_title()
                     };
 
-                    let status_text = Paragraph::new(format!("\u{f0fb1} bulletty | {title}"))
-                        .style(Style::default().fg(Color::from_u32(theme.base[0x6])));
-
-                    frame.render_widget(status_text, statusline[0]);
-
                     let instructions = if let Some(dialog) = self.dialog_queue.front() {
                         dialog.as_screen().get_instructions()
                     } else {
                         state.get_instructions()
                     };
+
+                    let instruction_width = (instructions.chars().count() as u16).min(85) + 5;
+
+                    let statusline = Layout::horizontal([
+                        Constraint::Max(25),
+                        Constraint::Fill(1),
+                        Constraint::Length(instruction_width),
+                    ])
+                    .margin(1)
+                    .split(mainlayout[1]);
+
+                    let status_text = Paragraph::new(format!("\u{f0fb1} bulletty | {title}"))
+                        .style(Style::default().fg(Color::from_u32(theme.base[0x6])));
+
+                    frame.render_widget(status_text, statusline[0]);
 
                     let instructions_text = Paragraph::new(instructions.to_string())
                         .style(Style::default().fg(Color::from_u32(theme.base[3])))
