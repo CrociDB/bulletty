@@ -49,7 +49,7 @@ fn is_feed(link_type: Cow<'_, str>) -> bool {
 }
 
 fn join(url: &Url, href: &str) -> Option<String> {
-    url.join(href).map(|url| url.to_string()).ok()
+    url.join(href).map(String::from).ok()
 }
 
 #[cfg(test)]
