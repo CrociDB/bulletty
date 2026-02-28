@@ -100,10 +100,10 @@ impl App {
             let work_status = self.get_work_status();
 
             // Expire notification if its duration has elapsed
-            if let Some(ref notif) = self.active_notification {
-                if notif.is_expired() {
-                    self.active_notification = None;
-                }
+            if let Some(ref notif) = self.active_notification
+                && notif.is_expired()
+            {
+                self.active_notification = None;
             }
 
             if let Some(state) = self.current_state.as_mut() {
