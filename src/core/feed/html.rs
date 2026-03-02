@@ -1,6 +1,7 @@
 use std::borrow::Cow;
+use std::fmt;
 
-use tl::{Bytes, Node};
+use tl::{Bytes, Node, VDom};
 use url::Url;
 
 pub fn is_html(content: &str) -> bool {
@@ -10,46 +11,105 @@ pub fn is_html(content: &str) -> bool {
         || trimmed.starts_with("<HTML")
 }
 
-pub fn extract_embedded_feed_urls(
-    html: &str,
-    url: &Url,
-    maximum_feeds: usize,
-) -> color_eyre::Result<Vec<String>> {
-    let dom = tl::parse(html, tl::ParserOptions::default())?;
-    let parser = dom.parser();
+pub struct LinkParser<'input, 'url> {
+    dom: VDom<'input>,
+    url: &'url Url,
+}
 
-    let links = dom
-        .query_selector("link[rel='alternate']")
-        .into_iter()
-        .flatten()
-        .filter_map(|node_handle| {
-            node_handle
-                .get(parser)
-                .and_then(Node::as_tag)
-                .filter(|tag| get_attribute(tag, "type").is_some_and(is_feed))
-                .and_then(|tag| get_attribute(tag, "href"))
-                .and_then(|href| join(url, &href))
+impl<'input, 'url> LinkParser<'input, 'url> {
+    pub fn new(input: &'input str, url: &'url Url) -> Result<LinkParser<'input, 'url>, ParseError> {
+        Ok(LinkParser {
+            dom: tl::parse(input, tl::ParserOptions::default())?,
+            url,
         })
-        .take(maximum_feeds)
-        .collect();
-
-    Ok(links)
+    }
 }
 
-fn get_attribute<'a>(tag: &'a tl::HTMLTag<'_>, attribute: &'a str) -> Option<Cow<'a, str>> {
-    tag.attributes()
-        .get(attribute)
-        .flatten()
-        .map(Bytes::as_utf8_str)
+impl<'input, 'url> IntoIterator for &'input LinkParser<'input, 'url> {
+    type Item = String;
+
+    type IntoIter = LinkIterator<'input>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        LinkIterator::new(self)
+    }
 }
 
-fn is_feed(link_type: Cow<'_, str>) -> bool {
-    let link_type = link_type.to_lowercase();
-    link_type.contains("atom") || link_type.contains("rss")
+pub struct LinkIterator<'input> {
+    inner: Box<dyn Iterator<Item = String> + 'input>,
 }
 
-fn join(url: &Url, href: &str) -> Option<String> {
-    url.join(href).map(String::from).ok()
+impl<'input> LinkIterator<'input> {
+    fn new<'url>(parser: &'input LinkParser<'input, 'url>) -> Self {
+        LinkIterator {
+            inner: Box::new(Self::links(parser)),
+        }
+    }
+
+    fn links<'url>(
+        parser: &'input LinkParser<'input, 'url>,
+    ) -> impl Iterator<Item = String> + 'input {
+        parser
+            .dom
+            .query_selector("link[rel='alternate']")
+            .into_iter()
+            .flatten()
+            .filter_map(move |node_handle| {
+                node_handle
+                    .get(parser.dom.parser())
+                    .and_then(Node::as_tag)
+                    .filter(|tag| Self::get_attribute(tag, "type").is_some_and(Self::is_feed))
+                    .and_then(|tag| Self::get_attribute(tag, "href"))
+                    .and_then(|href| parser.url.join(&href).map(String::from).ok())
+            })
+    }
+
+    fn is_feed(link_type: Cow<'_, str>) -> bool {
+        let link_type = link_type.to_lowercase();
+        link_type.contains("atom") || link_type.contains("rss")
+    }
+
+    fn get_attribute<'a>(tag: &'a tl::HTMLTag<'a>, attribute: &'a str) -> Option<Cow<'a, str>> {
+        tag.attributes()
+            .get(attribute)
+            .flatten()
+            .map(Bytes::as_utf8_str)
+    }
+}
+
+impl<'input> Iterator for LinkIterator<'input> {
+    type Item = String;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
+    }
+}
+
+/// An error that occurred during parsing
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ParseError {
+    /// The input string length was too large to fit in a `u32`
+    TooLarge,
+}
+
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ParseError::TooLarge => {
+                write!(f, "The input string length was too large to fit in a `u32`")
+            }
+        }
+    }
+}
+
+impl std::error::Error for ParseError {}
+
+impl From<tl::ParseError> for ParseError {
+    fn from(value: tl::ParseError) -> Self {
+        match value {
+            tl::ParseError::InvalidLength => ParseError::TooLarge,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -69,10 +129,11 @@ mod tests {
 </body>
 </html>"#;
 
-        let feeds =
-            extract_embedded_feed_urls(html, &Url::parse("https://example.com/").unwrap(), 10)
-                .unwrap();
-        assert_eq!(feeds, vec!["https://example.com/feed.rss"]);
+        let url = Url::parse("https://example.com/").unwrap();
+        let parser = LinkParser::new(html, &url).unwrap();
+        let mut iter = parser.into_iter();
+        assert_eq!(iter.next(), Some("https://example.com/feed.rss".into()));
+        assert_eq!(iter.next(), None);
     }
 
     #[test]
@@ -88,10 +149,11 @@ mod tests {
 </body>
 </html>"#;
 
-        let feeds =
-            extract_embedded_feed_urls(html, &Url::parse("https://example.com/blog/").unwrap(), 10)
-                .unwrap();
-        assert_eq!(feeds, vec!["https://example.com/feed.atom"]);
+        let url = Url::parse("https://example.com/blog/").unwrap();
+        let parser = LinkParser::new(html, &url).unwrap();
+        let mut iter = parser.into_iter();
+        assert_eq!(iter.next(), Some("https://example.com/feed.atom".into()));
+        assert_eq!(iter.next(), None);
     }
 
     #[test]
@@ -108,37 +170,12 @@ mod tests {
 </body>
 </html>"#;
 
-        let feeds =
-            extract_embedded_feed_urls(html, &Url::parse("https://example.com/").unwrap(), 10)
-                .unwrap();
-        assert_eq!(
-            feeds,
-            vec!["https://example.com/rss", "https://example.com/atom"]
-        );
-    }
-
-    #[test]
-    fn extract_limited_urls() {
-        let html = r#"<!DOCTYPE html>
-<html>
-<head>
-<title>Multi-feed Site</title>
-<link rel="alternate" type="application/rss+xml" href="https://example.com/rss1" />
-<link rel="alternate" type="application/rss+xml" href="https://example.com/rss2" />
-<link rel="alternate" type="application/rss+xml" href="https://example.com/rss3" />
-</head>
-<body>
-<h1>Welcome</h1>
-</body>
-</html>"#;
-
-        let feeds =
-            extract_embedded_feed_urls(html, &Url::parse("https://example.com/").unwrap(), 2)
-                .unwrap();
-        assert_eq!(
-            feeds,
-            vec!["https://example.com/rss1", "https://example.com/rss2"]
-        );
+        let url = Url::parse("https://example.com/").unwrap();
+        let parser = LinkParser::new(html, &url).unwrap();
+        let mut iter = parser.into_iter();
+        assert_eq!(iter.next(), Some("https://example.com/rss".into()));
+        assert_eq!(iter.next(), Some("https://example.com/atom".into()));
+        assert_eq!(iter.next(), None);
     }
 
     #[test]
@@ -153,10 +190,10 @@ mod tests {
 </body>
 </html>"#;
 
-        let feeds =
-            extract_embedded_feed_urls(html, &Url::parse("https://example.com/").unwrap(), 10)
-                .unwrap();
-        assert!(feeds.is_empty());
+        let url = Url::parse("https://example.com/").unwrap();
+        let parser = LinkParser::new(html, &url).unwrap();
+        let mut iter = parser.into_iter();
+        assert_eq!(iter.next(), None);
     }
 
     #[test]
