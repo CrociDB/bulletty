@@ -1,6 +1,6 @@
 use tracing::info;
 
-use crate::{app, core::Config};
+use crate::{app, core::config::Config};
 
 pub fn run_main_ui(config: &Config) -> color_eyre::Result<()> {
     info!("Initializing UI");

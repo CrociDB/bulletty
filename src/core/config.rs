@@ -1,109 +1,84 @@
-use dirs;
+use color_eyre::eyre::{Context, Result};
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::fs::OpenOptions;
-use std::io::Write;
+use std::fs::{File, OpenOptions};
+use std::io::{ErrorKind, Write};
 use std::path::{Path, PathBuf};
-use toml;
-use tracing::error;
-
-use crate::core::defs;
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     pub datapath: PathBuf,
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self::new()
-    }
+pub struct ConfigStore {
+    file_path: PathBuf,
 }
 
-impl Config {
-    pub fn save(&self) {
-        if let Some(config_dir) = dirs::config_dir() {
-            let config_file = Path::new(&config_dir)
-                .join(defs::CONFIG_PATH)
-                .join(defs::CONFIG_FILE);
-
-            match toml::to_string(self) {
-                Ok(toml_string) => {
-                    if let Err(e) = fs::write(&config_file, toml_string) {
-                        error!("Failed to write config file: {}", e);
-                        std::process::exit(1);
-                    }
-                }
-                Err(e) => {
-                    error!("Failed to serialize config: {}", e);
-                    std::process::exit(1);
-                }
-            }
-        } else {
-            error!("No config dir");
-            std::process::exit(1);
+impl ConfigStore {
+    pub fn new(dir: &Path) -> Self {
+        ConfigStore {
+            file_path: dir.join("config.toml"),
         }
     }
 
-    pub fn new() -> Self {
-        if let Some(config_dir) = dirs::config_dir() {
-            let config_file = Path::new(&config_dir)
-                .join(defs::CONFIG_PATH)
-                .join(defs::CONFIG_FILE);
-
-            if !config_file.exists() {
-                let config_path = Path::new(&config_dir).join(defs::CONFIG_PATH);
-                if !config_path.exists()
-                    && let Err(e) = fs::create_dir_all(config_path)
-                {
-                    error!("Failed to create directory: {}", e);
-                    std::process::exit(1);
-                }
-
-                match OpenOptions::new()
-                    .write(true)
-                    .create_new(true)
-                    .open(&config_file)
-                {
-                    Ok(mut file) => {
-                        if let Some(data_dir) = dirs::data_dir() {
-                            let config = Config {
-                                datapath: data_dir.join(defs::DATA_DIR),
-                            };
-
-                            if let Err(e) =
-                                file.write_all(&toml::to_string(&config).unwrap().into_bytes())
-                            {
-                                error!("Failed to write config: {}", e);
-                                std::process::exit(1);
-                            }
-
-                            config
-                        } else {
-                            error!("Error: data dir not found");
-                            std::process::exit(1);
-                        }
-                    }
-                    Err(e) => {
-                        error!("Failed to create new config file: {}", e);
-                        std::process::exit(1);
-                    }
-                }
-            } else if let Ok(configstr) = std::fs::read_to_string(&config_file) {
-                match toml::from_str(&configstr) {
-                    Ok(config) => config,
-                    Err(e) => {
-                        error!("Config file can't be parsed: {}", e);
-                        std::process::exit(1);
-                    }
-                }
-            } else {
-                error!("Can't read config file");
-                std::process::exit(1);
-            }
-        } else {
-            error!("No config dir");
-            std::process::exit(1);
+    pub fn get_or_create(&self, default_config: impl FnOnce() -> Config) -> Result<Config> {
+        if let Some(parent) = self.file_path.parent() {
+            std::fs::create_dir_all(parent).wrap_err_with(|| {
+                format!(
+                    "Failed to create base configuration directory {}",
+                    parent.to_string_lossy()
+                )
+            })?;
         }
+
+        match OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&self.file_path)
+        {
+            Ok(mut file) => {
+                Self::write(&default_config(), &mut file)?;
+                Ok(())
+            }
+            Err(err) => match err.kind() {
+                ErrorKind::AlreadyExists => Ok(()),
+                _ => Err(err),
+            },
+        }
+        .wrap_err_with(|| {
+            format!(
+                "Failed to create default configuration file at {}",
+                self.file_path.to_string_lossy()
+            )
+        })?;
+
+        self.read().wrap_err_with(|| {
+            format!(
+                "Failed to read configuration from {}",
+                self.file_path.to_string_lossy()
+            )
+        })
+    }
+
+    pub fn save(&self, config: &Config) -> Result<()> {
+        File::create(&self.file_path)
+            .and_then(|mut file| Self::write(config, &mut file))
+            .wrap_err_with(|| {
+                format!(
+                    "Failed to save configuration to {}",
+                    self.file_path.to_string_lossy()
+                )
+            })
+    }
+
+    fn read(&self) -> Result<Config> {
+        Ok(toml::from_str(&std::fs::read_to_string(&self.file_path)?)?)
+    }
+
+    fn write(config: &Config, file: &mut File) -> std::io::Result<()> {
+        file.write_all(
+            &toml::to_string(config)
+                .expect("configuration should be serializable")
+                .into_bytes(),
+        )
     }
 }

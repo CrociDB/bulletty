@@ -4,7 +4,8 @@ use std::path::{Path, PathBuf};
 use clap::{Error, Parser, Subcommand};
 use tracing::{error, info};
 
-use crate::core::Config;
+use crate::core::config::Config;
+use crate::core::config::ConfigStore;
 use crate::core::library::data::opml;
 use crate::core::library::feeditem::FeedItem;
 use crate::core::library::feedlibrary::FeedLibrary;
@@ -65,7 +66,11 @@ pub enum DirsCommands {
     Logs,
 }
 
-pub fn run_main_cli(cli: Cli, config: &mut Config) -> color_eyre::Result<()> {
+pub fn run_main_cli(
+    cli: Cli,
+    config: &mut Config,
+    config_store: &ConfigStore,
+) -> color_eyre::Result<()> {
     info!("Initializing CLI");
 
     match &cli.command {
@@ -73,7 +78,7 @@ pub fn run_main_cli(cli: Cli, config: &mut Config) -> color_eyre::Result<()> {
         Some(Commands::Add { url, category }) => command_add(&cli, url, category, &config.datapath),
         Some(Commands::Update) => command_update(&cli, &config.datapath),
         Some(Commands::Delete { ident }) => command_delete(&cli, ident, &config.datapath),
-        Some(Commands::Dirs { subcmd }) => command_dirs(&cli, subcmd, config),
+        Some(Commands::Dirs { subcmd }) => command_dirs(&cli, subcmd, config, config_store),
         Some(Commands::Import { opml_file }) => command_import(&cli, opml_file, &config.datapath),
         Some(Commands::Export { opml_file }) => command_export(&cli, opml_file, &config.datapath),
         None => Ok(()),
@@ -216,10 +221,11 @@ fn command_dirs(
     _cli: &Cli,
     subcmd: &Option<DirsCommands>,
     config: &mut Config,
+    config_store: &ConfigStore,
 ) -> color_eyre::Result<()> {
     match subcmd {
-        Some(DirsCommands::Library { path }) => command_dirs_library(path, config),
         Some(DirsCommands::Logs) => command_dirs_logs(),
+        Some(DirsCommands::Library { path }) => command_dirs_library(path, config, config_store),
         None => {
             println!("bulletty directories");
             println!("\t-> Library: {}", config.datapath.to_string_lossy());
@@ -233,7 +239,11 @@ fn command_dirs(
     }
 }
 
-fn command_dirs_library(path: &Option<PathBuf>, config: &mut Config) -> color_eyre::Result<()> {
+fn command_dirs_library(
+    path: &Option<PathBuf>,
+    config: &mut Config,
+    config_store: &ConfigStore,
+) -> color_eyre::Result<()> {
     match path {
         Some(new_path) => {
             if !new_path.exists() {
@@ -262,7 +272,7 @@ fn command_dirs_library(path: &Option<PathBuf>, config: &mut Config) -> color_ey
             });
 
             config.datapath = absolute_path.clone();
-            config.save();
+            config_store.save(&config)?;
             println!(
                 "Library path updated to: {}",
                 absolute_path.to_string_lossy()

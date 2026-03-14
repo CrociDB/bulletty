@@ -10,7 +10,7 @@ use ratatui::{
 
 use crate::{
     core::{
-        Config,
+        config::Config,
         library::feedlibrary::FeedLibrary,
         ui::{
             appscreen::{AppScreen, AppScreenEvent},
