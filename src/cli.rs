@@ -1,10 +1,10 @@
 use std::io::{self, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use clap::{Error, Parser, Subcommand};
 use tracing::{error, info};
 
-use crate::core::library::data::config::Config;
+use crate::core::Config;
 use crate::core::library::data::opml;
 use crate::core::library::feeditem::FeedItem;
 use crate::core::library::feedlibrary::FeedLibrary;
@@ -65,23 +65,23 @@ pub enum DirsCommands {
     Logs,
 }
 
-pub fn run_main_cli(cli: Cli) -> color_eyre::Result<()> {
+pub fn run_main_cli(cli: Cli, config: &mut Config) -> color_eyre::Result<()> {
     info!("Initializing CLI");
 
     match &cli.command {
-        Some(Commands::List) => command_list(&cli),
-        Some(Commands::Add { url, category }) => command_add(&cli, url, category),
-        Some(Commands::Update) => command_update(&cli),
-        Some(Commands::Delete { ident }) => command_delete(&cli, ident),
-        Some(Commands::Dirs { subcmd }) => command_dirs(&cli, subcmd),
-        Some(Commands::Import { opml_file }) => command_import(&cli, opml_file),
-        Some(Commands::Export { opml_file }) => command_export(&cli, opml_file),
+        Some(Commands::List) => command_list(&cli, &config.datapath),
+        Some(Commands::Add { url, category }) => command_add(&cli, url, category, &config.datapath),
+        Some(Commands::Update) => command_update(&cli, &config.datapath),
+        Some(Commands::Delete { ident }) => command_delete(&cli, ident, &config.datapath),
+        Some(Commands::Dirs { subcmd }) => command_dirs(&cli, subcmd, config),
+        Some(Commands::Import { opml_file }) => command_import(&cli, opml_file, &config.datapath),
+        Some(Commands::Export { opml_file }) => command_export(&cli, opml_file, &config.datapath),
         None => Ok(()),
     }
 }
 
-fn command_list(_cli: &Cli) -> color_eyre::Result<()> {
-    let library = FeedLibrary::new();
+fn command_list(_cli: &Cli, data_dir: &Path) -> color_eyre::Result<()> {
+    let library = FeedLibrary::new(data_dir);
 
     println!("Feeds Registered\n\n");
     for category in library.feedcategories.iter() {
@@ -95,8 +95,13 @@ fn command_list(_cli: &Cli) -> color_eyre::Result<()> {
     Ok(())
 }
 
-fn command_add(_cli: &Cli, url: &str, category: &Option<String>) -> color_eyre::Result<()> {
-    let mut library = FeedLibrary::new();
+fn command_add(
+    _cli: &Cli,
+    url: &str,
+    category: &Option<String>,
+    data_dir: &Path,
+) -> color_eyre::Result<()> {
+    let mut library = FeedLibrary::new(data_dir);
     match library.add_feed_from_url(url, category) {
         Ok(feed) => {
             info!("Feed added: {}", feed.title);
@@ -111,8 +116,8 @@ fn command_add(_cli: &Cli, url: &str, category: &Option<String>) -> color_eyre::
     Ok(())
 }
 
-fn command_update(_cli: &Cli) -> color_eyre::Result<()> {
-    let library = FeedLibrary::new();
+fn command_update(_cli: &Cli, data_dir: &Path) -> color_eyre::Result<()> {
+    let library = FeedLibrary::new(data_dir);
 
     for category in library.feedcategories.iter() {
         for feed in category.feeds.iter() {
@@ -138,8 +143,8 @@ fn confirm_delete(title: &str) -> Result<bool, Error> {
     Ok(matches!(normalized_input.as_str(), "y" | "yes"))
 }
 
-fn command_delete(_cli: &Cli, ident: &str) -> color_eyre::Result<()> {
-    let library = FeedLibrary::new();
+fn command_delete(_cli: &Cli, ident: &str, data_dir: &Path) -> color_eyre::Result<()> {
+    let library = FeedLibrary::new(data_dir);
 
     let matches: Vec<&FeedItem> = library.get_matching_feeds(ident);
     let matches_len = matches.len();
@@ -207,16 +212,17 @@ fn command_delete(_cli: &Cli, ident: &str) -> color_eyre::Result<()> {
     Ok(())
 }
 
-fn command_dirs(_cli: &Cli, subcmd: &Option<DirsCommands>) -> color_eyre::Result<()> {
+fn command_dirs(
+    _cli: &Cli,
+    subcmd: &Option<DirsCommands>,
+    config: &mut Config,
+) -> color_eyre::Result<()> {
     match subcmd {
-        Some(DirsCommands::Library { path }) => command_dirs_library(path),
+        Some(DirsCommands::Library { path }) => command_dirs_library(path, config),
         Some(DirsCommands::Logs) => command_dirs_logs(),
         None => {
-            let config = Config::new();
-            let library_path = config.datapath;
-
             println!("bulletty directories");
-            println!("\t-> Library: {}", library_path.to_string_lossy());
+            println!("\t-> Library: {}", config.datapath.to_string_lossy());
 
             if let Some(logs_path) = logging::logging_dir() {
                 println!("\t-> Logs:    {}", logs_path.to_string_lossy());
@@ -227,9 +233,7 @@ fn command_dirs(_cli: &Cli, subcmd: &Option<DirsCommands>) -> color_eyre::Result
     }
 }
 
-fn command_dirs_library(path: &Option<PathBuf>) -> color_eyre::Result<()> {
-    let mut config = Config::new();
-
+fn command_dirs_library(path: &Option<PathBuf>, config: &mut Config) -> color_eyre::Result<()> {
     match path {
         Some(new_path) => {
             if !new_path.exists() {
@@ -284,9 +288,9 @@ fn command_dirs_logs() -> color_eyre::Result<()> {
     Ok(())
 }
 
-fn command_import(_cli: &Cli, opml_file: &str) -> color_eyre::Result<()> {
+fn command_import(_cli: &Cli, opml_file: &str, data_dir: &Path) -> color_eyre::Result<()> {
     println!("Importing feeds");
-    let mut library = FeedLibrary::new();
+    let mut library = FeedLibrary::new(data_dir);
     let opml_feeds = opml::get_opml_feeds(opml_file)?;
 
     for feed in opml_feeds {
@@ -305,8 +309,8 @@ fn command_import(_cli: &Cli, opml_file: &str) -> color_eyre::Result<()> {
     Ok(())
 }
 
-fn command_export(_cli: &Cli, opml_file: &str) -> color_eyre::Result<()> {
-    let library = FeedLibrary::new();
+fn command_export(_cli: &Cli, opml_file: &str, data_dir: &Path) -> color_eyre::Result<()> {
+    let library = FeedLibrary::new(data_dir);
 
     opml::save_opml(&library.feedcategories, opml_file)?;
 

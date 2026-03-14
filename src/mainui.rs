@@ -1,13 +1,13 @@
 use tracing::info;
 
-use crate::app;
+use crate::{app, core::Config};
 
-pub fn run_main_ui() -> color_eyre::Result<()> {
+pub fn run_main_ui(config: &Config) -> color_eyre::Result<()> {
     info!("Initializing UI");
 
     let terminal = ratatui::init();
 
-    let mut app = app::App::new();
+    let mut app = app::App::new(config);
     app.initmain();
 
     let result = app.run(terminal);

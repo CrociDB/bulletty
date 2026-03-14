@@ -10,6 +10,7 @@ use ratatui::{
 
 use crate::{
     core::{
+        Config,
         library::feedlibrary::FeedLibrary,
         ui::{
             appscreen::{AppScreen, AppScreenEvent},
@@ -61,16 +62,10 @@ pub struct App {
     event_poll_timeout: Duration,
 }
 
-impl Default for App {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl App {
-    pub fn new() -> Self {
+    pub fn new(config: &Config) -> Self {
         Self {
-            library: Rc::new(RefCell::new(FeedLibrary::new())),
+            library: Rc::new(RefCell::new(FeedLibrary::new(&config.datapath))),
 
             running: true,
             current_state: None,
