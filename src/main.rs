@@ -7,7 +7,7 @@ pub mod mainui;
 pub mod ui;
 
 use clap::Parser;
-use color_eyre::eyre::bail;
+use color_eyre::eyre::Context;
 
 use crate::{
     core::config::{Config, ConfigStore},
@@ -17,9 +17,7 @@ use crate::{
 pub fn run() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
-    let Some(dirs) = Directories::new() else {
-        bail!("Failed to construct base directories");
-    };
+    let dirs = Directories::new().wrap_err("Failed to construct base directories")?;
 
     let _guard = logging::init(dirs.log());
 
