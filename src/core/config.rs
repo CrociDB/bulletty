@@ -4,6 +4,8 @@ use std::fs::{File, OpenOptions};
 use std::io::{ErrorKind, Write};
 use std::path::{Path, PathBuf};
 
+use crate::core::defs::CONFIG_FILE;
+
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     pub datapath: PathBuf,
@@ -16,7 +18,7 @@ pub struct ConfigStore {
 impl ConfigStore {
     pub fn new(dir: &Path) -> Self {
         ConfigStore {
-            file_path: dir.join("config.toml"),
+            file_path: dir.join(CONFIG_FILE),
         }
     }
 

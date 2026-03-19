@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use color_eyre::eyre::{OptionExt, Result};
 use etcetera::BaseStrategy;
 
-use crate::core::defs::PROGRAM_NAME;
+use crate::core::defs::{CONFIG_PATH, DATA_DIR, LEGACY_LOG_DIR, LOG_BASE_DIR, LOG_SUBDIR};
 
 pub struct Directories {
     log: PathBuf,
@@ -20,7 +20,7 @@ impl Directories {
         } else {
             dirs::data_local_dir().ok_or_eyre("Failed to get local data directory for user ")
         }
-        .map(|base| base.join("bulletty_logs"))?;
+        .map(|base| base.join(LEGACY_LOG_DIR))?;
 
         let log_dir = if legacy_log_dir.try_exists()? {
             legacy_log_dir
@@ -28,22 +28,22 @@ impl Directories {
             current_strategy
                 .state_dir() // Exists on Linux/macOS only
                 .unwrap_or_else(|| current_strategy.cache_dir())
-                .join(PROGRAM_NAME)
-                .join("logs")
+                .join(LOG_BASE_DIR)
+                .join(LOG_SUBDIR)
         };
 
         let legacy_config_dir = dirs::config_dir()
             .ok_or_eyre("Failed to get configuration directory for user")
-            .map(|base| base.join(PROGRAM_NAME))?;
+            .map(|base| base.join(CONFIG_PATH))?;
         let config_dir = if legacy_config_dir.try_exists()? {
             legacy_config_dir
         } else {
-            current_strategy.config_dir().join(PROGRAM_NAME)
+            current_strategy.config_dir().join(CONFIG_PATH)
         };
 
         Ok(Directories {
             log: log_dir,
-            default_data: current_strategy.data_dir().join(PROGRAM_NAME),
+            default_data: current_strategy.data_dir().join(DATA_DIR),
             config: config_dir,
         })
     }
