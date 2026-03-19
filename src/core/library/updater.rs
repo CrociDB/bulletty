@@ -1,4 +1,5 @@
 use std::{
+    path::{Path, PathBuf},
     sync::{
         Arc, Mutex,
         atomic::{AtomicBool, AtomicU16, Ordering::Relaxed},
@@ -19,7 +20,7 @@ pub struct Updater {
 }
 
 impl Updater {
-    pub fn new(feedcategories: Vec<FeedCategory>) -> Self {
+    pub fn new(feedcategories: Vec<FeedCategory>, data_dir: &Path) -> Self {
         let completed = Arc::new(Mutex::new(String::from("Working...")));
         let finished = Arc::new(AtomicBool::new(false));
         let total_completed = Arc::new(AtomicU16::new(0));
@@ -28,9 +29,10 @@ impl Updater {
         let finished_clone = Arc::clone(&finished);
         let total_completed_clone = Arc::clone(&total_completed);
 
+        let data_dir: PathBuf = data_dir.into();
         let handle = Some(thread::spawn(move || {
             info!("Starting updater");
-            let library = FeedLibrary::new();
+            let library = FeedLibrary::new(&data_dir);
 
             for category in feedcategories.iter() {
                 for feed in category.feeds.iter() {

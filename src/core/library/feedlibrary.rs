@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use color_eyre::eyre::eyre;
 use fuzzt::algorithms::normalized_levenshtein;
 use tracing::error;
@@ -8,11 +10,8 @@ use crate::{
         defs,
         feed::{self, feedentry::FeedEntry},
         library::{
-            data::{config::Config, librarydata::LibraryData},
-            feedcategory::FeedCategory,
-            feeditem::FeedItem,
-            settings::usersettings::UserSettings,
-            updater::Updater,
+            data::librarydata::LibraryData, feedcategory::FeedCategory, feeditem::FeedItem,
+            settings::usersettings::UserSettings, updater::Updater,
         },
     },
 };
@@ -27,16 +26,9 @@ pub struct FeedLibrary {
     pub settings: UserSettings,
 }
 
-impl Default for FeedLibrary {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl FeedLibrary {
-    pub fn new() -> Self {
-        let config_obj = Config::new();
-        let data_obj = LibraryData::new(config_obj.datapath.as_ref());
+    pub fn new(data_dir: &Path) -> Self {
+        let data_obj = LibraryData::new(data_dir);
 
         let categories = match data_obj.generate_categories_tree() {
             Ok(c) => c,
@@ -50,7 +42,7 @@ impl FeedLibrary {
             feedcategories: categories,
             data: data_obj,
             updater: None,
-            settings: UserSettings::new(&config_obj.datapath).unwrap(),
+            settings: UserSettings::new(data_dir).unwrap(),
         }
     }
 
@@ -144,7 +136,7 @@ impl FeedLibrary {
     }
 
     pub fn start_updater(&mut self) {
-        self.updater = Some(Updater::new(self.feedcategories.clone()));
+        self.updater = Some(Updater::new(self.feedcategories.clone(), &self.data.path));
     }
 
     pub fn update(&mut self) {
