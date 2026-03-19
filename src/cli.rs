@@ -226,7 +226,10 @@ fn command_dirs(
     config_store: &ConfigStore,
 ) -> color_eyre::Result<()> {
     match subcmd {
-        Some(DirsCommands::Logs) => Ok(command_dirs_logs(dirs.log())),
+        Some(DirsCommands::Logs) => {
+            command_dirs_logs(dirs.log());
+            Ok(())
+        }
         Some(DirsCommands::Library { path }) => command_dirs_library(path, config, config_store),
         None => {
             println!("bulletty directories");
@@ -271,7 +274,7 @@ fn command_dirs_library(
             });
 
             config.datapath = absolute_path.clone();
-            config_store.save(&config)?;
+            config_store.save(config)?;
             println!(
                 "Library path updated to: {}",
                 absolute_path.to_string_lossy()
