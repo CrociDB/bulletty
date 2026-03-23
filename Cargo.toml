@@ -2,13 +2,13 @@
 name = "bulletty"
 version = "0.2.2"
 description = "a pretty TUI feed reader (RSS+ATOM) that stores articles locally as Markdown files"
-authors = [ "Bruno Croci <crocidb@gmail.com>" ]
+authors = [ "Bruno Croci <bruno@croci.me>" ]
 license = "MIT"
 edition = "2024"
 rust-version = "1.90"
-repository = "https://github.com/CrociDB/bulletty"
+repository = "https://github.com/crocidb/bulletty"
 readme = "README.md"
-homepage = "https://github.com/CrociDB/bulletty"
+homepage = "https://github.com/crocidb/bulletty"
 documentation = "https://docs.rs/bulletty"
 
 [dependencies]
