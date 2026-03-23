@@ -151,6 +151,26 @@ impl FeedTreeState {
             .select(Some(self.treeitems.len().saturating_sub(1)));
     }
 
+    pub fn select_next_category(&mut self) {
+        let current = self.listatate.selected().unwrap_or(0);
+        for (i, item) in self.treeitems.iter().enumerate().skip(current + 1) {
+            if matches!(item, FeedItemInfo::Category(_) | FeedItemInfo::ReadLater) {
+                self.listatate.select(Some(i));
+                return;
+            }
+        }
+    }
+
+    pub fn select_previous_category(&mut self) {
+        let current = self.listatate.selected().unwrap_or(0);
+        for (i, item) in self.treeitems.iter().enumerate().take(current).rev() {
+            if matches!(item, FeedItemInfo::Category(_) | FeedItemInfo::ReadLater) {
+                self.listatate.select(Some(i));
+                return;
+            }
+        }
+    }
+
     fn is_selected_separator(&self) -> bool {
         if let Some(index) = self.listatate.selected() {
             index < self.treeitems.len() && matches!(self.treeitems[index], FeedItemInfo::Separator)

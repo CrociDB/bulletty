@@ -300,6 +300,14 @@ impl AppScreen for MainScreen {
                     self.decrease_tree_width()?;
                     Ok(AppScreenEvent::None)
                 }
+                (_, KeyCode::Char('n')) => {
+                    self.feedtreestate.select_next_category();
+                    Ok(AppScreenEvent::None)
+                }
+                (_, KeyCode::Char('p')) => {
+                    self.feedtreestate.select_previous_category();
+                    Ok(AppScreenEvent::None)
+                }
                 (_, KeyCode::Char('t')) => self.open_theme_selector(),
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
                     HelpDialog::new(self.library.clone(), self.get_full_instructions()),
@@ -420,7 +428,9 @@ impl AppScreen for MainScreen {
 
     fn get_instructions(&self) -> String {
         if self.inputstate == MainInputState::Menu {
-            String::from("?: Help | j/k/↓/↑: move | Enter: select | Esc: quit")
+            String::from(
+                "?: Help | j/k/↓/↑: move | n/p: next/prev category | Enter: select | Esc: quit",
+            )
         } else {
             String::from(
                 "?: Help | j/k/↓/↑: move | o: open | L: add/remove read later | Enter: read | Esc: back",
@@ -438,6 +448,7 @@ impl AppScreen for MainScreen {
                 "Navigation",
                 vec![
                     InstructionDetail::new("j/k/↓/↑", "move selection"),
+                    InstructionDetail::new("n/p", "next/previous category"),
                     InstructionDetail::new("g/G/Home/End", "beginning and end of list"),
                 ],
             ),
