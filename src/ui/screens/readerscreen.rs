@@ -277,6 +277,7 @@ impl AppScreen for ReaderScreen {
                 self.library.clone(),
             )))),
             (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(HelpDialog::new(
+                self.library.clone(),
                 self.get_full_instructions(),
             )))),
             _ => Ok(AppScreenEvent::None),

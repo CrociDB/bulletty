@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use color_eyre::eyre::Result;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::layout::{Alignment, Constraint, Layout, Margin, Rect};
@@ -5,17 +7,21 @@ use ratatui::style::{Color, Style};
 use ratatui::widgets::{Paragraph, Wrap};
 
 use crate::app::AppWorkStatus;
-
+use crate::core::library::feedlibrary::FeedLibrary;
 use crate::core::ui::appscreen::{AppScreen, AppScreenEvent};
 use crate::core::ui::dialog::Dialog;
 
 pub struct HelpDialog {
+    library: Rc<RefCell<FeedLibrary>>,
     help_string: String,
 }
 
 impl HelpDialog {
-    pub fn new(help_string: String) -> HelpDialog {
-        HelpDialog { help_string }
+    pub fn new(library: Rc<RefCell<FeedLibrary>>, help_string: String) -> HelpDialog {
+        HelpDialog {
+            library,
+            help_string,
+        }
     }
 }
 
@@ -44,15 +50,21 @@ impl AppScreen for HelpDialog {
     fn unpause(&mut self) {}
 
     fn render(&mut self, frame: &mut ratatui::Frame, area: ratatui::prelude::Rect) {
+        let theme = {
+            let library = self.library.borrow();
+            library.settings.get_theme().unwrap().clone()
+        };
+
         let contentlayout = Layout::vertical([Constraint::Length(2), Constraint::Fill(1)])
             .split(area.inner(Margin::new(2, 1)));
 
         let title = Paragraph::new(self.get_title())
-            .style(Style::new().fg(Color::from_u32(0xc64b3a)))
+            .style(Style::new().fg(Color::from_u32(theme.base[0x8])))
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: true });
 
         let content = Paragraph::new(self.help_string.to_string())
+            .style(Style::new().fg(Color::from_u32(theme.base[0x6])))
             .alignment(Alignment::Left)
             .wrap(Wrap { trim: true });
 

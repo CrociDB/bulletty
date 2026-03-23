@@ -301,7 +301,7 @@ impl AppScreen for MainScreen {
                 }
                 (_, KeyCode::Char('t')) => self.open_theme_selector(),
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
-                    HelpDialog::new(self.get_full_instructions()),
+                    HelpDialog::new(self.library.clone(), self.get_full_instructions()),
                 ))),
                 _ => Ok(AppScreenEvent::None),
             },
@@ -406,7 +406,7 @@ impl AppScreen for MainScreen {
                 }
                 (_, KeyCode::Char('t')) => self.open_theme_selector(),
                 (_, KeyCode::Char('?')) => Ok(AppScreenEvent::OpenDialog(Box::new(
-                    HelpDialog::new(self.get_full_instructions()),
+                    HelpDialog::new(self.library.clone(), self.get_full_instructions()),
                 ))),
                 _ => Ok(AppScreenEvent::None),
             },
