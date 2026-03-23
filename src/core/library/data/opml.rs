@@ -1,4 +1,4 @@
-use color_eyre::{eyre, Result};
+use color_eyre::{Result, eyre};
 use roxmltree::Node;
 
 use crate::core::library::feedcategory::FeedCategory;
