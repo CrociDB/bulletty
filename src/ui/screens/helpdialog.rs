@@ -4,7 +4,7 @@ use color_eyre::eyre::Result;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::layout::{Alignment, Constraint, Layout, Margin, Rect};
 use ratatui::style::{Color, Style};
-use ratatui::widgets::{Paragraph, Wrap};
+use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap};
 
 use crate::app::AppWorkStatus;
 use crate::core::library::feedlibrary::FeedLibrary;
@@ -14,6 +14,9 @@ use crate::core::ui::dialog::Dialog;
 pub struct HelpDialog {
     library: Rc<RefCell<FeedLibrary>>,
     help_string: String,
+    active_tab: usize,
+    scroll: u16,
+    scrollmax: u16,
 }
 
 impl HelpDialog {
@@ -21,14 +24,16 @@ impl HelpDialog {
         HelpDialog {
             library,
             help_string,
+            active_tab: 0,
+            scroll: 0,
+            scrollmax: 0,
         }
     }
 }
 
 impl Dialog for HelpDialog {
     fn get_size(&self) -> ratatui::prelude::Rect {
-        let line_breaks = self.help_string.matches('\n').count() as u16;
-        Rect::new(60, line_breaks + 7, 0, 0)
+        Rect::new(80, 30, 0, 0)
     }
 
     fn as_screen(&self) -> &dyn AppScreen {
@@ -55,21 +60,75 @@ impl AppScreen for HelpDialog {
             library.settings.get_theme().unwrap().clone()
         };
 
-        let contentlayout = Layout::vertical([Constraint::Length(2), Constraint::Fill(1)])
-            .split(area.inner(Margin::new(2, 1)));
+        let contentlayout = Layout::vertical([
+            Constraint::Length(3),
+            Constraint::Length(1),
+            Constraint::Fill(1),
+        ])
+        .split(area.inner(Margin::new(2, 1)));
 
-        let title = Paragraph::new(self.get_title())
-            .style(Style::new().fg(Color::from_u32(theme.base[0x8])))
-            .alignment(Alignment::Center)
-            .wrap(Wrap { trim: true });
+        let tab_labels = ["Instructions", "About"];
+        let tab_chunks =
+            Layout::horizontal(tab_labels.map(|_| Constraint::Fill(1))).split(contentlayout[0]);
 
-        let content = Paragraph::new(self.help_string.to_string())
-            .style(Style::new().fg(Color::from_u32(theme.base[0x6])))
-            .alignment(Alignment::Left)
-            .wrap(Wrap { trim: true });
+        for (i, label) in tab_labels.iter().enumerate() {
+            let (fg, bg) = if i == self.active_tab {
+                (
+                    Color::from_u32(theme.base[0x0]),
+                    Color::from_u32(theme.base[0x8]),
+                )
+            } else {
+                (
+                    Color::from_u32(theme.base[0x6]),
+                    Color::from_u32(theme.base[0x2]),
+                )
+            };
+            let tab = Paragraph::new(*label)
+                .style(Style::new().fg(fg).bg(bg))
+                .alignment(Alignment::Center)
+                .block(ratatui::widgets::Block::new().padding(ratatui::widgets::Padding::top(1)));
+            frame.render_widget(tab, tab_chunks[i]);
+        }
 
-        frame.render_widget(title, contentlayout[0]);
-        frame.render_widget(content, contentlayout[1]);
+        let content_area = contentlayout[2];
+
+        if self.active_tab == 0 {
+            // Instructions tab with scrollbar
+            let chunks = Layout::horizontal([Constraint::Fill(1), Constraint::Length(1)])
+                .split(content_area);
+
+            let content_text = self.help_string.to_string();
+            let line_count = content_text.lines().count() as u16;
+            let visible_height = chunks[0].height;
+            self.scrollmax = line_count.saturating_sub(visible_height);
+
+            let content = Paragraph::new(content_text)
+                .style(Style::new().fg(Color::from_u32(theme.base[0x6])))
+                .alignment(Alignment::Left)
+                .scroll((self.scroll, 0))
+                .wrap(Wrap { trim: true });
+
+            frame.render_widget(content, chunks[0]);
+
+            let mut scrollbar_state =
+                ScrollbarState::new(self.scrollmax as usize).position(self.scroll as usize);
+            let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
+                .style(Style::new().fg(Color::from_u32(theme.base[3])));
+            frame.render_stateful_widget(scrollbar, chunks[1], &mut scrollbar_state);
+        } else {
+            // About tab
+            let about_text = format!(
+                "bulletty v{}\n\n{}",
+                env!("CARGO_PKG_VERSION"),
+                env!("CARGO_PKG_AUTHORS")
+            );
+            let about = Paragraph::new(about_text)
+                .style(Style::new().fg(Color::from_u32(theme.base[0x6])))
+                .alignment(Alignment::Center)
+                .wrap(Wrap { trim: true });
+
+            frame.render_widget(about, content_area);
+        }
     }
 
     fn handle_event(&mut self, event: Event) -> Result<AppScreenEvent> {
@@ -87,6 +146,28 @@ impl AppScreen for HelpDialog {
             | (KeyModifiers::CONTROL, KeyCode::Char('c') | KeyCode::Char('C')) => {
                 Ok(AppScreenEvent::CloseDialog)
             }
+            (_, KeyCode::Tab) => {
+                self.active_tab = (self.active_tab + 1) % 2;
+                self.scroll = 0;
+                Ok(AppScreenEvent::None)
+            }
+            (_, KeyCode::BackTab) => {
+                self.active_tab = (self.active_tab - 1) % 2;
+                self.scroll = 0;
+                Ok(AppScreenEvent::None)
+            }
+            (_, KeyCode::Down | KeyCode::Char('j')) => {
+                if self.active_tab == 0 {
+                    self.scroll = self.scroll.saturating_add(1).min(self.scrollmax);
+                }
+                Ok(AppScreenEvent::None)
+            }
+            (_, KeyCode::Up | KeyCode::Char('k')) => {
+                if self.active_tab == 0 {
+                    self.scroll = self.scroll.saturating_sub(1);
+                }
+                Ok(AppScreenEvent::None)
+            }
             _ => Ok(AppScreenEvent::None),
         }
     }
@@ -100,7 +181,7 @@ impl AppScreen for HelpDialog {
     }
 
     fn get_instructions(&self) -> String {
-        String::from("Esc/q: close help")
+        String::from("Tab: switch tabs | j/k ↑↓: scroll | Esc/q: close")
     }
 
     fn get_full_instructions(&self) -> String {
