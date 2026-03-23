@@ -31,6 +31,7 @@ pub struct ReaderScreen {
     current_index: usize,
     scroll: usize,
     scrollmax: usize,
+    viewport_height: usize,
 }
 
 impl ReaderScreen {
@@ -45,6 +46,7 @@ impl ReaderScreen {
             current_index,
             scroll: 0,
             scrollmax: 1,
+            viewport_height: 24,
         }
     }
 
@@ -56,6 +58,16 @@ impl ReaderScreen {
 
     pub fn scrolldown(&mut self) {
         self.scroll = std::cmp::min(self.scroll + 1, self.scrollmax);
+    }
+
+    pub fn scroll_half_down(&mut self) {
+        let half = (self.viewport_height / 2).max(1);
+        self.scroll = (self.scroll + half).min(self.scrollmax);
+    }
+
+    pub fn scroll_half_up(&mut self) {
+        let half = (self.viewport_height / 2).max(1);
+        self.scroll = self.scroll.saturating_sub(half);
     }
 
     pub fn next_entry(&mut self) {
@@ -204,6 +216,7 @@ impl AppScreen for ReaderScreen {
 
         let scrollheight = textheight + (wrapped_lines as f32 * 1.06) as usize + 4;
         self.scrollmax = scrollheight - (contentlayout[3].height as usize).min(scrollheight);
+        self.viewport_height = contentlayout[3].height as usize;
 
         // Content Paragraph component
         let paragraph = Paragraph::new(text)
@@ -276,6 +289,14 @@ impl AppScreen for ReaderScreen {
                 self.decrease_reader_width()?;
                 Ok(AppScreenEvent::None)
             }
+            (KeyModifiers::CONTROL, KeyCode::Char('d') | KeyCode::Char('D')) => {
+                self.scroll_half_down();
+                Ok(AppScreenEvent::None)
+            }
+            (KeyModifiers::CONTROL, KeyCode::Char('u') | KeyCode::Char('U')) => {
+                self.scroll_half_up();
+                Ok(AppScreenEvent::None)
+            }
             (_, KeyCode::Char('t')) => Ok(AppScreenEvent::OpenDialog(Box::new(ThemeDialog::new(
                 self.library.clone(),
             )))),
@@ -311,6 +332,7 @@ impl AppScreen for ReaderScreen {
                 "Navigation",
                 vec![
                     InstructionDetail::new("j/k/↓/↑", "scroll"),
+                    InstructionDetail::new("Ctrl+d/u", "scroll half page down/up"),
                     InstructionDetail::new("g/G", "go to beginning or end of file"),
                     InstructionDetail::new("</>", "change reader width"),
                     InstructionDetail::new("n/p", "next/previous entry"),
