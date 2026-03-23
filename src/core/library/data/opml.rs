@@ -1,4 +1,4 @@
-use color_eyre::{Result, eyre};
+use color_eyre::{eyre, Result};
 use roxmltree::Node;
 
 use crate::core::library::feedcategory::FeedCategory;
@@ -65,16 +65,17 @@ pub fn save_opml(categories: &[FeedCategory], filename: &str) -> Result<()> {
     for category in categories.iter() {
         let mut text_feeds = String::new();
         for feed in category.feeds.iter() {
-            let title = html_escape::encode_text(&feed.title);
-            let description = html_escape::encode_text(&feed.description);
+            let title = html_escape::encode_double_quoted_attribute(&feed.title);
+            let description = html_escape::encode_double_quoted_attribute(&feed.description);
+            let feed_url = html_escape::encode_double_quoted_attribute(&feed.feed_url);
 
-            text_feeds.push_str(&format!("\n            <outline text={:?} title={:?} description={:?} xmlUrl={:?} type=\"rss\" />", title, title, description, feed.feed_url));
+            text_feeds.push_str(&format!("\n            <outline text=\"{}\" title=\"{}\" description=\"{}\" xmlUrl=\"{}\" type=\"rss\" />", title, title, description, feed_url));
         }
 
-        let title = html_escape::encode_text(&category.title);
+        let title = html_escape::encode_double_quoted_attribute(&category.title);
 
         text_categories.push_str(&format!(
-            "\n        <outline text={:?} title={:?}>{}\n        </outline>",
+            "\n        <outline text=\"{}\" title=\"{}\">{}\n        </outline>",
             title, title, text_feeds
         ));
     }
@@ -84,7 +85,7 @@ pub fn save_opml(categories: &[FeedCategory], filename: &str) -> Result<()> {
 <opml version="1.0">
     <head>
         <title>Generated from bulletty</title>
-        <url>https://github.com/CrociDB/bulletty</url>
+        <url>https://github.com/crocidb/bulletty</url>
     </head>
     <body>{text_categories}
     </body>
