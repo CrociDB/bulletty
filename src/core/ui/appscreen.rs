@@ -4,6 +4,7 @@ use ratatui::{Frame, layout::Rect};
 
 use crate::app::AppWorkStatus;
 
+use super::instructiondetails::ScreenInstructions;
 use super::notification::AppNotification;
 
 use super::dialog::Dialog;
@@ -36,5 +37,5 @@ pub trait AppScreen {
     fn get_work_status(&self) -> AppWorkStatus;
     fn get_title(&self) -> String;
     fn get_instructions(&self) -> String;
-    fn get_full_instructions(&self) -> String;
+    fn get_full_instructions(&self) -> ScreenInstructions;
 }

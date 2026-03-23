@@ -16,6 +16,7 @@ use crate::{
         library::feedlibrary::FeedLibrary,
         ui::{
             appscreen::{AppScreen, AppScreenEvent},
+            instructiondetails::{InstructionCategory, InstructionDetail, ScreenInstructions},
             notification::{AppNotification, NotificationPriority},
         },
     },
@@ -431,21 +432,33 @@ impl AppScreen for MainScreen {
         self.library.borrow().get_update_status()
     }
 
-    fn get_full_instructions(&self) -> String {
-        String::from(
-            r#"j/k/↓/↑: move selection
-               g/G/Home/End: beginning and end of the list
-               </>: change feed column width
-               
-               o: open link externally
-               L: add/remove read later
-               Enter: select category or read entry
-               
-               r: toggle item read state
-               R: mark all of the items as read
-               
-               t: open theme picker
-               Esc/q: back from entries or quit"#,
-        )
+    fn get_full_instructions(&self) -> ScreenInstructions {
+        ScreenInstructions::new(vec![
+            InstructionCategory::new(
+                "Navigation",
+                vec![
+                    InstructionDetail::new("j/k/↓/↑", "move selection"),
+                    InstructionDetail::new("g/G/Home/End", "beginning and end of list"),
+                ],
+            ),
+            InstructionCategory::new(
+                "Actions",
+                vec![
+                    InstructionDetail::new("o", "open link externally"),
+                    InstructionDetail::new("L", "add/remove read later"),
+                    InstructionDetail::new("Enter", "select category or read entry"),
+                    InstructionDetail::new("r", "toggle item read state"),
+                    InstructionDetail::new("R", "mark all items as read"),
+                ],
+            ),
+            InstructionCategory::new(
+                "App",
+                vec![
+                    InstructionDetail::new("</>", "change feed column width"),
+                    InstructionDetail::new("t", "open theme picker"),
+                    InstructionDetail::new("Esc/q", "back from entries or quit"),
+                ],
+            ),
+        ])
     }
 }

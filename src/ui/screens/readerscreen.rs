@@ -14,7 +14,10 @@ use crate::app::AppWorkStatus;
 use crate::core::{
     feed::feedentry::FeedEntry,
     library::feedlibrary::FeedLibrary,
-    ui::appscreen::{AppScreen, AppScreenEvent},
+    ui::{
+        appscreen::{AppScreen, AppScreenEvent},
+        instructiondetails::{InstructionCategory, InstructionDetail, ScreenInstructions},
+    },
 };
 use crate::ui::screens::themedialog::ThemeDialog;
 use crate::ui::screens::urldialog::UrlDialog;
@@ -302,18 +305,29 @@ impl AppScreen for ReaderScreen {
         AppWorkStatus::None
     }
 
-    fn get_full_instructions(&self) -> String {
-        String::from(
-            r#"j/k/↓/↑: scroll
-               g/G: go to beginning or end of file
-               </>: change reader width
-               
-               n/p: next/previous entry
-               o: open externally
-               
-               t: open theme picker
-               Esc/q: leave"#,
-        )
+    fn get_full_instructions(&self) -> ScreenInstructions {
+        ScreenInstructions::new(vec![
+            InstructionCategory::new(
+                "Navigation",
+                vec![
+                    InstructionDetail::new("j/k/↓/↑", "scroll"),
+                    InstructionDetail::new("g/G", "go to beginning or end of file"),
+                    InstructionDetail::new("</>", "change reader width"),
+                    InstructionDetail::new("n/p", "next/previous entry"),
+                ],
+            ),
+            InstructionCategory::new(
+                "Actions",
+                vec![InstructionDetail::new("o", "open externally")],
+            ),
+            InstructionCategory::new(
+                "App",
+                vec![
+                    InstructionDetail::new("t", "open theme picker"),
+                    InstructionDetail::new("Esc/q", "leave"),
+                ],
+            ),
+        ])
     }
 }
 

@@ -3,27 +3,29 @@ use std::{cell::RefCell, rc::Rc};
 use color_eyre::eyre::Result;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::layout::{Alignment, Constraint, Layout, Margin, Rect};
-use ratatui::style::{Color, Style};
+use ratatui::style::{Color, Modifier, Style};
+use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap};
 
 use crate::app::AppWorkStatus;
 use crate::core::library::feedlibrary::FeedLibrary;
 use crate::core::ui::appscreen::{AppScreen, AppScreenEvent};
 use crate::core::ui::dialog::Dialog;
+use crate::core::ui::instructiondetails::ScreenInstructions;
 
 pub struct HelpDialog {
     library: Rc<RefCell<FeedLibrary>>,
-    help_string: String,
+    instructions: ScreenInstructions,
     active_tab: usize,
     scroll: u16,
     scrollmax: u16,
 }
 
 impl HelpDialog {
-    pub fn new(library: Rc<RefCell<FeedLibrary>>, help_string: String) -> HelpDialog {
+    pub fn new(library: Rc<RefCell<FeedLibrary>>, instructions: ScreenInstructions) -> HelpDialog {
         HelpDialog {
             library,
-            help_string,
+            instructions,
             active_tab: 0,
             scroll: 0,
             scrollmax: 0,
@@ -33,7 +35,7 @@ impl HelpDialog {
 
 impl Dialog for HelpDialog {
     fn get_size(&self) -> ratatui::prelude::Rect {
-        Rect::new(80, 30, 0, 0)
+        Rect::new(70, 28, 0, 0)
     }
 
     fn as_screen(&self) -> &dyn AppScreen {
@@ -97,16 +99,34 @@ impl AppScreen for HelpDialog {
             let chunks = Layout::horizontal([Constraint::Fill(1), Constraint::Length(1)])
                 .split(content_area);
 
-            let content_text = self.help_string.to_string();
-            let line_count = content_text.lines().count() as u16;
-            let visible_height = chunks[0].height;
-            self.scrollmax = line_count.saturating_sub(visible_height);
-
+            let mut lines: Vec<Line> = Vec::new();
+            for category in &self.instructions.categories {
+                lines.push(Line::from(Span::styled(
+                    category.name.clone(),
+                    Style::new()
+                        .fg(Color::from_u32(theme.base[0x8]))
+                        .add_modifier(Modifier::BOLD),
+                )));
+                lines.push(Line::from(""));
+                for detail in &category.details {
+                    lines.push(Line::from(vec![
+                        Span::styled(
+                            format!("  {:19}", detail.keys),
+                            Style::new().fg(Color::from_u32(theme.base[0x6])),
+                        ),
+                        Span::styled(
+                            detail.description.clone(),
+                            Style::new().fg(Color::from_u32(theme.base[0x4])),
+                        ),
+                    ]));
+                }
+                lines.push(Line::from(""));
+            }
+            let content_text = Text::from(lines);
+            self.scrollmax = (content_text.height() as u16).saturating_sub(chunks[0].height);
             let content = Paragraph::new(content_text)
-                .style(Style::new().fg(Color::from_u32(theme.base[0x6])))
                 .alignment(Alignment::Left)
-                .scroll((self.scroll, 0))
-                .wrap(Wrap { trim: true });
+                .scroll((self.scroll, 0));
 
             frame.render_widget(content, chunks[0]);
 
@@ -184,7 +204,7 @@ impl AppScreen for HelpDialog {
         String::from("Tab: switch tabs | j/k ↑↓: scroll | Esc/q: close")
     }
 
-    fn get_full_instructions(&self) -> String {
-        self.get_instructions()
+    fn get_full_instructions(&self) -> ScreenInstructions {
+        ScreenInstructions::empty()
     }
 }

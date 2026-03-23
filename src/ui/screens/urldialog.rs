@@ -8,6 +8,9 @@ use crate::app::AppWorkStatus;
 
 use crate::core::ui::appscreen::{AppScreen, AppScreenEvent};
 use crate::core::ui::dialog::Dialog;
+use crate::core::ui::instructiondetails::{
+    InstructionCategory, InstructionDetail, ScreenInstructions,
+};
 
 pub struct UrlDialog {
     url: String,
@@ -90,7 +93,10 @@ impl AppScreen for UrlDialog {
         String::from("Esc/q: close url")
     }
 
-    fn get_full_instructions(&self) -> String {
-        self.get_instructions()
+    fn get_full_instructions(&self) -> ScreenInstructions {
+        ScreenInstructions::new(vec![InstructionCategory::new(
+            "Navigation",
+            vec![InstructionDetail::new("Esc/q", "close")],
+        )])
     }
 }

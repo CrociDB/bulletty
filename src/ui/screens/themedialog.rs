@@ -13,6 +13,7 @@ use crate::app::AppWorkStatus;
 use crate::core::library::feedlibrary::FeedLibrary;
 use crate::core::ui::appscreen::{AppScreen, AppScreenEvent};
 use crate::core::ui::dialog::Dialog;
+use crate::core::ui::instructiondetails::ScreenInstructions;
 use crate::ui::states::themestate::ThemeState;
 
 pub struct ThemeDialog {
@@ -147,7 +148,7 @@ impl AppScreen for ThemeDialog {
         String::from("j/k: select theme | Esc/q: close url")
     }
 
-    fn get_full_instructions(&self) -> String {
-        self.get_instructions()
+    fn get_full_instructions(&self) -> ScreenInstructions {
+        ScreenInstructions::empty()
     }
 }
