@@ -4,45 +4,101 @@ summary: The CLI commands reference for bulletty
 show_datetime: false
 ---
 
-**bulletty** has the following commands:
+Running **bulletty** without any command launches the TUI (Terminal User Interface). All other commands below are for managing feeds and configuration from the command line.
 
- - `list`: List all feeds and categories
- - `add`: Add new feed
- - `update`: Update all feeds
- - `delete`: Delete a feed
- - `dirs`: Show important directories
- - `import`: Import a list of feed sources through OPML
- - `export`: Export all your sources to an OPML file
- - `help`: Print this message or the help of the given subcommand(s)
+## ⚙️ Global Flags
 
-## list
+These flags can be used with any command:
 
-Lists all the categories and feeds on each of them, along with their _slugs_, the slugified name without spaces that is used as a directory in the filesystem.
+| Flag | Description |
+|------|-------------|
+| `--no-hooks` | Disable all hooks defined in the config |
+| `--version` | Display the current version of bulletty |
+| `--help` | Display help information |
 
-## add *feed_url* [*category*]
+## 📋 Commands
 
-Adds a new feed source to the specified category. If no category is specified, it's added to `General`.
+### 💠 `list`
 
-## update
+Lists all your categories and the feeds in each one, along with their *slugs* (the slugified, space-free names used as directory names in the filesystem).
 
-This will check for new articles in all of the feeds registered.
+```
+bulletty list
+```
 
-## delete [*feed name* / *url* / *slug*]
+### 💠 `add <URL> [CATEGORY]`
 
-It will find the feed with the specified name/url/slug and prompt you to delete it with all of its articles.
+Adds a new RSS/Atom feed. Provide the feed URL and, optionally, a category name. If no category is specified, the feed is added to **General**.
 
-## dirs
+```
+bulletty add https://example.com/feed.xml
+bulletty add https://example.com/feed.xml "Tech News"
+```
 
-Displays important directories used by **bulletty**, including the library directory, that can be synchronized with your other machiens.
+### 💠 `update`
 
-## import [*opml file*]
+Checks all registered feeds for new articles and downloads them.
 
-Imports a list of feed sources form an OPML file. Other feed readers usually generate these types of files.
+```
+bulletty update
+```
 
-## export [*opml file*]
+### 💠 `delete <IDENTIFIER>`
 
-Exports the list of feed source to an OPML file.
+Finds a feed matching the given name, URL, or slug and prompts you for confirmation before deleting it along with all of its articles. If multiple feeds match, you'll be asked to pick which one to delete.
 
-## help
+```
+bulletty delete "My Blog"
+bulletty delete https://example.com/feed.xml
+bulletty delete my-blog
+```
 
-Display all the commands and their description.
+### 💠 `dirs`
+
+Displays the important directories used by **bulletty**, including the library and logs paths.
+
+```
+bulletty dirs
+```
+
+#### `dirs library [PATH]`
+
+Without arguments, prints the current library path. When a path is provided, updates the library directory to the specified location. This is useful if you want to sync your library across machines (e.g. via a cloud-synced folder).
+
+```
+bulletty dirs library
+bulletty dirs library ~/Dropbox/bulletty
+```
+
+#### `dirs logs`
+
+Prints the path to the logs directory.
+
+```
+bulletty dirs logs
+```
+
+### 💠 `import <OPML_FILE>`
+
+Imports feed sources from an OPML file. Most feed readers can export to this format, making it easy to migrate your subscriptions into **bulletty**.
+
+```
+bulletty import feeds.opml
+```
+
+### 💠 `export <OPML_FILE>`
+
+Exports all your feed sources to an OPML file, so you can back them up or import them into another reader.
+
+```
+bulletty export my_feeds.opml
+```
+
+### 💠 `help`
+
+Displays all available commands and their descriptions. You can also pass a command name to get detailed help for that specific command.
+
+```
+bulletty help
+bulletty help add
+```
