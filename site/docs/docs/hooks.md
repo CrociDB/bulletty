@@ -8,7 +8,7 @@ show_datetime: false
 
 ## ⚙️ Configuration
 
-Hooks are in your **local configuration**. That means it's not synced with your library, allowing you to have different hooks for different systems that interact with the same library. They can be configured in your local config dir (`bulletty dirs local_config`) `$CONFIG_DIR/config.toml` under a `[hooks]` table. All fields are optional.
+Hooks are in your **local configuration**. That means it's not synced with your library, allowing you to have different hooks for different systems that interact with the same library. They can be configured in your local config dir (`bulletty dirs local-config`) `$CONFIG_DIR/config.toml` under a `[hooks]` table. All fields are optional.
 
 ```toml
 [hooks]
