@@ -67,6 +67,8 @@ pub enum DirsCommands {
     },
     /// Show the logs directory
     Logs,
+    /// Show the local config directory
+    LocalConfig,
 }
 
 pub fn run_main_cli(
@@ -230,14 +232,20 @@ fn command_dirs(
 ) -> color_eyre::Result<()> {
     match subcmd {
         Some(DirsCommands::Logs) => {
-            command_dirs_logs(dirs.log());
+            command_show_dir(dirs.log());
+            Ok(())
+        }
+        Some(DirsCommands::LocalConfig) => {
+            command_show_dir(dirs.config());
             Ok(())
         }
         Some(DirsCommands::Library { path }) => command_dirs_library(path, config, config_store),
         None => {
-            println!("bulletty directories");
+            println!("bulletty directories\n");
             println!("\t-> Library: {}", config.datapath.to_string_lossy());
             println!("\t-> Logs:    {}", dirs.log().to_string_lossy());
+            println!("\t-> Local config:    {}", dirs.config().to_string_lossy());
+            println!();
 
             Ok(())
         }
@@ -291,8 +299,8 @@ fn command_dirs_library(
     Ok(())
 }
 
-fn command_dirs_logs(log_dir: &Path) {
-    println!("{}", log_dir.to_string_lossy());
+fn command_show_dir(dir: &Path) {
+    println!("{}", dir.to_string_lossy());
 }
 
 fn command_import(_cli: &Cli, opml_file: &str, data_dir: &Path) -> color_eyre::Result<()> {

@@ -78,6 +78,14 @@ Prints the path to the logs directory.
 bulletty dirs logs
 ```
 
+#### `dirs local-config`
+
+Prints the path to the local config directory.
+
+```
+bulletty dirs local-config
+```
+
 ### 💠 `import <OPML_FILE>`
 
 Imports feed sources from an OPML file. Most feed readers can export to this format, making it easy to migrate your subscriptions into **bulletty**.
