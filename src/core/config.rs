@@ -5,10 +5,13 @@ use std::io::{ErrorKind, Write};
 use std::path::{Path, PathBuf};
 
 use crate::core::defs::CONFIG_FILE;
+use crate::core::hooks::AppHooks;
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     pub datapath: PathBuf,
+    #[serde(default)]
+    pub hooks: Option<AppHooks>,
 }
 
 pub struct ConfigStore {
