@@ -2,6 +2,8 @@
 title: Install
 summary: Install bulletty
 show_datetime: false
+hide:
+  - navigation
 ---
 
 # Install

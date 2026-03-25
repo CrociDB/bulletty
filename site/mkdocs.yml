@@ -1,9 +1,12 @@
-site_name: bulletty
+site_name: bulletty - TUI RSS Reader
 site_url: https://bulletty.croci.dev/
-repo_url: https://github.com/CrociDB/bulletty
-repo_name: CrociDB/bulletty
+repo_url: https://github.com/crocidb/bulletty
+repo_name: crocidb/bulletty
+
 theme:
   name: material
+  logo: img/bulletty.png
+  favicon: img/bulletty.png
   features:
       - navigation.tabs
   icon:
@@ -25,12 +28,11 @@ markdown_extensions:
   - admonition
 
 nav:
-  - Getting Started:
-    - bulletty: 'index.md'
-    - Install: 'install.md'
-    - Contributing: 'contributing.md'
+  - Home: 'index.md'
+  - Install: 'install.md'
   - Docs:
     - CLI Reference: 'docs/cli_reference.md'
     - Themes: 'docs/themes.md'
     - Hooks: 'docs/hooks.md'
+    - Contributing: 'contributing.md'
     - Reference: 'docs/reference.md'
