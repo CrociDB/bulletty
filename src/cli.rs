@@ -17,6 +17,9 @@ use crate::dirs::Directories;
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,
+    /// Disable all hooks defined in config
+    #[arg(long)]
+    pub no_hooks: bool,
 }
 
 #[derive(Subcommand)]
