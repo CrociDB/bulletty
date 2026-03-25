@@ -29,6 +29,10 @@ pub fn run() -> color_eyre::Result<()> {
 
     let cli = cli::Cli::parse();
 
+    if cli.no_hooks {
+        config.hooks = None;
+    }
+
     if cli.command.is_none() {
         mainui::run_main_ui(&config)
     } else {
