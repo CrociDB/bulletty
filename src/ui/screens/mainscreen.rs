@@ -95,19 +95,18 @@ impl MainScreen {
     }
 
     fn open_external_url(&self, url: &str) -> Result<AppScreenEvent> {
-        if let Some(cmd) = self.hooks.build_open_link_command(url) {
-            match std::process::Command::new("sh")
-                .arg("-c")
-                .arg(&cmd)
-                .status()
-            {
-                Ok(s) if s.success() => return Ok(AppScreenEvent::None),
-                Ok(s) => error!("open_link hook exited with status: {}", s),
-                Err(e) => error!("open_link hook failed: {}", e),
-            }
+        if self.hooks.run_open_link(url) {
+            return Ok(AppScreenEvent::Notify(AppNotification::new(
+                "Link opened externally with user hook",
+                NotificationPriority::Low,
+            )));
         }
+
         match open::that(url) {
-            Ok(_) => Ok(AppScreenEvent::None),
+            Ok(_) => Ok(AppScreenEvent::Notify(AppNotification::new(
+                "Link opened externally",
+                NotificationPriority::Low,
+            ))),
             Err(_) => {
                 error!("Couldn't invoke system browser");
                 Ok(AppScreenEvent::OpenDialog(Box::new(UrlDialog::new(
@@ -409,7 +408,10 @@ impl AppScreen for MainScreen {
                         self.library.borrow_mut().data.set_entry_seen(&entry);
                         self.open_external_url(&entry.url)
                     } else {
-                        Ok(AppScreenEvent::None)
+                        Ok(AppScreenEvent::Notify(AppNotification::new(
+                            "Couldn't open link externally",
+                            NotificationPriority::High,
+                        )))
                     }
                 }
                 (_, KeyCode::Char('L')) => {
