@@ -13,6 +13,7 @@ use unicode_width::UnicodeWidthStr;
 use crate::app::AppWorkStatus;
 use crate::core::{
     feed::feedentry::FeedEntry,
+    hooks::AppHooks,
     library::feedlibrary::FeedLibrary,
     ui::{
         appscreen::{AppScreen, AppScreenEvent},
@@ -32,6 +33,7 @@ pub struct ReaderScreen {
     scroll: usize,
     scrollmax: usize,
     viewport_height: usize,
+    hooks: Rc<AppHooks>,
 }
 
 impl ReaderScreen {
@@ -39,6 +41,7 @@ impl ReaderScreen {
         library: Rc<RefCell<FeedLibrary>>,
         entries: Vec<FeedEntry>,
         current_index: usize,
+        hooks: Rc<AppHooks>,
     ) -> ReaderScreen {
         ReaderScreen {
             library,
@@ -47,6 +50,7 @@ impl ReaderScreen {
             scroll: 0,
             scrollmax: 1,
             viewport_height: 24,
+            hooks,
         }
     }
 
@@ -93,6 +97,17 @@ impl ReaderScreen {
     }
 
     fn open_external_url(&self, url: &str) -> Result<AppScreenEvent> {
+        if let Some(cmd) = self.hooks.build_open_link_command(url) {
+            match std::process::Command::new("sh")
+                .arg("-c")
+                .arg(&cmd)
+                .status()
+            {
+                Ok(s) if s.success() => return Ok(AppScreenEvent::None),
+                Ok(s) => error!("open_link hook exited with status: {}", s),
+                Err(e) => error!("open_link hook failed: {}", e),
+            }
+        }
         match open::that(url) {
             Ok(_) => Ok(AppScreenEvent::None),
             Err(_) => {
@@ -379,7 +394,12 @@ mod tests {
     fn test_navigation() {
         let (library, _temp_dir) = FeedLibrary::new_for_test();
         let entries = create_test_entries();
-        let mut reader_screen = ReaderScreen::new(Rc::new(RefCell::new(library)), entries, 0);
+        let mut reader_screen = ReaderScreen::new(
+            Rc::new(RefCell::new(library)),
+            entries,
+            0,
+            Rc::new(AppHooks::default()),
+        );
 
         // Test next_entry
         assert_eq!(reader_screen.current_index, 0);

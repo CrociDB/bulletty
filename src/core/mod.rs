@@ -1,5 +1,6 @@
 pub mod config;
 pub mod defs;
 pub mod feed;
+pub mod hooks;
 pub mod library;
 pub mod ui;

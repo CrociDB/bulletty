@@ -13,6 +13,7 @@ use crate::{
     app::AppWorkStatus,
     core::{
         feed::feedentry::FeedEntry,
+        hooks::AppHooks,
         library::feedlibrary::FeedLibrary,
         ui::{
             appscreen::{AppScreen, AppScreenEvent},
@@ -42,15 +43,17 @@ pub struct MainScreen {
     feedtreestate: FeedTreeState,
     feedentrystate: FeedEntryState,
     inputstate: MainInputState,
+    hooks: Rc<AppHooks>,
 }
 
 impl MainScreen {
-    pub fn new(library: Rc<RefCell<FeedLibrary>>) -> Self {
+    pub fn new(library: Rc<RefCell<FeedLibrary>>, hooks: Rc<AppHooks>) -> Self {
         Self {
             library,
             feedtreestate: FeedTreeState::new(),
             feedentrystate: FeedEntryState::new(),
             inputstate: MainInputState::Menu,
+            hooks,
         }
     }
 
@@ -92,6 +95,17 @@ impl MainScreen {
     }
 
     fn open_external_url(&self, url: &str) -> Result<AppScreenEvent> {
+        if let Some(cmd) = self.hooks.build_open_link_command(url) {
+            match std::process::Command::new("sh")
+                .arg("-c")
+                .arg(&cmd)
+                .status()
+            {
+                Ok(s) if s.success() => return Ok(AppScreenEvent::None),
+                Ok(s) => error!("open_link hook exited with status: {}", s),
+                Err(e) => error!("open_link hook failed: {}", e),
+            }
+        }
         match open::that(url) {
             Ok(_) => Ok(AppScreenEvent::None),
             Err(_) => {
@@ -352,6 +366,7 @@ impl AppScreen for MainScreen {
                             self.library.clone(),
                             self.feedentrystate.entries.clone(),
                             self.feedentrystate.listatate.selected().unwrap_or(0),
+                            self.hooks.clone(),
                         ))))
                     } else {
                         Ok(AppScreenEvent::None)

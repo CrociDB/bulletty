@@ -11,6 +11,7 @@ use ratatui::{
 use crate::{
     core::{
         config::Config,
+        hooks::AppHooks,
         library::feedlibrary::FeedLibrary,
         ui::{
             appscreen::{AppScreen, AppScreenEvent},
@@ -55,6 +56,7 @@ fn interpolate_color(fg: u32, bg: u32, t: f32) -> Color {
 pub struct App {
     running: bool,
     library: Rc<RefCell<FeedLibrary>>,
+    hooks: Rc<AppHooks>,
     current_state: Option<Box<dyn AppScreen>>,
     states_queue: VecDeque<Box<dyn AppScreen>>,
     dialog_queue: VecDeque<Box<dyn Dialog>>,
@@ -66,6 +68,7 @@ impl App {
     pub fn new(config: &Config) -> Self {
         Self {
             library: Rc::new(RefCell::new(FeedLibrary::new(&config.datapath))),
+            hooks: Rc::new(config.hooks.clone().unwrap_or_default()),
 
             running: true,
             current_state: None,
@@ -82,7 +85,10 @@ impl App {
     }
 
     pub fn initmain(&mut self) {
-        self.init(Box::new(MainScreen::new(self.library.clone())));
+        self.init(Box::new(MainScreen::new(
+            self.library.clone(),
+            self.hooks.clone(),
+        )));
 
         if self.library.borrow().is_empty() {
             self.open_dialog(Box::new(WelcomeDialog::new(self.library.clone())));

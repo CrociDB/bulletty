@@ -24,6 +24,7 @@ pub fn run() -> color_eyre::Result<()> {
     let config_store = ConfigStore::new(dirs.config());
     let mut config = config_store.get_or_create(|| Config {
         datapath: dirs.default_data().into(),
+        hooks: None,
     })?;
 
     let cli = cli::Cli::parse();
