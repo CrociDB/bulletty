@@ -11,6 +11,7 @@ use tracing::error;
 use unicode_width::UnicodeWidthStr;
 
 use crate::app::AppWorkStatus;
+use crate::core::ui::notification::{AppNotification, NotificationPriority};
 use crate::core::{
     feed::feedentry::FeedEntry,
     hooks::AppHooks,
@@ -97,19 +98,18 @@ impl ReaderScreen {
     }
 
     fn open_external_url(&self, url: &str) -> Result<AppScreenEvent> {
-        if let Some(cmd) = self.hooks.build_open_link_command(url) {
-            match std::process::Command::new("sh")
-                .arg("-c")
-                .arg(&cmd)
-                .status()
-            {
-                Ok(s) if s.success() => return Ok(AppScreenEvent::None),
-                Ok(s) => error!("open_link hook exited with status: {}", s),
-                Err(e) => error!("open_link hook failed: {}", e),
-            }
+        if self.hooks.run_open_link(url) {
+            return Ok(AppScreenEvent::Notify(AppNotification::new(
+                "Link opened externally with user hook",
+                NotificationPriority::Low,
+            )));
         }
+
         match open::that(url) {
-            Ok(_) => Ok(AppScreenEvent::None),
+            Ok(_) => Ok(AppScreenEvent::Notify(AppNotification::new(
+                "Link opened externally",
+                NotificationPriority::Low,
+            ))),
             Err(_) => {
                 error!("Couldn't invoke system browser");
                 Ok(AppScreenEvent::OpenDialog(Box::new(UrlDialog::new(
