@@ -32,4 +32,5 @@ nav:
   - Docs:
     - CLI Reference: 'docs/cli_reference.md'
     - Themes: 'docs/themes.md'
+    - Hooks: 'docs/hooks.md'
     - Reference: 'docs/reference.md'
