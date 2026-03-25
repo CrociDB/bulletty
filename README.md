@@ -21,6 +21,7 @@ It's in active development.
  - Read articles with the embedded cozy Markdown reader
  - Import/export **OPML** feed list
  - Supports multiple beautiful colorful **themes**
+ - Hooks: you can set hooks to sync your feed library before bulletty opens and after it closes; or tell it how to open links 
 
 ## 🚀 Install
 
