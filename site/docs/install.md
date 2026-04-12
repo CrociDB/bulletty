@@ -90,7 +90,7 @@ brew install bulletty
 
 ### Through _Cargo_
 
-If you have Rust and `cargo 1.90+` installed on any platform (Linux, macOS, or Windows):
+**Requirements**: Rust 1.90+, openssl libraries and perl.
 
 ```shell
 cargo install bulletty
@@ -118,6 +118,11 @@ cargo install --git https://github.com/CrociDB/bulletty.git
 git clone https://github.com/CrociDB/bulletty.git
 cd bulletty
 cargo build --release
+```
+By default, bulletty will vendor the openssl library. But you find issues and would like to use the available openssl library in the system (only in Linux), then you can build with:
+
+```shell
+OPENSSL_NO_VENDOR=1 cargo build --release
 ```
 
 ### Notes on building on Windows

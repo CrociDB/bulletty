@@ -71,6 +71,12 @@ It requires **cargo 1.90+**:
 cargo install bulletty
 ```
 
+To install the latest version in the repository:
+
+```shell
+cargo install --git https://github.com/CrociDB/bulletty.git
+```
+
 ### ☂️ Pre-requisites
 
 **bulletty** runs in most platforms, however there are some pre-requisites to have it run the best way possible:
