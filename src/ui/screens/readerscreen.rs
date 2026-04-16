@@ -81,7 +81,6 @@ impl ReaderScreen {
             self.scroll = 0;
             self.library
                 .borrow_mut()
-                .data
                 .set_entry_seen(&self.entries[self.current_index]);
         }
     }
@@ -92,7 +91,6 @@ impl ReaderScreen {
             self.scroll = 0;
             self.library
                 .borrow_mut()
-                .data
                 .set_entry_seen(&self.entries[self.current_index]);
         }
     }

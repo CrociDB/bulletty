@@ -1,5 +1,6 @@
+use std::collections::HashMap;
+
 use ratatui::widgets::{ListItem, ListState};
-use tracing::error;
 
 use crate::core::library::feedlibrary::FeedLibrary;
 
@@ -17,6 +18,9 @@ pub enum FeedItemInfo {
 pub struct FeedTreeState {
     pub treeitems: Vec<FeedItemInfo>,
     pub listatate: ListState,
+    last_generation: u64,
+    unread_counts: HashMap<(String, String), u16>,
+    read_later_count: usize,
 }
 
 impl Default for FeedTreeState {
@@ -30,11 +34,20 @@ impl FeedTreeState {
         Self {
             treeitems: vec![],
             listatate: ListState::default().with_selected(Some(0)),
+            last_generation: u64::MAX,
+            unread_counts: HashMap::new(),
+            read_later_count: 0,
         }
     }
 
     pub fn update(&mut self, library: &mut FeedLibrary) {
+        if library.generation == self.last_generation {
+            return;
+        }
+        self.last_generation = library.generation;
+
         self.treeitems.clear();
+        self.unread_counts.clear();
 
         for category in library.feedcategories.iter() {
             self.treeitems
@@ -45,38 +58,49 @@ impl FeedTreeState {
                     category.title.clone(),
                     item.slug.clone(),
                 ));
+
+                if let Ok(count) = library.data.get_unread_feed(&category.title, &item.slug) {
+                    self.unread_counts
+                        .insert((category.title.clone(), item.slug.clone()), count);
+                }
             }
         }
 
         // display Read Later section if it has entries
-        if library.has_read_later_entries() {
-            self.treeitems.push(FeedItemInfo::Separator);
-            self.treeitems.push(FeedItemInfo::ReadLater);
+        match library.get_read_later_feed_entries() {
+            Ok(entries) if !entries.is_empty() => {
+                self.read_later_count = entries.len();
+                self.treeitems.push(FeedItemInfo::Separator);
+                self.treeitems.push(FeedItemInfo::ReadLater);
+            }
+            _ => {
+                self.read_later_count = 0;
+            }
         }
     }
 
-    pub fn get_items(&self, library: &mut FeedLibrary) -> Vec<ListItem<'_>> {
+    pub fn get_items(&self) -> Vec<ListItem<'_>> {
         self.treeitems
             .iter()
             .map(|item| {
                 let title = match item {
                     FeedItemInfo::Category(t) => format!("\u{f07c} {t}"),
                     FeedItemInfo::Item(t, c, s) => {
-                        if let Ok(unread) = library.data.get_unread_feed(c, s) {
-                            if unread > 0 {
-                                format!(" \u{f09e}  {t} ({unread})")
-                            } else {
-                                format!(" \u{f09e}  {t}")
-                            }
+                        let unread = self
+                            .unread_counts
+                            .get(&(c.clone(), s.clone()))
+                            .copied()
+                            .unwrap_or(0);
+                        if unread > 0 {
+                            format!(" \u{f09e}  {t} ({unread})")
                         } else {
-                            error!("Couldn't get unread feed entries for '{}'", t);
                             format!(" \u{f09e}  {t}")
                         }
                     }
                     FeedItemInfo::Separator => "".to_string(),
                     FeedItemInfo::ReadLater => {
-                        if let Ok(count) = library.get_read_later_feed_entries() {
-                            format!("\u{f02d} Read Later ({})", count.len())
+                        if self.read_later_count > 0 {
+                            format!("\u{f02d} Read Later ({})", self.read_later_count)
                         } else {
                             "\u{f02d} Read Later".to_string()
                         }
