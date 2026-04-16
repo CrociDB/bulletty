@@ -24,6 +24,8 @@ pub struct FeedLibrary {
     pub data: LibraryData,
     pub updater: Option<Updater>,
     pub settings: UserSettings,
+    pub generation: u64,
+    last_updater_completed: u16,
 }
 
 impl FeedLibrary {
@@ -43,6 +45,8 @@ impl FeedLibrary {
             data: data_obj,
             updater: None,
             settings: UserSettings::new(data_dir).unwrap(),
+            generation: 0,
+            last_updater_completed: 0,
         }
     }
 
@@ -56,6 +60,8 @@ impl FeedLibrary {
                 data: data_obj,
                 updater: None,
                 settings: UserSettings::new(temp_dir.path()).unwrap(),
+                generation: 0,
+                last_updater_completed: 0,
             },
             temp_dir,
         )
@@ -139,11 +145,35 @@ impl FeedLibrary {
         self.updater = Some(Updater::new(self.feedcategories.clone(), &self.data.path));
     }
 
+    pub fn bump_generation(&mut self) {
+        self.generation += 1;
+    }
+
+    pub fn set_entry_seen(&mut self, entry: &FeedEntry) {
+        self.data.set_entry_seen(entry);
+        self.generation += 1;
+    }
+
+    pub fn toggle_entry_seen(&mut self, entry: &FeedEntry) {
+        self.data.toggle_entry_seen(entry);
+        self.generation += 1;
+    }
+
     pub fn update(&mut self) {
-        if let Some(updater) = self.updater.as_ref()
-            && updater.finished.load(std::sync::atomic::Ordering::Relaxed)
-        {
-            self.updater = None;
+        if let Some(updater) = self.updater.as_ref() {
+            let completed = updater
+                .total_completed
+                .load(std::sync::atomic::Ordering::Relaxed);
+            if completed > self.last_updater_completed {
+                self.last_updater_completed = completed;
+                self.generation += 1;
+            }
+
+            if updater.finished.load(std::sync::atomic::Ordering::Relaxed) {
+                self.updater = None;
+                self.last_updater_completed = 0;
+                self.generation += 1;
+            }
         }
     }
 
@@ -194,11 +224,15 @@ impl FeedLibrary {
     }
 
     pub fn add_to_read_later(&mut self, entry: &FeedEntry) -> color_eyre::Result<()> {
-        self.data.add_to_read_later(entry)
+        self.data.add_to_read_later(entry)?;
+        self.generation += 1;
+        Ok(())
     }
 
     pub fn remove_from_read_later(&mut self, file_path: &str) -> color_eyre::Result<()> {
-        self.data.remove_from_read_later(file_path)
+        self.data.remove_from_read_later(file_path)?;
+        self.generation += 1;
+        Ok(())
     }
 
     pub fn has_read_later_entries(&mut self) -> bool {

@@ -89,9 +89,11 @@ impl MainScreen {
             _ => vec![],
         };
 
+        let mut lib = self.library.borrow_mut();
         for entry in entries.iter() {
-            self.library.borrow_mut().data.set_entry_seen(entry);
+            lib.data.set_entry_seen(entry);
         }
+        lib.bump_generation();
     }
 
     fn open_external_url(&self, url: &str) -> Result<AppScreenEvent> {
@@ -219,7 +221,7 @@ impl AppScreen for MainScreen {
             )
         };
 
-        let treelist = List::new(self.feedtreestate.get_items(&mut self.library.borrow_mut()))
+        let treelist = List::new(self.feedtreestate.get_items())
             .block(treestyle)
             .highlight_style(treeselectionstyle);
 
@@ -227,7 +229,6 @@ impl AppScreen for MainScreen {
         frame.render_stateful_widget(treelist, chunks[0], &mut treestate);
 
         // The feed entries
-        self.feedentrystate.library = Some(self.library.clone());
         self.feedentrystate
             .update(&mut self.library.borrow_mut(), &self.feedtreestate);
 
@@ -358,7 +359,7 @@ impl AppScreen for MainScreen {
                 }
                 (_, KeyCode::Enter) => {
                     if let Some(entry) = self.feedentrystate.get_selected() {
-                        self.library.borrow_mut().data.set_entry_seen(&entry);
+                        self.library.borrow_mut().set_entry_seen(&entry);
                         self.feedentrystate.set_current_read();
 
                         Ok(AppScreenEvent::ChangeState(Box::new(ReaderScreen::new(
@@ -374,7 +375,7 @@ impl AppScreen for MainScreen {
                 (_, KeyCode::Char('r')) => {
                     if let Some(entry) = self.feedentrystate.get_selected() {
                         let was_seen = entry.seen;
-                        self.library.borrow_mut().data.toggle_entry_seen(&entry);
+                        self.library.borrow_mut().toggle_entry_seen(&entry);
                         let message = if was_seen {
                             "Marked as Unread"
                         } else {
@@ -405,7 +406,7 @@ impl AppScreen for MainScreen {
                 }
                 (_, KeyCode::Char('o')) => {
                     if let Some(entry) = self.feedentrystate.get_selected() {
-                        self.library.borrow_mut().data.set_entry_seen(&entry);
+                        self.library.borrow_mut().set_entry_seen(&entry);
                         self.open_external_url(&entry.url)
                     } else {
                         Ok(AppScreenEvent::Notify(AppNotification::new(

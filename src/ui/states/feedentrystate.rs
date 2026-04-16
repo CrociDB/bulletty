@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::collections::HashSet;
 
 use ratatui::{
     style::{Color, Style},
@@ -19,8 +19,9 @@ pub struct FeedEntryState {
     pub entries: Vec<FeedEntry>,
     pub listatate: ListState,
     pub previous_selected: String,
-    pub library: Option<Rc<RefCell<FeedLibrary>>>,
     theme: Theme,
+    last_generation: u64,
+    read_later_paths: HashSet<String>,
 }
 
 impl Default for FeedEntryState {
@@ -35,50 +36,68 @@ impl FeedEntryState {
             entries: vec![],
             listatate: ListState::default().with_selected(Some(0)),
             previous_selected: String::new(),
-            library: None,
             theme: Theme::default(),
+            last_generation: u64::MAX,
+            read_later_paths: HashSet::new(),
         }
     }
 
     pub fn update(&mut self, library: &mut FeedLibrary, treestate: &FeedTreeState) {
-        let prev = self.previous_selected.to_string();
+        let current_selected = match treestate.get_selected() {
+            Some(FeedItemInfo::Category(t)) => t.to_string(),
+            Some(FeedItemInfo::Item(_, _, s)) => s.to_string(),
+            Some(FeedItemInfo::ReadLater) => "read_later".to_string(),
+            _ => String::new(),
+        };
+
         self.theme = library.settings.get_theme().unwrap().clone();
 
+        if library.generation == self.last_generation && current_selected == self.previous_selected
+        {
+            return;
+        }
+
+        self.last_generation = library.generation;
+
+        let selection_changed = current_selected != self.previous_selected;
+        self.previous_selected = current_selected;
+
         self.entries = match treestate.get_selected() {
-            Some(FeedItemInfo::Category(t)) => {
-                self.previous_selected = t.to_string();
-                match library.get_feed_entries_by_category(t) {
-                    Ok(entries) => entries,
-                    Err(e) => {
-                        error!("Error getting feed entries by category: {:?}", e);
-                        vec![]
-                    }
+            Some(FeedItemInfo::Category(t)) => match library.get_feed_entries_by_category(t) {
+                Ok(entries) => entries,
+                Err(e) => {
+                    error!("Error getting feed entries by category: {:?}", e);
+                    vec![]
                 }
-            }
-            Some(FeedItemInfo::Item(_, _, s)) => {
-                self.previous_selected = s.to_string();
-                match library.get_feed_entries_by_item_slug(s) {
-                    Ok(entries) => entries,
-                    Err(e) => {
-                        error!("Error getting feed entries by item slug: {:?}", e);
-                        vec![]
-                    }
+            },
+            Some(FeedItemInfo::Item(_, _, s)) => match library.get_feed_entries_by_item_slug(s) {
+                Ok(entries) => entries,
+                Err(e) => {
+                    error!("Error getting feed entries by item slug: {:?}", e);
+                    vec![]
                 }
-            }
-            Some(FeedItemInfo::ReadLater) => {
-                self.previous_selected = "read_later".to_string();
-                match library.get_read_later_feed_entries() {
-                    Ok(entries) => entries,
-                    Err(e) => {
-                        error!("Error getting Read Later entries: {:?}", e);
-                        vec![]
-                    }
+            },
+            Some(FeedItemInfo::ReadLater) => match library.get_read_later_feed_entries() {
+                Ok(entries) => entries,
+                Err(e) => {
+                    error!("Error getting Read Later entries: {:?}", e);
+                    vec![]
                 }
-            }
+            },
             _ => vec![],
         };
 
-        if prev != self.previous_selected {
+        // precompute read-later paths for use in get_items()
+        self.read_later_paths.clear();
+        if let Ok(rl_entries) = library.get_read_later_feed_entries() {
+            for entry in rl_entries {
+                if let Some(path) = entry.filepath.to_str() {
+                    self.read_later_paths.insert(path.to_string());
+                }
+            }
+        }
+
+        if selection_changed {
             self.listatate.select_first();
         }
     }
@@ -91,12 +110,12 @@ impl FeedEntryState {
 
                 item_content_lines.push(Line::from(""));
 
-                let read_later_icon =
-                    if self.is_in_read_later(entry.filepath.to_str().unwrap_or_default()) {
-                        " \u{f02d}" // read later icon
-                    } else {
-                        ""
-                    };
+                let file_path = entry.filepath.to_str().unwrap_or_default();
+                let read_later_icon = if self.read_later_paths.contains(file_path) {
+                    " \u{f02d}" // read later icon
+                } else {
+                    ""
+                };
 
                 // Title
                 if !entry.seen {
@@ -203,13 +222,5 @@ impl FeedEntryState {
 
     pub fn scroll(&self) -> usize {
         self.listatate.selected().unwrap_or(0)
-    }
-
-    fn is_in_read_later(&self, file_path: &str) -> bool {
-        if let Some(library) = &self.library {
-            library.borrow_mut().is_in_read_later(file_path)
-        } else {
-            false
-        }
     }
 }
